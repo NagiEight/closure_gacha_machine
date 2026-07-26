@@ -79,8 +79,18 @@ GET /api/banner/EN A Shared Oath of Guardianship
 ### Success Response
 **Status:** `200 OK`
 ```typescript
+enum BannerTypes {
+    Standard,
+    Limited,
+    Orienteering,
+    JointOperation,
+    TFTW
+} 
+
 interface GetBannerResponse {
     Name: string;
+    ReleaseDate: number;
+    Type: BannerTypes;
     OperatorPool: {
         SixStarsPool: {
             Primary: string[];
@@ -103,30 +113,32 @@ interface GetBannerResponse {
 ```json
 {
     "Name": "EN A Shared Oath of Guardianship",
+    "ReleaseDate": 1761955200000,
+    "Type": 1,
     "OperatorPool": {
         "SixStarsPool": {
             "Primary": [
-                "char_1046_sbell2"
+                "char_1046_sbell2",
+                "char_1045_svash2"
             ],
             "Secondary": [
                 "char_1038_whitw2",
-                "char_1045_svash2",
                 "char_245_cello",
                 "char_1035_wisdel"
             ],
-            "Standard": []
+            "Standard": ["<6* operators>"]
         },
         "FiveStarsPool": {
             "Primary": [
                 "char_4211_snhunt"
             ],
-            "Standard": []
+            "Standard": ["<5* operators>"]
         },
         "FourStarsPool": {
             "Primary": [],
-            "Standard": []
+            "Standard": ["<4* operators>"]
         },
-        "ThreeStarsPool": []
+        "ThreeStarsPool": ["<3* operators>"],
     }
 }
 ```
@@ -166,6 +178,8 @@ interface GetOperatorResponse {
     ID: string;
     Name: string;
     Rarity: number;
+    ReleaseDate: number;
+    Limited: boolean;
 }
 ```
 **Example**
@@ -173,7 +187,8 @@ interface GetOperatorResponse {
 {
     "ID": "char_103_angel",
     "Name": "Exusiai",
-    "Rarity": 6
+    "Rarity": 6,
+    "ReleaseDate": 1580860800000
 }
 ```
 
