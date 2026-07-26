@@ -1,4 +1,5 @@
 *test*
+.env
 dev/
 node_modules/
 database/
