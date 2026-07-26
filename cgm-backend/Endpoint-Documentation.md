@@ -8,6 +8,7 @@ http://localhost:3000
 ---
 
 # API Endpoints
+These endpoints return informations about Operators and Banners.
 
 ## Get Banners (Paginated)
 Returns an array of banners for a specific page.
@@ -273,6 +274,7 @@ GET /assets/operator/char_103_angel
 
 ## Get Operator E2 Artwork
 Returns the Elite 2 (E2) artwork image for an operator.
+
 ### Request
 ```http
 GET /assets/e2operator/:OperatorID
@@ -281,21 +283,204 @@ GET /assets/e2operator/:OperatorID
 | Parameter | Type | Description |
 |------------|--------|-------------|
 | OperatorID | string | Operator identifier |
+
 ### Example
 ```http
 GET /asset/e2operator/char_103_angel
 ```
+
 ### Success Response
-**Status:** `200 OK`
-**Content-Type:**
-```text
-image/png
-```
+**Status:** `200 OK` <br/>
+**Content-Type:** `image/png`
+
 ### Error Response
 **Status:** `404 Not Found`
 ```json
 {
     "message": "Operator '${OperatorID}' doesn't exist."
+}
+```
+
+---
+
+# Gacha Endpoints
+These endpoints are for interacting with the gacha system.
+
+---
+
+## Create session token
+Create a new session token, this is necessary for interacting with the /gacha/ endpoints.
+
+### Request
+```http
+POST /gacha/create
+```
+
+### Success Response
+**Status:** `200 OK`
+```txt
+Create profile successfully.
+```
+**Header:**
+```json
+{
+    "Session-Token": "<your session token>"
+}
+```
+
+---
+
+## Perform a roll
+Perform a gacha roll on a specific banner.
+
+### Request
+```http
+POST /gacha/:BannerName/roll
+```
+
+### Parameters
+| Parameter | Type | Description |
+|------------|--------|-------------|
+| BannerName | string | Banner identifier or name |
+
+### Headers
+```json
+{
+    "Session-Token": "<your session token>"
+}
+```
+
+### Example
+```http
+GET /gacha/EN A Shared Oath of Guardianship/roll
+```
+
+### Success Response
+```typescript
+interface GachaRollResponse {
+    Result: string;
+}
+```
+**Example:**
+```json
+{
+    "Result": "char_1046_sbell2"
+}
+```
+
+### Error Response
+**Status:** `404 Not Found`
+```json
+{
+    "message": "Missing session token."
+}
+```
+```json
+{
+    "message": "There are no profile associated with this token."
+}
+```
+```json
+{
+    "message": "Banner '${BannerName}' doesn't exist."
+}
+```
+
+---
+
+## Perform multiple rolls
+Perform multiple gacha rolls on a specific banner.
+
+### Request
+```http
+POST /gacha/:BannerName/roll/:Count
+```
+
+### Parameters
+| Parameter | Type | Description |
+|------------|--------|-------------|
+| BannerName | string | Banner identifier or name |
+| Count | number | Amount of times you want to roll |
+
+### Headers
+```json
+{
+    "Session-Token": "<your session token>"
+}
+```
+
+### Example
+```http
+GET /gacha/EN A Shared Oath of Guardianship/roll/10
+```
+
+### Success Response
+```typescript
+interface GachaMultiRollResponse {
+    Result: string[];
+}
+```
+**Example:**
+```json
+{
+    "Result": [
+        "char_1046_sbell2",
+        "<9 more character ids>"
+    ]
+}
+```
+
+### Error Response
+**Status:** `404 Not Found`
+```json
+{
+    "message": "Missing session token."
+}
+```
+```json
+{
+    "message": "There are no profile associated with this token."
+}
+```
+```json
+{
+    "message": "Banner '${BannerName}' doesn't exist."
+}
+```
+
+---
+
+## Delete a session token
+Delete a session token, will invalidate this token.
+
+### Request
+```http
+PURGE /gacha/delete/
+```
+
+### Headers
+```json
+{
+    "Session-Token": "<your session token>"
+}
+```
+
+### Success Response
+**Status:** `200 OK`
+```txt
+Delete profile successfully.
+```
+
+### Error Response
+**Status:** `404 Not Found`
+```json
+{
+    "message": "Missing session token."
+}
+```
+```json
+{
+    "message": "There are no profile associated with this token."
 }
 ```
 

@@ -1,5 +1,4 @@
 import type { Database as DBType } from "better-sqlite3";
-import { Items } from "../consts/GachaItems.js";
 import LoadEnv from "./LoadEnv.js";
 import Database from "better-sqlite3";
 import path from "path";
@@ -19,7 +18,9 @@ DB.exec(`
         ReleaseDate INTEGER NOT NULL,
         Limited INTEGER NOT NULL,
         Art BLOB NOT NULL,
-        E2Art BLOB NOT NULL
+        E2Art BLOB NOT NULL,
+
+        CHECK (Rarity IN (3, 4, 5, 6))
     );
 
     CREATE TABLE IF NOT EXISTS BannerPools(
@@ -40,7 +41,9 @@ DB.exec(`
         Name TEXT PRIMARY KEY,
         ReleaseDate INTEGER NOT NULL,
         Type INTEGER NOT NULL,
-        Cover BLOB NOT NULL
+        Cover BLOB NOT NULL,
+
+        CHECK(Type IN (0, 1, 2, 3, 4))
     );
 
     CREATE TABLE IF NOT EXISTS GachaData(
@@ -50,11 +53,13 @@ DB.exec(`
         Count INTEGER NOT NULL,
         RollsWithoutSixStar INTEGER NOT NULL,
         Focused INTEGER NOT NULL,
+        TenRolls INTEGER NOT NULL,
 
         PRIMARY KEY (UserToken, Banner),
         FOREIGN KEY (UserToken) REFERENCES GachaProfiles(Token),
 
-        CHECK (Focused IN (0, 1))
+        CHECK(Focused IN (0, 1)),
+        CHECK(TenRolls IN (0, 1))
     );
 
     CREATE TABLE IF NOT EXISTS GachaStorage(
@@ -112,21 +117,21 @@ interface BannersRow {
 
 export interface Operator {
     Name: string;
-    Rarity: Items;
+    Rarity: 3 | 4 | 5 | 6;
     ReleaseDate: number;
     Limited: boolean;
 }
 interface OperatorsRow {
     ID: string;
     Name: string;
-    Rarity: number;
+    Rarity: 3 | 4 | 5 | 6;
     ReleaseDate: number;
     Limited: number;
 }
 
 class DataManager {
     private readonly Operators: Map<string, Operator> = new Map(
-        (DB.prepare<[], OperatorsRow>("SELECT ID, Name, Rarity FROM Operators").all()).map(Row => 
+        (DB.prepare<[], OperatorsRow>("SELECT ID, Name, Rarity, ReleaseDate, Limited FROM Operators").all()).map(Row => 
             [Row.ID, { Name: Row.Name, Rarity: Row.Rarity, ReleaseDate: Row.ReleaseDate, Limited: !!Row.Limited }]
         )
     );
