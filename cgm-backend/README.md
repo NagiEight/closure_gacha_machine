@@ -189,7 +189,8 @@ interface GetOperatorResponse {
     "ID": "char_103_angel",
     "Name": "Exusiai",
     "Rarity": 6,
-    "ReleaseDate": 1580860800000
+    "ReleaseDate": 1580860800000,
+    "Limited": false
 }
 ```
 
