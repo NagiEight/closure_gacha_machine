@@ -1,0 +1,234 @@
+import type { Database as DBType } from "better-sqlite3";
+import { Items } from "../consts/GachaItems.js";
+import LoadEnv from "./LoadEnv.js";
+import Database from "better-sqlite3";
+import path from "path";
+import fs from "fs/promises";
+
+const DBDir: string = path.join(import.meta.dirname, "..", "database");
+await fs.mkdir(DBDir, { recursive: true });
+
+const DB: DBType = new Database(path.join(DBDir, "Banners.db"));
+DB.pragma("journal_mode = WAL");
+DB.pragma("foreign_keys = ON");
+DB.exec(`
+    CREATE TABLE IF NOT EXISTS Operators(
+        ID TEXT PRIMARY KEY,
+        Name TEXT NOT NULL,
+        Rarity INTEGER NOT NULL,
+        ReleaseDate INTEGER NOT NULL,
+        Limited INTEGER NOT NULL,
+        Art BLOB NOT NULL,
+        E2Art BLOB NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS BannerPools(
+        BannerName TEXT NOT NULL,
+        Rarity INTEGER NOT NULL,
+
+        Prima TEXT,
+        Secondary TEXT,
+        Standard TEXT NOT NULL,
+
+        PRIMARY KEY (BannerName, Rarity),
+        FOREIGN KEY (BannerName) REFERENCES Banners(Name),
+
+        CHECK (Rarity IN (3, 4, 5, 6))
+    );
+
+    CREATE TABLE IF NOT EXISTS Banners(
+        Name TEXT PRIMARY KEY,
+        ReleaseDate INTEGER NOT NULL,
+        Type INTEGER NOT NULL,
+        Cover BLOB NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS GachaData(
+        UserToken TEXT NOT NULL,
+        Banner TEXT NOT NULL,
+
+        Count INTEGER NOT NULL,
+        RollsWithoutSixStar INTEGER NOT NULL,
+        Focused INTEGER NOT NULL,
+
+        PRIMARY KEY (UserToken, Banner),
+        FOREIGN KEY (UserToken) REFERENCES GachaProfiles(Token),
+
+        CHECK (Focused IN (0, 1))
+    );
+
+    CREATE TABLE IF NOT EXISTS GachaStorage(
+        UserToken TEXT NOT NULL,
+        Banner TEXT NOT NULL,
+        Rarity INTEGER NOT NULL,
+
+        Storage TEXT NOT NULL,
+
+        PRIMARY KEY (UserToken, Banner, Rarity),
+        FOREIGN KEY (UserToken) REFERENCES GachaProfiles(Token),
+
+        CHECK (Rarity IN (3, 4, 5, 6))
+    );
+
+    CREATE TABLE IF NOT EXISTS GachaProfiles(
+        Token TEXT PRIMARY KEY
+    );
+`);
+
+export enum BannerTypes {
+    Standard,
+    Limited,
+    Orienteering,
+    JointOperation,
+    TFTW
+}
+export interface Banner {
+    ReleaseDate: number;
+    Type: BannerTypes;
+    SixStarsPool: {
+        Primary: string[];
+        Secondary: string[];
+        Standard: string[];
+    };
+    FiveStarsPool: {
+        Primary: string[];
+        Standard: string[];
+    };
+    FourStarsPool: {
+        Primary: string[];
+        Standard: string[];
+    };
+    ThreeStarsPool: string[];
+}
+interface BannersRow {
+    Name: string;
+    ReleaseDate: number;
+    Type: number;
+    Rarity: 3 | 4 | 5 | 6;
+    Prima: string | null;
+    Secondary: string | null;
+    Standard: string;
+}
+
+export interface Operator {
+    Name: string;
+    Rarity: Items;
+    ReleaseDate: number;
+    Limited: boolean;
+}
+interface OperatorsRow {
+    ID: string;
+    Name: string;
+    Rarity: number;
+    ReleaseDate: number;
+    Limited: number;
+}
+
+class DataManager {
+    private readonly Operators: Map<string, Operator> = new Map(
+        (DB.prepare<[], OperatorsRow>("SELECT ID, Name, Rarity FROM Operators").all()).map(Row => 
+            [Row.ID, { Name: Row.Name, Rarity: Row.Rarity, ReleaseDate: Row.ReleaseDate, Limited: !!Row.Limited }]
+        )
+    );
+    private readonly BannerNames: string[] = DB.prepare<[], { Name: string }>("SELECT Name FROM Banners").all().map(Row => Row.Name);
+    private readonly Banners: Map<string, Banner> = new Map(this.BannerNames.map(Name => [Name, {
+        ReleaseDate: 0,
+        Type: BannerTypes.Standard,
+        SixStarsPool: {
+            Primary: [],
+            Secondary: [],
+            Standard: []
+        },
+        FiveStarsPool: {
+            Primary: [],
+            Standard: []
+        },
+        FourStarsPool: {
+            Primary: [],
+            Standard: []
+        },
+        ThreeStarsPool: []
+    }]));
+    // Storing these in memory is expensive so i have to do database query instead.
+    private readonly GetBannerCoverSTMT = DB.prepare<[string], { Cover: Buffer }>("SELECT Cover FROM Banners WHERE Name = ?");
+    private readonly GetOperatorArtSTMT = DB.prepare<[string], { Art: Buffer }>("SELECT Art FROM Operators WHERE ID = ?");
+    private readonly GetOperatorE2ArtSTMT = DB.prepare<[string], { E2Art: Buffer }>("SELECT E2Art FROM Operators WHERE ID = ?");
+
+    public constructor() {
+        const Query: BannersRow[] = DB.prepare<[], BannersRow>(`
+            SELECT B.Name, B.ReleaseDate, B.Type, BP.Rarity, BP.Prima, BP.Secondary, BP.Standard
+            FROM BannerPools BP JOIN Banners B ON BP.BannerName = B.Name
+        `).all();
+        for(const Row of Query) {
+            const Name: string = Row.Name;
+            const Banner: Banner | undefined = this.Banners.get(Name);
+
+            if(!Banner)
+                continue;
+
+            Banner.ReleaseDate = Row.ReleaseDate;
+            Banner.Type = Row.Type;
+
+            switch(Row.Rarity) {
+                case 3:
+                    Banner.ThreeStarsPool = JSON.parse(Row.Standard);
+                    break;
+
+                case 4:
+                    if(Row.Prima)
+                        Banner.FourStarsPool.Primary = JSON.parse(Row.Prima);
+                    Banner.FourStarsPool.Standard = JSON.parse(Row.Standard);
+                    break;
+
+                case 5:
+                    if(Row.Prima)
+                        Banner.FiveStarsPool.Primary = JSON.parse(Row.Prima);
+                    Banner.FiveStarsPool.Standard = JSON.parse(Row.Standard);
+                    break;
+
+                case 6:
+                    if(Row.Prima)
+                        Banner.SixStarsPool.Primary = JSON.parse(Row.Prima);
+                    if(Row.Secondary)
+                        Banner.SixStarsPool.Secondary = JSON.parse(Row.Secondary);
+                    Banner.SixStarsPool.Standard = JSON.parse(Row.Standard);
+                    break;
+            }
+        }
+    }
+
+    private static Pagination<T>(Page: number, Set: T[]): T[] {
+        const Start: number = (Page - 1) * LoadEnv.PAGE_SIZE;
+        const End: number = Start + LoadEnv.PAGE_SIZE;
+        return Set.slice(Start, End);
+    }
+
+    public GetBanner(Name: string): Banner | undefined {
+        return this.Banners.get(Name);
+    }
+    public GetBanners(Page: number): string[] {
+        return DataManager.Pagination(Page, this.BannerNames);
+    }
+    public GetBannerCover(Name: string): Buffer | undefined {
+        return this.GetBannerCoverSTMT.get(Name)?.Cover;
+    }
+
+    public GetOperator(OperatorID: string): Operator | undefined {
+        return this.Operators.get(OperatorID);
+    }
+    public GetOperatorArt(OperatorID: string): Buffer | undefined {
+        return this.GetOperatorArtSTMT.get(OperatorID)?.Art;
+    }
+    public GetOperatorE2Art(OperatorID: string): Buffer | undefined {
+        return this.GetOperatorE2ArtSTMT.get(OperatorID)?.E2Art;
+    }
+}
+
+const Signals: string[] = ["SIGTERM", "SIGINT"];
+for(const Signal in Signals) 
+    process.on(Signal, () => DB.close());
+
+export default {
+    DB,
+    Manager: new DataManager()
+};
