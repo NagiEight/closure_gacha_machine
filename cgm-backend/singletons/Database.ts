@@ -45,39 +45,6 @@ DB.exec(`
 
         CHECK(Type IN (0, 1, 2, 3, 4))
     );
-
-    CREATE TABLE IF NOT EXISTS GachaData(
-        UserToken TEXT NOT NULL,
-        Banner TEXT NOT NULL,
-
-        Count INTEGER NOT NULL,
-        RollsWithoutSixStar INTEGER NOT NULL,
-        Focused INTEGER NOT NULL,
-        TenRolls INTEGER NOT NULL,
-
-        PRIMARY KEY (UserToken, Banner),
-        FOREIGN KEY (UserToken) REFERENCES GachaProfiles(Token),
-
-        CHECK(Focused IN (0, 1)),
-        CHECK(TenRolls IN (0, 1))
-    );
-
-    CREATE TABLE IF NOT EXISTS GachaStorage(
-        UserToken TEXT NOT NULL,
-        Banner TEXT NOT NULL,
-        Rarity INTEGER NOT NULL,
-
-        Storage TEXT NOT NULL,
-
-        PRIMARY KEY (UserToken, Banner, Rarity),
-        FOREIGN KEY (UserToken) REFERENCES GachaProfiles(Token),
-
-        CHECK (Rarity IN (3, 4, 5, 6))
-    );
-
-    CREATE TABLE IF NOT EXISTS GachaProfiles(
-        Token TEXT PRIMARY KEY
-    );
 `);
 
 export enum BannerTypes {

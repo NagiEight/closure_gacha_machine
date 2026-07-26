@@ -5,7 +5,7 @@ import GenerateToken from "../helpers/GenerateToken.js";
 import PityCalculator from "../helpers/PityCalculator.js";
 import crypto from "crypto";
 
-/** 
+Database.DB.exec(`
     CREATE TABLE IF NOT EXISTS GachaData(
         UserToken TEXT NOT NULL,
         Banner TEXT NOT NULL,
@@ -38,7 +38,7 @@ import crypto from "crypto";
     CREATE TABLE IF NOT EXISTS GachaProfiles(
         Token TEXT PRIMARY KEY
     );
-*/
+`);
 
 export interface ProfileBanner {
     Count: number;
@@ -94,17 +94,17 @@ class GachaSystem {
         (UserToken, Banner, Rarity, Storage)
         VALUES(?, ?, ?, ?)
         ON CONFLICT(UserToken, Banner, Rarity) DO UPDATE SET
-        Storage = excluded.Storage
+            Storage = excluded.Storage
     `);
     private readonly RefreshDataSTMT = Database.DB.prepare<[string, string, number, number, number, number], void>(`
         INSERT INTO GachaData
-        (UserToken, Banner, Count, RollsWithoutSixStar, Focused)
+        (UserToken, Banner, Count, RollsWithoutSixStar, Focused, TenRolls)
         VALUES(?, ?, ?, ?, ?, ?)
         ON CONFLICT(UserToken, Banner) DO UPDATE SET
-        Count = excluded.Count,
-        RollsWithoutSixStar = excluded.RollsWithoutSixStar,
-        Focused = excluded.Focused,
-        TenRolls = excluded.TenRolls
+            Count = excluded.Count,
+            RollsWithoutSixStar = excluded.RollsWithoutSixStar,
+            Focused = excluded.Focused,
+            TenRolls = excluded.TenRolls
     `);
     private readonly DeleteProfileSTMT = Database.DB.transaction((Token: string): void => {
         Database.DB.prepare<[string], void>("DELETE FROM GachaStorage WHERE UserToken = ?").run(Token);
@@ -118,7 +118,7 @@ class GachaSystem {
             FROM GachaStorage GS JOIN GachaProfiles GP ON GP.Token = GS.UserToken
         `).all();
         const DataQuery: GachaProfileDataRow[] = Database.DB.prepare<[], GachaProfileDataRow>(`
-            SELECT GP.Token, GD.Banner, GD.Focused, GD.RollsWithoutSixStar
+            SELECT GP.Token, GD.Banner, GD.Focused, GD.RollsWithoutSixStar, GD.TenRolls
             FROM GachaData GD JOIN GachaProfiles GP ON GP.TOKEN = GD.UserToken
         `).all();
         
