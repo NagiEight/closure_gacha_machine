@@ -121,8 +121,8 @@ Server.post("/gacha/create", (_, Res) => {
     const BannerName: string = Req.params.BannerName;
     const Count: number = Number(Req.params.Count);
 
-    if(!Count && Count < 1) {
-        Res.status(404).json({ message: "Roll count has to be a number greater or equals to 1." });
+    if(!Count && Count <= 0) {
+        Res.status(404).json({ message: "Roll count must be a number greater than 0." });
         return;
     }
 

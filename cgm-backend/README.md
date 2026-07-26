@@ -400,7 +400,7 @@ POST /gacha/:BannerName/roll/:Count
 | Parameter | Type | Description |
 |------------|--------|-------------|
 | BannerName | string | Banner identifier or name |
-| Count | number | Amount of times you want to roll |
+| Count | number | Amount of times you want to roll (must be greater than 0) |
 
 ### Headers
 ```json
@@ -434,6 +434,11 @@ interface GachaMultiRollResponse {
 **Status:** `404 Not Found`
 ```json
 {
+    "message": "Roll count must be a number greater than 0."
+}
+```
+```json
+{
     "message": "Missing session token."
 }
 ```
@@ -451,7 +456,7 @@ interface GachaMultiRollResponse {
 ---
 
 ## Delete a session token
-Delete a session token, will invalidate this token.
+Delete a session token, will invalidate this token. This is irrecoverable.
 
 ### Request
 ```http
