@@ -1,5 +1,4 @@
-import type { Express } from "express";
-import express from "express";
+import express, { type Express } from "express";
 import LoadEnv from "./singletons/LoadEnv.js";
 import Database, { type Banner, type Operator } from "./singletons/Database.js";
 import GachaSystem, { type GachaProfile } from "./singletons/GachaSystem.js";

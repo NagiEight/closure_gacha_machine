@@ -20,7 +20,7 @@ DB.exec(`
         Art BLOB NOT NULL,
         E2Art BLOB NOT NULL,
 
-        CHECK (Rarity IN (3, 4, 5, 6))
+        CHECK(Rarity IN (3, 4, 5, 6))
     );
 
     CREATE TABLE IF NOT EXISTS BannerPools(
@@ -34,7 +34,7 @@ DB.exec(`
         PRIMARY KEY (BannerName, Rarity),
         FOREIGN KEY (BannerName) REFERENCES Banners(Name),
 
-        CHECK (Rarity IN (3, 4, 5, 6))
+        CHECK(Rarity IN (3, 4, 5, 6))
     );
 
     CREATE TABLE IF NOT EXISTS Banners(

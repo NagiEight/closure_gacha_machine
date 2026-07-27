@@ -32,7 +32,7 @@ Database.DB.exec(`
         PRIMARY KEY (UserToken, Banner, Rarity),
         FOREIGN KEY (UserToken) REFERENCES GachaProfiles(Token),
 
-        CHECK (Rarity IN (3, 4, 5, 6))
+        CHECK(Rarity IN (3, 4, 5, 6))
     );
 
     CREATE TABLE IF NOT EXISTS GachaProfiles(
@@ -211,239 +211,122 @@ class GachaSystem {
         }
 
         const Result: Items = Gacha(StandardRate)!;
-        let Output: string;
-        let OutputRarity: number;
 
-        switch(Banner.Type) {
-            case BannerTypes.Standard:
-                switch(Result) {
-                    case Items.SixStars:
-                        Profile.RollsWithoutSixStar = 0;
-                        if(Profile.Count > 150 && !Profile.Focused) {
-                            Output = Banner.SixStarsPool.Primary[crypto.randomInt(Banner.SixStarsPool.Primary.length)];
+        const [Output, OutputRarity]: [string, 3 | 4 | 5 | 6] = {
+            [BannerTypes.Standard]: {
+                [Items.SixStars]: 
+                    Profile.Count > 150 && !Profile.Focused 
+                        ? (() => { 
                             Profile.Focused = true;
-                        }
-                        else if(crypto.randomInt(2) === 0) 
-                            Output = Banner.SixStarsPool.Primary[crypto.randomInt(Banner.SixStarsPool.Primary.length)];
-                        else Output = Banner.SixStarsPool.Standard[crypto.randomInt(Banner.SixStarsPool.Standard.length)];
-                        Profile.Storage.SixStars.push(Output);
-                        OutputRarity = 6;
-                        break;
+                            return [Banner.SixStarsPool.Primary[crypto.randomInt(Banner.SixStarsPool.Primary.length)], 6];
+                        })()
+                    : 
+                    {
+                        0: [Banner.SixStarsPool.Primary[crypto.randomInt(Banner.SixStarsPool.Primary.length)], 6],
+                        1: [Banner.SixStarsPool.Standard[crypto.randomInt(Banner.SixStarsPool.Standard.length)], 6]
+                    }[crypto.randomInt(2)],
 
-                    case Items.FiveStars:
-                        if(crypto.randomInt(2) === 0) 
-                            Output = Banner.FiveStarsPool.Primary[crypto.randomInt(Banner.FiveStarsPool.Primary.length)];
-                        else Output = Banner.FiveStarsPool.Standard[crypto.randomInt(Banner.FiveStarsPool.Standard.length)];
-                        Profile.Storage.FiveStars.push(Output);
-                        OutputRarity = 5;
-                        break;
+                [Items.FiveStars]: {
+                    0: [Banner.FiveStarsPool.Primary[crypto.randomInt(Banner.FiveStarsPool.Primary.length)], 5],
+                    1: [Banner.FiveStarsPool.Standard[crypto.randomInt(Banner.FiveStarsPool.Standard.length)], 5]
+                }[crypto.randomInt(2)],
 
-                    case Items.FourStars:
-                        const IsRateUp: boolean = Gacha([
-                            { Value: true, Chance: 20 },
-                            { Value: false, Chance: 80 }
-                        ])!;
-                        if(Banner.FourStarsPool.Primary.length && IsRateUp)
-                            Output = Banner.FourStarsPool.Primary[crypto.randomInt(Banner.FourStarsPool.Primary.length)]
-                        else Output = Banner.FourStarsPool.Standard[crypto.randomInt(Banner.FourStarsPool.Standard.length)];
-                        Profile.Storage.FourStars.push(Output);
-                        OutputRarity = 4;
-                        break;
+                [Items.FourStars]: {
+                    0: [Banner.FourStarsPool.Standard[crypto.randomInt(Banner.FourStarsPool.Standard.length)], 4],
+                    1: [[Banner.FourStarsPool.Primary[crypto.randomInt(Banner.FourStarsPool.Primary.length)], 4]]
+                }[Number(Banner.FourStarsPool.Primary.length && Gacha([{ Value: true, Chance: 20 }, { Value: false, Chance: 80 }])!)],
 
-                    case Items.ThreeStars:
-                        Output = Banner.ThreeStarsPool[crypto.randomInt(Banner.ThreeStarsPool.length)];
-                        Profile.Storage.ThreeStars.push(Output);
-                        OutputRarity = 3;
-                        break;
-                }
-                break;
+                [Items.ThreeStars]: [Banner.ThreeStarsPool[crypto.randomInt(Banner.ThreeStarsPool.length)], 3]
+            }[Result],
 
-            case BannerTypes.Limited:
-                switch(Result) {
-                    case Items.SixStars:
-                        Profile.RollsWithoutSixStar = 0;
-                        const LimitedRateUp: GachaItems<RateUp>[] = [
-                            { Value: RateUp.Primary, Chance: 70 },
-                            { Value: RateUp.Secondary, Chance: 25 },
-                            { Value: RateUp.None, Chance: 5 },
-                        ];
-                        const SixStarRateUpResult: RateUp = Gacha(LimitedRateUp)!;
+            [BannerTypes.Limited]: {
+                [Items.SixStars]: {
+                    [RateUp.Primary]: [Banner.SixStarsPool.Primary[crypto.randomInt(Banner.SixStarsPool.Primary.length)], 6],
+                    [RateUp.Secondary]: [Banner.SixStarsPool.Secondary[crypto.randomInt(Banner.SixStarsPool.Secondary.length)], 6],
+                    [RateUp.None]: [Banner.SixStarsPool.Standard[crypto.randomInt(Banner.SixStarsPool.Standard.length)], 6]
+                }[Gacha([{ Value: RateUp.Primary, Chance: 70 }, { Value: RateUp.Secondary, Chance: 25 }, { Value: RateUp.None, Chance: 5 }])!],
 
-                        switch(SixStarRateUpResult) {
-                            case RateUp.Primary:
-                                Output = Banner.SixStarsPool.Primary[crypto.randomInt(Banner.SixStarsPool.Primary.length)];
-                                break;
+                [Items.FiveStars]: {
+                    0: [Banner.FiveStarsPool.Primary[crypto.randomInt(Banner.FiveStarsPool.Primary.length)], 5],
+                    1: [Banner.FiveStarsPool.Standard[crypto.randomInt(Banner.FiveStarsPool.Standard.length)], 5]
+                }[crypto.randomInt(2)],
 
-                            case RateUp.Secondary:
-                                Output = Banner.SixStarsPool.Secondary[crypto.randomInt(Banner.SixStarsPool.Secondary.length)];
-                                break;
-
-                            case RateUp.None:
-                                Output = Banner.SixStarsPool.Standard[crypto.randomInt(Banner.SixStarsPool.Standard.length)];
-                                break;
-                        }
-                        Profile.Storage.SixStars.push(Output);
-                        OutputRarity = 6;
-                        break;
-                        
-                    case Items.FiveStars:
-                        if(crypto.randomInt(2) === 0) 
-                            Output = Banner.FiveStarsPool.Primary[crypto.randomInt(Banner.FiveStarsPool.Primary.length)];
-                        else Output = Banner.FiveStarsPool.Standard[crypto.randomInt(Banner.FiveStarsPool.Standard.length)];
-                        Profile.Storage.FiveStars.push(Output);
-                        OutputRarity = 5;
-                        break;
-                        
-                    case Items.FourStars:
-                        const IsRateUp: boolean = Gacha([
-                            { Value: true, Chance: 20 },
-                            { Value: false, Chance: 80 }
-                        ])!;
-                        if(Banner.FourStarsPool.Primary.length && IsRateUp)
-                            Output = Banner.FourStarsPool.Primary[crypto.randomInt(Banner.FourStarsPool.Primary.length)]
-                        else Output = Banner.FourStarsPool.Standard[crypto.randomInt(Banner.FourStarsPool.Standard.length)];
-                        Profile.Storage.FourStars.push(Output);
-                        OutputRarity = 4;
-                        break;
-                        
-                    case Items.ThreeStars:
-                        Output = Banner.ThreeStarsPool[crypto.randomInt(Banner.ThreeStarsPool.length)];
-                        Profile.Storage.ThreeStars.push(Output);
-                        OutputRarity = 3;
-                        break;
-                    }
-                    break;
-                    
-            case BannerTypes.Orienteering:
-                switch(Result) {
-                    case Items.SixStars:
-                        Profile.RollsWithoutSixStar = 0;
-                        Output = Banner.SixStarsPool.Primary[crypto.randomInt(Banner.SixStarsPool.Primary.length)];
-                        Profile.Storage.SixStars.push(Output);
-                        OutputRarity = 6;
-                        break;
-
-                    case Items.FiveStars:
-                        const IsRateUp: boolean = Gacha([
-                            { Value: true, Chance: 60 },
-                            { Value: false, Chance: 40 }
-                        ])!;
-                        if(IsRateUp) 
-                            Output = Banner.FiveStarsPool.Primary[crypto.randomInt(Banner.FiveStarsPool.Primary.length)];
-                        else Output = Banner.FiveStarsPool.Standard[crypto.randomInt(Banner.FiveStarsPool.Standard.length)];
-                        Profile.Storage.FiveStars.push(Output);
-                        OutputRarity = 5;
-                        break;
-
-                    case Items.FourStars:
-                        Output = Banner.FourStarsPool.Standard[crypto.randomInt(Banner.FourStarsPool.Standard.length)];
-                        Profile.Storage.FourStars.push(Output);
-                        OutputRarity = 4;
-                        break;
-
-                    case Items.ThreeStars:
-                        Output = Banner.ThreeStarsPool[crypto.randomInt(Banner.ThreeStarsPool.length)];
-                        Profile.Storage.ThreeStars.push(Output);
-                        OutputRarity = 3;
-                        break;
-                }
-                break;
-            
-            case BannerTypes.JointOperation:
-                switch(Result) {
-                    case Items.SixStars:
-                        Profile.RollsWithoutSixStar = 0;
-                        Output = Banner.SixStarsPool.Primary[crypto.randomInt(Banner.SixStarsPool.Primary.length)];
-                        Profile.Storage.SixStars.push(Output);
-                        OutputRarity = 6;
-                        break;
-
-                    case Items.FiveStars:
-                        Output = Banner.FiveStarsPool.Primary[crypto.randomInt(Banner.FiveStarsPool.Primary.length)];
-                        Profile.Storage.FiveStars.push(Output);
-                        OutputRarity = 5;
-                        break;
-
-                    case Items.FourStars:
-                        const IsRateUp: boolean = Gacha([
-                            { Value: true, Chance: 20 },
-                            { Value: false, Chance: 80 }
-                        ])!;
-                        if(Banner.FourStarsPool.Primary.length && IsRateUp)
-                            Output = Banner.FourStarsPool.Primary[crypto.randomInt(Banner.FourStarsPool.Primary.length)]
-                        else Output = Banner.FourStarsPool.Standard[crypto.randomInt(Banner.FourStarsPool.Standard.length)];
-                        Profile.Storage.FourStars.push(Output);
-                        OutputRarity = 4;
-                        break;
-
-                    case Items.ThreeStars:
-                        Output = Banner.ThreeStarsPool[crypto.randomInt(Banner.ThreeStarsPool.length)];
-                        Profile.Storage.ThreeStars.push(Output);
-                        OutputRarity = 3;
-                        break;
-                }
-                break;
+                [Items.FourStars]: {
+                    0: [Banner.FourStarsPool.Standard[crypto.randomInt(Banner.FourStarsPool.Standard.length)], 4],
+                    1: [[Banner.FourStarsPool.Primary[crypto.randomInt(Banner.FourStarsPool.Primary.length)], 4]]
+                }[Number(Banner.FourStarsPool.Primary.length && Gacha([{ Value: true, Chance: 20 }, { Value: false, Chance: 80 }])!)],
                 
-            case BannerTypes.TFTW:
-                switch(Result) {
-                    case Items.SixStars:
-                        Profile.RollsWithoutSixStar = 0;
-                        Output = Banner.SixStarsPool.Primary[crypto.randomInt(Banner.SixStarsPool.Primary.length)];
-                        Profile.Storage.SixStars.push(Output);
-                        OutputRarity = 6;
-                        break;
+                [Items.ThreeStars]: [Banner.ThreeStarsPool[crypto.randomInt(Banner.ThreeStarsPool.length)], 3]
+            }[Result],
 
-                    case Items.FiveStars:
-                        const Is5StarsRateUp: boolean = Gacha([
-                            { Value: true, Chance: 60 },
-                            { Value: false, Chance: 40 }
-                        ])!;
-                        if(Is5StarsRateUp) 
-                            Output = Banner.FiveStarsPool.Primary[crypto.randomInt(Banner.FiveStarsPool.Primary.length)];
-                        else Output = Banner.FiveStarsPool.Standard[crypto.randomInt(Banner.FiveStarsPool.Standard.length)];
-                        Profile.Storage.FiveStars.push(Output);
-                        OutputRarity = 5;
-                        break;
+            [BannerTypes.Orienteering]: {
+                [Items.SixStars]: [Banner.SixStarsPool.Primary[crypto.randomInt(Banner.SixStarsPool.Primary.length)], 6],
 
-                    case Items.FourStars:
-                        const Is4StarsRateUp: boolean = Gacha([
-                            { Value: true, Chance: 45 },
-                            { Value: false, Chance: 55 }
-                        ])!;
-                        if(Banner.FourStarsPool.Primary.length && Is4StarsRateUp)
-                            Output = Banner.FourStarsPool.Primary[crypto.randomInt(Banner.FourStarsPool.Primary.length)]
-                        else Output = Banner.FourStarsPool.Standard[crypto.randomInt(Banner.FourStarsPool.Standard.length)];
-                        Profile.Storage.FourStars.push(Output);
-                        OutputRarity = 4;
-                        break;
+                [Items.FiveStars]: {
+                    0: [Banner.FiveStarsPool.Standard[crypto.randomInt(Banner.FiveStarsPool.Standard.length)], 5],
+                    1: [Banner.FiveStarsPool.Primary[crypto.randomInt(Banner.FiveStarsPool.Primary.length)], 5]
+                }[Number(Gacha([{ Value: true, Chance: 60 }, { Value: false, Chance: 40 }])!)],
 
-                    case Items.ThreeStars:
-                        Output = Banner.ThreeStarsPool[crypto.randomInt(Banner.ThreeStarsPool.length)];
-                        Profile.Storage.ThreeStars.push(Output);
-                        OutputRarity = 3;
-                        break;
-                }
-                break;
-                
-            default:
-                console.log("Defected database, please fix this shit.");
-                return;
-        }
+                [Items.FourStars]: {
+                    0: [Banner.FourStarsPool.Standard[crypto.randomInt(Banner.FourStarsPool.Standard.length)], 4],
+                    1: [[Banner.FourStarsPool.Primary[crypto.randomInt(Banner.FourStarsPool.Primary.length)], 4]]
+                }[Number(Banner.FourStarsPool.Primary.length && Gacha([{ Value: true, Chance: 20 }, { Value: false, Chance: 80 }])!)],
+
+                [Items.ThreeStars]: [Banner.ThreeStarsPool[crypto.randomInt(Banner.ThreeStarsPool.length)], 3]
+            }[Result],
+
+            [BannerTypes.JointOperation]: {
+                [Items.SixStars]: [Banner.SixStarsPool.Primary[crypto.randomInt(Banner.SixStarsPool.Primary.length)], 6],
+
+                [Items.FiveStars]: [Banner.FiveStarsPool.Primary[crypto.randomInt(Banner.FiveStarsPool.Primary.length)], 5],
+
+                [Items.FourStars]: {
+                    0: [Banner.FourStarsPool.Standard[crypto.randomInt(Banner.FourStarsPool.Standard.length)], 4],
+                    1: [[Banner.FourStarsPool.Primary[crypto.randomInt(Banner.FourStarsPool.Primary.length)], 4]]
+                }[Number(Banner.FourStarsPool.Primary.length && Gacha([{ Value: true, Chance: 20 }, { Value: false, Chance: 80 }])!)],
+
+                [Items.ThreeStars]: [Banner.ThreeStarsPool[crypto.randomInt(Banner.ThreeStarsPool.length)], 3]
+            }[Result],
+
+            [BannerTypes.TFTW]: {
+                [Items.SixStars]: [Banner.SixStarsPool.Primary[crypto.randomInt(Banner.SixStarsPool.Primary.length)], 6],
+
+                [Items.FiveStars]: {
+                    0: [Banner.FiveStarsPool.Standard[crypto.randomInt(Banner.FiveStarsPool.Standard.length)], 5],
+                    1: [Banner.FiveStarsPool.Primary[crypto.randomInt(Banner.FiveStarsPool.Primary.length)], 5]
+                }[Number(Gacha([{ Value: true, Chance: 60 }, { Value: false, Chance: 40 }])!)],
+
+                [Items.FourStars]: {
+                    0: [Banner.FourStarsPool.Standard[crypto.randomInt(Banner.FourStarsPool.Standard.length)], 4],
+                    1: [[Banner.FourStarsPool.Primary[crypto.randomInt(Banner.FourStarsPool.Primary.length)], 4]]
+                }[Number(Banner.FourStarsPool.Primary.length && Gacha([{ Value: true, Chance: 45 }, { Value: false, Chance: 55 }])!)],
+
+                [Items.ThreeStars]: [Banner.ThreeStarsPool[crypto.randomInt(Banner.ThreeStarsPool.length)], 3]
+            }[Result]
+        }[Banner.Type] as [string, 3 | 4 | 5 | 6];
+
+
+        const ToPush: string[] = {
+            6: Profile.Storage.SixStars,
+            5: Profile.Storage.FiveStars,
+            4: Profile.Storage.FourStars,
+            3: Profile.Storage.ThreeStars
+        }[OutputRarity];
+        ToPush.push(Output);
+
+        if(OutputRarity === 6)
+            Profile.RollsWithoutSixStar = 0;
 
         if(OutputRarity === 5 || OutputRarity === 6) 
             Profile.TenRolls = false;
 
         if(WriteDB) {
-            this.RefreshStorageSTMT.run(Token, BannerName, OutputRarity, JSON.stringify(
-                OutputRarity === 3 
-                    ? Profile.Storage.ThreeStars
-                : OutputRarity === 4 
-                    ? Profile.Storage.FourStars
-                : OutputRarity === 5
-                    ? Profile.Storage.FiveStars
-                : Profile.Storage.SixStars
-            ));
-
+            this.RefreshStorageSTMT.run(
+                Token,
+                BannerName,
+                OutputRarity,
+                JSON.stringify(ToPush)
+            );
             this.RefreshDataSTMT.run(
                 Token,
                 BannerName,
@@ -466,15 +349,17 @@ class GachaSystem {
         const Rarities: Set<number> = new Set<number>(Result.map(Roll => Roll[1]));
         
         for(const OutputRarity of Rarities) {
-            this.RefreshStorageSTMT.run(Token, BannerName, OutputRarity, JSON.stringify(
-                OutputRarity === 3 
-                    ? Profile.Storage.ThreeStars
-                : OutputRarity === 4 
-                    ? Profile.Storage.FourStars
-                : OutputRarity === 5
-                    ? Profile.Storage.FiveStars
-                : Profile.Storage.SixStars
-            ));
+            this.RefreshStorageSTMT.run(
+                Token,
+                BannerName,
+                OutputRarity,
+                JSON.stringify({
+                    6: Profile.Storage.SixStars,
+                    5: Profile.Storage.FiveStars,
+                    4: Profile.Storage.FourStars,
+                    3: Profile.Storage.ThreeStars
+                }[OutputRarity])
+            );
         }
         this.RefreshDataSTMT.run(
             Token, 
