@@ -8,6 +8,7 @@ http://localhost:3000
 ---
 
 # API Endpoints
+These endpoints return informations about Operators and Banners.
 
 ## Get Banners (Paginated)
 Returns an array of banners for a specific page.
@@ -79,8 +80,18 @@ GET /api/banner/EN A Shared Oath of Guardianship
 ### Success Response
 **Status:** `200 OK`
 ```typescript
+enum BannerTypes {
+    Standard,
+    Limited,
+    Orienteering,
+    JointOperation,
+    TFTW
+} 
+
 interface GetBannerResponse {
     Name: string;
+    ReleaseDate: number;
+    Type: BannerTypes;
     OperatorPool: {
         SixStarsPool: {
             Primary: string[];
@@ -103,30 +114,32 @@ interface GetBannerResponse {
 ```json
 {
     "Name": "EN A Shared Oath of Guardianship",
+    "ReleaseDate": 1761955200000,
+    "Type": 1,
     "OperatorPool": {
         "SixStarsPool": {
             "Primary": [
-                "char_1046_sbell2"
+                "char_1046_sbell2",
+                "char_1045_svash2"
             ],
             "Secondary": [
                 "char_1038_whitw2",
-                "char_1045_svash2",
                 "char_245_cello",
                 "char_1035_wisdel"
             ],
-            "Standard": []
+            "Standard": ["<6* operators>"]
         },
         "FiveStarsPool": {
             "Primary": [
                 "char_4211_snhunt"
             ],
-            "Standard": []
+            "Standard": ["<5* operators>"]
         },
         "FourStarsPool": {
             "Primary": [],
-            "Standard": []
+            "Standard": ["<4* operators>"]
         },
-        "ThreeStarsPool": []
+        "ThreeStarsPool": ["<3* operators>"],
     }
 }
 ```
@@ -166,6 +179,8 @@ interface GetOperatorResponse {
     ID: string;
     Name: string;
     Rarity: number;
+    ReleaseDate: number;
+    Limited: boolean;
 }
 ```
 **Example**
@@ -173,7 +188,9 @@ interface GetOperatorResponse {
 {
     "ID": "char_103_angel",
     "Name": "Exusiai",
-    "Rarity": 6
+    "Rarity": 6,
+    "ReleaseDate": 1580860800000,
+    "Limited": false
 }
 ```
 
@@ -258,6 +275,7 @@ GET /assets/operator/char_103_angel
 
 ## Get Operator E2 Artwork
 Returns the Elite 2 (E2) artwork image for an operator.
+
 ### Request
 ```http
 GET /assets/e2operator/:OperatorID
@@ -266,21 +284,209 @@ GET /assets/e2operator/:OperatorID
 | Parameter | Type | Description |
 |------------|--------|-------------|
 | OperatorID | string | Operator identifier |
+
 ### Example
 ```http
 GET /asset/e2operator/char_103_angel
 ```
+
 ### Success Response
-**Status:** `200 OK`
-**Content-Type:**
-```text
-image/png
-```
+**Status:** `200 OK` <br/>
+**Content-Type:** `image/png`
+
 ### Error Response
 **Status:** `404 Not Found`
 ```json
 {
     "message": "Operator '${OperatorID}' doesn't exist."
+}
+```
+
+---
+
+# Gacha Endpoints
+These endpoints are for interacting with the gacha system.
+
+---
+
+## Create session token
+Create a new session token, this is necessary for interacting with the /gacha/ endpoints.
+
+### Request
+```http
+POST /gacha/create
+```
+
+### Success Response
+**Status:** `200 OK`
+```txt
+Create profile successfully.
+```
+**Header:**
+```json
+{
+    "Session-Token": "<your session token>"
+}
+```
+
+---
+
+## Perform a roll
+Perform a gacha roll on a specific banner.
+
+### Request
+```http
+POST /gacha/:BannerName/roll
+```
+
+### Parameters
+| Parameter | Type | Description |
+|------------|--------|-------------|
+| BannerName | string | Banner identifier or name |
+
+### Headers
+```json
+{
+    "Session-Token": "<your session token>"
+}
+```
+
+### Example
+```http
+GET /gacha/EN A Shared Oath of Guardianship/roll
+```
+
+### Success Response
+```typescript
+interface GachaRollResponse {
+    Result: string;
+}
+```
+**Example:**
+```json
+{
+    "Result": "char_1046_sbell2"
+}
+```
+
+### Error Response
+**Status:** `404 Not Found`
+```json
+{
+    "message": "Missing session token."
+}
+```
+```json
+{
+    "message": "There are no profile associated with this token."
+}
+```
+```json
+{
+    "message": "Banner '${BannerName}' doesn't exist."
+}
+```
+
+---
+
+## Perform multiple rolls
+Perform multiple gacha rolls on a specific banner.
+
+### Request
+```http
+POST /gacha/:BannerName/roll/:Count
+```
+
+### Parameters
+| Parameter | Type | Description |
+|------------|--------|-------------|
+| BannerName | string | Banner identifier or name |
+| Count | number | Amount of times you want to roll (must be greater than 0) |
+
+### Headers
+```json
+{
+    "Session-Token": "<your session token>"
+}
+```
+
+### Example
+```http
+GET /gacha/EN A Shared Oath of Guardianship/roll/10
+```
+
+### Success Response
+```typescript
+interface GachaMultiRollResponse {
+    Result: string[];
+}
+```
+**Example:**
+```json
+{
+    "Result": [
+        "char_1046_sbell2",
+        "<9 more character ids>"
+    ]
+}
+```
+
+### Error Response
+**Status:** `404 Not Found`
+```json
+{
+    "message": "Roll count must be a number greater than 0."
+}
+```
+```json
+{
+    "message": "Missing session token."
+}
+```
+```json
+{
+    "message": "There are no profile associated with this token."
+}
+```
+```json
+{
+    "message": "Banner '${BannerName}' doesn't exist."
+}
+```
+
+---
+
+## Delete a session token
+Delete a session token, will invalidate this token. This is irrecoverable.
+
+### Request
+```http
+PURGE /gacha/delete/
+```
+
+### Headers
+```json
+{
+    "Session-Token": "<your session token>"
+}
+```
+
+### Success Response
+**Status:** `200 OK`
+```txt
+Delete profile successfully.
+```
+
+### Error Response
+**Status:** `404 Not Found`
+```json
+{
+    "message": "Missing session token."
+}
+```
+```json
+{
+    "message": "There are no profile associated with this token."
 }
 ```
 

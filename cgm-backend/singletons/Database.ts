@@ -1,5 +1,4 @@
 import type { Database as DBType } from "better-sqlite3";
-import { Items } from "../consts/GachaItems.js";
 import LoadEnv from "./LoadEnv.js";
 import Database from "better-sqlite3";
 import path from "path";
@@ -19,7 +18,9 @@ DB.exec(`
         ReleaseDate INTEGER NOT NULL,
         Limited INTEGER NOT NULL,
         Art BLOB NOT NULL,
-        E2Art BLOB NOT NULL
+        E2Art BLOB NOT NULL,
+
+        CHECK(Rarity IN (3, 4, 5, 6))
     );
 
     CREATE TABLE IF NOT EXISTS BannerPools(
@@ -33,45 +34,16 @@ DB.exec(`
         PRIMARY KEY (BannerName, Rarity),
         FOREIGN KEY (BannerName) REFERENCES Banners(Name),
 
-        CHECK (Rarity IN (3, 4, 5, 6))
+        CHECK(Rarity IN (3, 4, 5, 6))
     );
 
     CREATE TABLE IF NOT EXISTS Banners(
         Name TEXT PRIMARY KEY,
         ReleaseDate INTEGER NOT NULL,
         Type INTEGER NOT NULL,
-        Cover BLOB NOT NULL
-    );
+        Cover BLOB NOT NULL,
 
-    CREATE TABLE IF NOT EXISTS GachaData(
-        UserToken TEXT NOT NULL,
-        Banner TEXT NOT NULL,
-
-        Count INTEGER NOT NULL,
-        RollsWithoutSixStar INTEGER NOT NULL,
-        Focused INTEGER NOT NULL,
-
-        PRIMARY KEY (UserToken, Banner),
-        FOREIGN KEY (UserToken) REFERENCES GachaProfiles(Token),
-
-        CHECK (Focused IN (0, 1))
-    );
-
-    CREATE TABLE IF NOT EXISTS GachaStorage(
-        UserToken TEXT NOT NULL,
-        Banner TEXT NOT NULL,
-        Rarity INTEGER NOT NULL,
-
-        Storage TEXT NOT NULL,
-
-        PRIMARY KEY (UserToken, Banner, Rarity),
-        FOREIGN KEY (UserToken) REFERENCES GachaProfiles(Token),
-
-        CHECK (Rarity IN (3, 4, 5, 6))
-    );
-
-    CREATE TABLE IF NOT EXISTS GachaProfiles(
-        Token TEXT PRIMARY KEY
+        CHECK(Type IN (0, 1, 2, 3, 4))
     );
 `);
 
@@ -112,21 +84,21 @@ interface BannersRow {
 
 export interface Operator {
     Name: string;
-    Rarity: Items;
+    Rarity: 3 | 4 | 5 | 6;
     ReleaseDate: number;
     Limited: boolean;
 }
 interface OperatorsRow {
     ID: string;
     Name: string;
-    Rarity: number;
+    Rarity: 3 | 4 | 5 | 6;
     ReleaseDate: number;
     Limited: number;
 }
 
 class DataManager {
     private readonly Operators: Map<string, Operator> = new Map(
-        (DB.prepare<[], OperatorsRow>("SELECT ID, Name, Rarity FROM Operators").all()).map(Row => 
+        (DB.prepare<[], OperatorsRow>("SELECT ID, Name, Rarity, ReleaseDate, Limited FROM Operators").all()).map(Row => 
             [Row.ID, { Name: Row.Name, Rarity: Row.Rarity, ReleaseDate: Row.ReleaseDate, Limited: !!Row.Limited }]
         )
     );
