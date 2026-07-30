@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:ui/presentation/widgets/painter/orundum.dart';
 
 enum CurrencyType { permitTen, permitOne, originite, orundum }
 
@@ -18,7 +19,6 @@ class CurrencyPill extends StatelessWidget {
     required this.onTopUp,
   });
 
-  // Map PNG asset paths here
   String get _assetPath {
     switch (type) {
       case CurrencyType.permitTen:
@@ -52,19 +52,20 @@ class CurrencyPill extends StatelessWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // PNG Icon
-            Image.asset(
-              _assetPath,
-              width: 22,
-              height: 22,
-              errorBuilder: (_, __, ___) => const Icon(
-                Icons.monetization_on,
-                size: 20,
-                color: Colors.amber,
+            if (type == CurrencyType.orundum)
+              const CustomPaint(size: Size(22, 22), painter: OrundumPainter())
+            else
+              Image.asset(
+                _assetPath,
+                width: 22,
+                height: 22,
+                errorBuilder: (_, __, ___) => const Icon(
+                  Icons.monetization_on,
+                  size: 20,
+                  color: Colors.amber,
+                ),
               ),
-            ),
             const SizedBox(width: 6),
-            // Currency Balance Value
             Text(
               '$amount',
               style: const TextStyle(
@@ -74,7 +75,6 @@ class CurrencyPill extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 4),
-            // Plus / Top-up Button
             InkWell(
               onTap: onTopUp,
               borderRadius: BorderRadius.circular(12),
