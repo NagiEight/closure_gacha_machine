@@ -16,5 +16,12 @@
     "dev": "tsx main.ts",
     "start": "node public/main.js",
     "build": "tsc"
-  }
+  },
+  "name": "cgm-backend",
+  "description": "## Base URL ``` http://localhost:3000 ```",
+  "version": "1.0.0",
+  "main": "index.js",
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
 }
