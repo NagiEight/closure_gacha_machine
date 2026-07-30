@@ -178,8 +178,8 @@ class DataManager {
     public GetBanner(Name: string): Banner | undefined {
         return this.Banners.get(Name);
     }
-    public GetBanners(Page: number): string[] {
-        return DataManager.Pagination(Page, this.BannerNames);
+    public GetBanners(Page: number): Banner[] {
+        return DataManager.Pagination(Page, this.BannerNames).map(Banner => this.Banners.get(Banner)!);
     }
     public GetBannerCover(Name: string): Buffer | undefined {
         return this.GetBannerCoverSTMT.get(Name)?.Cover;
