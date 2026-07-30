@@ -1,7 +1,7 @@
 import 'package:ui/domain/entities/local_entities.dart';
 
 abstract class SanityTimerRepository {
-  Future<List<SanityTimer>> getTimers();
+  Future<SanityTimer?> getTimer();
   Future<void> saveTimer(SanityTimer timer);
-  Future<void> deleteTimer(String id);
+  Future<void> deleteTimer();
 }

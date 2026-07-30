@@ -27,6 +27,7 @@ class ClosureGachaMachineAdapter implements GachaPort {
 
     if (response.statusCode == 200) {
       final List<dynamic> jsonList = jsonDecode(response.body);
+      print(jsonList);
       return jsonList.cast<String>();
     }
 
