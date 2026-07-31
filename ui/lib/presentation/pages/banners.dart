@@ -3,8 +3,8 @@ import 'package:ui/application/use_cases/get_gacha_roll.dart';
 import 'package:ui/domain/repositories/currency_repository.dart';
 import 'package:ui/presentation/pages/gacha.dart';
 import '../../../application/use_cases/get_banners.dart';
-import '../../domain/entities/api_entities.dart';
 import '../../../domain/ports/gacha_port.dart';
+import '../../domain/entities/api_entities.dart';
 
 enum ServerRegion { en, cn, jp }
 
@@ -38,7 +38,9 @@ class _BannersPageState extends State<BannersPage> {
   @override
   void initState() {
     super.initState();
-    _fetchNextBannerPage();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _fetchNextBannerPage();
+    });
   }
 
   Future<void> _fetchNextBannerPage() async {
@@ -303,7 +305,7 @@ class _BannerCard extends StatelessWidget {
                       ),
                       decoration: BoxDecoration(
                         color: isActive
-                            ? activeColor.withOpacity(0.2)
+                            ? activeColor.withValues(alpha: 0.2)
                             : Colors.grey[800],
                         borderRadius: BorderRadius.circular(6),
                       ),

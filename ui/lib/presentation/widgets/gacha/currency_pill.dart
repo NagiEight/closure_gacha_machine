@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:ui/presentation/widgets/painter/orundum.dart';
+import 'package:ui/presentation/painter/originite.dart';
+import 'package:ui/presentation/painter/orundum.dart';
+import 'package:ui/presentation/painter/permit_one.dart';
+import 'package:ui/presentation/painter/permit_ten.dart';
 
 enum CurrencyType { permitTen, permitOne, originite, orundum }
 
@@ -19,16 +22,25 @@ class CurrencyPill extends StatelessWidget {
     required this.onTopUp,
   });
 
-  String get _assetPath {
+  Widget _buildIcon() {
     switch (type) {
-      case CurrencyType.permitTen:
-        return 'assets/images/permit_ten.png';
-      case CurrencyType.permitOne:
-        return 'assets/images/permit_one.png';
-      case CurrencyType.originite:
-        return 'assets/images/originite.png';
       case CurrencyType.orundum:
-        return 'assets/images/orundum.png';
+        return CustomPaint(size: const Size(22, 22), painter: OrundumPainter());
+      case CurrencyType.originite:
+        return CustomPaint(
+          size: const Size(22, 22),
+          painter: OriginitePainter(),
+        );
+      case CurrencyType.permitOne:
+        return CustomPaint(
+          size: const Size(28.16, 17.6),
+          painter: PermitOnePainter(),
+        );
+      case CurrencyType.permitTen:
+        return CustomPaint(
+          size: const Size(28.16, 17.6),
+          painter: PermitTenPainter(),
+        );
     }
   }
 
@@ -41,7 +53,7 @@ class CurrencyPill extends StatelessWidget {
         padding: const EdgeInsets.only(left: 8, right: 4, top: 4, bottom: 4),
         decoration: BoxDecoration(
           color: isSelected
-              ? Colors.amber[900]!.withOpacity(0.3)
+              ? Colors.amber[900]!.withValues(alpha: 0.3)
               : const Color(0xFF1E1E1E),
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
@@ -52,19 +64,7 @@ class CurrencyPill extends StatelessWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            if (type == CurrencyType.orundum)
-              const CustomPaint(size: Size(22, 22), painter: OrundumPainter())
-            else
-              Image.asset(
-                _assetPath,
-                width: 22,
-                height: 22,
-                errorBuilder: (_, __, ___) => const Icon(
-                  Icons.monetization_on,
-                  size: 20,
-                  color: Colors.amber,
-                ),
-              ),
+            _buildIcon(),
             const SizedBox(width: 6),
             Text(
               '$amount',
