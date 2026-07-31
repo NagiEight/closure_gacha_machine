@@ -356,6 +356,37 @@ GET /asset/e2operator/char_103_angel
 
 ---
 
+## Get Operator Card
+
+### Request
+```http
+GET /assets/card/:OperatorID
+```
+
+### Parameters
+| Parameter | Type | Description |
+|------------|--------|-------------|
+| OperatorID | string | Operator identifier |
+
+### Example
+```http
+GET /assets/operator/char_103_angel
+```
+
+### Success Response
+**Status:** `200 OK` <br/>
+**Content-Type:**`image/png`
+
+### Error Response
+**Status:** `404 Not Found`
+```json
+{
+    "message": "Operator '${OperatorID}' doesn't exist."
+}
+```
+
+---
+
 # Gacha Endpoints
 These endpoints are for interacting with the gacha system.
 

@@ -81,6 +81,18 @@ Server.get("/assets/banner/:BannerName", (Req, Res) => {
     
     Res.set("Content-Type", "image/png");
     Res.send(OperatorArt);
+})
+.get("/assets/card/:OperatorID", (Req, Res) => {
+    const OperatorID: string = Req.params.OperatorID;
+    const OperatorArt: Buffer | undefined = Database.Manager.GetOperatorCard(OperatorID);
+
+    if(!OperatorArt) {
+        Res.status(404).json({ message: `Operator '${OperatorID}' doesn't exist.` });
+        return;
+    }
+    
+    Res.set("Content-Type", "image/png");
+    Res.send(OperatorArt);
 });
 
 // Gacha endpoint

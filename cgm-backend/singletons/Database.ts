@@ -19,6 +19,7 @@ DB.exec(`
         Limited INTEGER NOT NULL,
         Art BLOB NOT NULL,
         E2Art BLOB NOT NULL,
+        Card BLOB NOT NULL,
 
         CHECK(Rarity IN (3, 4, 5, 6))
     );
@@ -125,6 +126,7 @@ class DataManager {
     private readonly GetBannerCoverSTMT = DB.prepare<[string], { Cover: Buffer }>("SELECT Cover FROM Banners WHERE Name = ?");
     private readonly GetOperatorArtSTMT = DB.prepare<[string], { Art: Buffer }>("SELECT Art FROM Operators WHERE ID = ?");
     private readonly GetOperatorE2ArtSTMT = DB.prepare<[string], { E2Art: Buffer }>("SELECT E2Art FROM Operators WHERE ID = ?");
+    private readonly GetOperatorCardSTMT = DB.prepare<[string], { Card: Buffer }>("SELECT Card FROM Operators WHERE ID = ?");
 
     public constructor() {
         const Query: BannersRow[] = DB.prepare<[], BannersRow>(`
@@ -200,6 +202,9 @@ class DataManager {
     }
     public GetOperatorE2Art(OperatorID: string): Buffer | undefined {
         return this.GetOperatorE2ArtSTMT.get(OperatorID)?.E2Art;
+    }
+    public GetOperatorCard(OperatorID: string): Buffer | undefined {
+        return this.GetOperatorCardSTMT.get(OperatorID)?.Card;
     }
 }
 
