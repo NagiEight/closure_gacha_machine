@@ -31,21 +31,73 @@ GET /api/banners/1
 ### Success Response
 **Status:** `200 OK`
 ```typescript
-type GetBannerPageResponse = string[];
+enum BannerTypes {
+    Standard,
+    Limited,
+    Orienteering,
+    JointOperation,
+    TFTW
+}
+
+type GetBannerPageResponse = {
+    Name: string;
+    Type: BannerTypes,
+    ReleaseDate: number;
+}[];
 ```
 **Example**
 ```json
 [
-    "EN Cremation Last Wish",
-    "EN Earthborn Metals",
-    "EN Illusions of the Past",
-    "EN Quicksand Vortex",
-    "EN Behold the Sword of Tide Rerun",
-    "EN Misty Wild",
-    "EN Lisa of the Valley",
-    "EN First Snowfall",
-    "EN The Piper on the Knoll",
-    "EN Thousand Headed Arsenal"
+    {
+        "Name": "EN 600 Meters Over The Facts",
+        "Type": 0,
+        "ReleaseDate": 1764892800000
+    },
+    {
+        "Name": "EN A Shared Oath of Guardianship",
+        "Type": 1,
+        "ReleaseDate": 1761955200000
+    },
+    {
+        "Name": "EN A Wanderer in the Wind",
+        "Type": 0,
+        "ReleaseDate": 1649894400000
+    },
+    {
+        "Name": "EN Abyss Corrosion",
+        "Type": 1,
+        "ReleaseDate": 1651363200000
+    },
+    {
+        "Name": "EN An Eternity Aflame",
+        "Type": 1,
+        "ReleaseDate": 1737504000000
+    },
+    {
+        "Name": "EN Anchor In The Deep",
+        "Type": 0,
+        "ReleaseDate": 1717545600000
+    },
+    {
+        "Name": "EN Anchor In The Deep Rerun",
+        "Type": 0,
+        "ReleaseDate": 1750291200000
+    },
+    {
+        "Name": "EN And the Canoe'll Carry Us to You",
+        "Type": 0,
+        "ReleaseDate": 1739491200000
+    },
+    {
+        "Name": "EN Arbiter Aequissimus",
+        "Type": 0,
+        "ReleaseDate": 1703116800000
+    },
+    {
+        "Name": "EN Arbiter Aequissimus Rerun",
+        "Type": 0,
+        "ReleaseDate": 1719273600000
+    }
 ]
 ```
 
