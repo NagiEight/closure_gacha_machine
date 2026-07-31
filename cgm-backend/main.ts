@@ -48,50 +48,50 @@ Server.get("/api/banners/:Page", (Req, Res) => {
 // Assets endpoint
 Server.get("/assets/banner/:BannerName", (Req, Res) => {
     const BannerName: string = Req.params.BannerName;
-    const BannerCover: Buffer | undefined = Database.Manager.GetBannerCover(BannerName);
+    const BannerCover: string | undefined = Database.Manager.GetBannerCover(BannerName);
 
     if(!BannerCover) {
         Res.status(404).json({ message: `Banner '${BannerName}' doesn't exist.` });
         return;
     }
 
-    Res.set("Content-Type", "image/png");
+    Res.set("Content-Type", "text/plain");
     Res.send(BannerCover);
 })
 .get("/assets/operator/:OperatorID", (Req, Res) => {
     const OperatorID: string = Req.params.OperatorID;
-    const OperatorArt: Buffer | undefined = Database.Manager.GetOperatorArt(OperatorID);
+    const OperatorArt: string | undefined = Database.Manager.GetOperatorArt(OperatorID);
 
     if(!OperatorArt) {
         Res.status(404).json({ message: `Operator '${OperatorID}' doesn't exist.` });
         return;
     }
     
-    Res.set("Content-Type", "image/png");
+    Res.set("Content-Type", "text/plain");
     Res.send(OperatorArt);
 })
 .get("/assets/e2operator/:OperatorID", (Req, Res) => {
     const OperatorID: string = Req.params.OperatorID;
-    const OperatorArt: Buffer | undefined = Database.Manager.GetOperatorE2Art(OperatorID);
+    const OperatorArt: string | undefined = Database.Manager.GetOperatorE2Art(OperatorID);
 
     if(!OperatorArt) {
         Res.status(404).json({ message: `Operator '${OperatorID}' doesn't exist.` });
         return;
     }
     
-    Res.set("Content-Type", "image/png");
+    Res.set("Content-Type", "text/plain");
     Res.send(OperatorArt);
 })
 .get("/assets/card/:OperatorID", (Req, Res) => {
     const OperatorID: string = Req.params.OperatorID;
-    const OperatorArt: Buffer | undefined = Database.Manager.GetOperatorCard(OperatorID);
+    const OperatorArt: string | undefined = Database.Manager.GetOperatorCard(OperatorID);
 
     if(!OperatorArt) {
         Res.status(404).json({ message: `Operator '${OperatorID}' doesn't exist.` });
         return;
     }
     
-    Res.set("Content-Type", "image/png");
+    Res.set("Content-Type", "text/plain");
     Res.send(OperatorArt);
 });
 

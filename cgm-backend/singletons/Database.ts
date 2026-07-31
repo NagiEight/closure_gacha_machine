@@ -17,9 +17,6 @@ DB.exec(`
         Rarity INTEGER NOT NULL,
         ReleaseDate INTEGER NOT NULL,
         Limited INTEGER NOT NULL,
-        Art BLOB NOT NULL,
-        E2Art BLOB NOT NULL,
-        Card BLOB NOT NULL,
 
         CHECK(Rarity IN (3, 4, 5, 6))
     );
@@ -42,7 +39,6 @@ DB.exec(`
         Name TEXT PRIMARY KEY,
         ReleaseDate INTEGER NOT NULL,
         Type INTEGER NOT NULL,
-        Cover BLOB NOT NULL,
 
         CHECK(Type IN (0, 1, 2, 3, 4))
     );
@@ -103,6 +99,7 @@ class DataManager {
             [Row.ID, { Name: Row.Name, Rarity: Row.Rarity, ReleaseDate: Row.ReleaseDate, Limited: !!Row.Limited }]
         )
     );
+    private readonly OperatorIDs: string[] = DB.prepare<[], { Name: string }>("SELECT ID FROM Operators").all().map(Row => Row.Name);
     private readonly BannerNames: string[] = DB.prepare<[], { Name: string }>("SELECT Name FROM Banners").all().map(Row => Row.Name);
     private readonly Banners: Map<string, Banner> = new Map(this.BannerNames.map(Name => [Name, {
         ReleaseDate: 0,
@@ -122,11 +119,6 @@ class DataManager {
         },
         ThreeStarsPool: []
     }]));
-    // Storing these in memory is expensive so i have to do database query instead.
-    private readonly GetBannerCoverSTMT = DB.prepare<[string], { Cover: Buffer }>("SELECT Cover FROM Banners WHERE Name = ?");
-    private readonly GetOperatorArtSTMT = DB.prepare<[string], { Art: Buffer }>("SELECT Art FROM Operators WHERE ID = ?");
-    private readonly GetOperatorE2ArtSTMT = DB.prepare<[string], { E2Art: Buffer }>("SELECT E2Art FROM Operators WHERE ID = ?");
-    private readonly GetOperatorCardSTMT = DB.prepare<[string], { Card: Buffer }>("SELECT Card FROM Operators WHERE ID = ?");
 
     public constructor() {
         const Query: BannersRow[] = DB.prepare<[], BannersRow>(`
@@ -190,22 +182,28 @@ class DataManager {
             }
         });
     }
-    public GetBannerCover(Name: string): Buffer | undefined {
-        return this.GetBannerCoverSTMT.get(Name)?.Cover;
+    public GetBannerCover(Name: string): string | undefined {
+        return this.BannerNames.includes(Name) ? DataManager.FormMediaURL("banners/covers", Name) : undefined;
     }
 
     public GetOperator(OperatorID: string): Operator | undefined {
         return this.Operators.get(OperatorID);
     }
-    public GetOperatorArt(OperatorID: string): Buffer | undefined {
-        return this.GetOperatorArtSTMT.get(OperatorID)?.Art;
+    public GetOperatorArt(OperatorID: string): string | undefined {
+        return this.OperatorIDs.includes(OperatorID) ? DataManager.FormMediaURL("operators/e0", OperatorID) : undefined;
     }
-    public GetOperatorE2Art(OperatorID: string): Buffer | undefined {
-        return this.GetOperatorE2ArtSTMT.get(OperatorID)?.E2Art;
+    public GetOperatorE2Art(OperatorID: string): string | undefined {
+        return this.OperatorIDs.includes(OperatorID) ? DataManager.FormMediaURL("operators/e2", OperatorID) : undefined;
     }
-    public GetOperatorCard(OperatorID: string): Buffer | undefined {
-        return this.GetOperatorCardSTMT.get(OperatorID)?.Card;
+    public GetOperatorCard(OperatorID: string): string | undefined {
+        return this.OperatorIDs.includes(OperatorID) ? DataManager.FormMediaURL("operators/cards", OperatorID) : undefined;
     }
+
+    private static FormMediaURL(Base: string, Name: string): string {
+        const MediaURL: URL = new URL(`${LoadEnv.BASE_MEDIA_URL}/${Base}/${Name}`);
+        MediaURL.pathname = MediaURL.pathname.replace(/\/+/g, '/');
+        return MediaURL.toString(); 
+    };
 }
 
 const Signals: string[] = ["SIGTERM", "SIGINT"];
