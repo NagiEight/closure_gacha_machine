@@ -113,7 +113,7 @@ Server.post("/gacha/create", (_, Res) => {
         return;
     }
 
-    const Result: string = Object.keys(GachaSystem.Roll(Token, BannerName)!)[0];
+    const Result: string = GachaSystem.Roll(Token, BannerName)![0];
     Res.json({ Result });
 })
 .post("/gacha/:BannerName/roll/:Count", (Req, Res) => {

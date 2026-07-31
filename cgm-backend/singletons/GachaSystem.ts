@@ -118,7 +118,7 @@ class GachaSystem {
             FROM GachaStorage GS JOIN GachaProfiles GP ON GP.Token = GS.UserToken
         `).all();
         const DataQuery: GachaProfileDataRow[] = Database.DB.prepare<[], GachaProfileDataRow>(`
-            SELECT GP.Token, GD.Banner, GD.Focused, GD.RollsWithoutSixStar, GD.TenRolls
+            SELECT GP.Token, GD.Banner, GD.Focused, GD.RollsWithoutSixStar, GD.TenRolls, GD.Count
             FROM GachaData GD JOIN GachaProfiles GP ON GP.TOKEN = GD.UserToken
         `).all();
         
@@ -186,13 +186,27 @@ class GachaSystem {
         return this.GachaProfiles[Token];
     }
     public Roll(Token: string, BannerName: string, WriteDB: boolean = true): [string, number] | undefined {
-        const Profile: ProfileBanner = this.GachaProfiles[Token][BannerName];
         const Banner: Banner | undefined = Database.Manager.GetBanner(BannerName);
-
-        if(!Profile || !Banner) 
+        const Profile = this.GachaProfiles[Token];
+        
+        if(!Banner || !Profile) 
             return;
 
-        Profile.Count += 1;
+        this.GachaProfiles[Token][BannerName] ??= {
+            Count: 0,
+            RollsWithoutSixStar: 0,
+            Focused: false,
+            TenRolls: false,
+            Storage: {
+                SixStars: [],
+                FiveStars: [],
+                FourStars: [],
+                ThreeStars: []
+            }
+        };
+        
+        const BannerProfile: ProfileBanner = this.GachaProfiles[Token][BannerName];
+        BannerProfile.Count += 1;
 
         let StandardRate: GachaItems<Items>[] = [
             { Value: Items.SixStars, Chance: 2 },
@@ -201,9 +215,9 @@ class GachaSystem {
             { Value: Items.ThreeStars, Chance: 40 }
         ];
 
-        if(Profile.RollsWithoutSixStar > 50) 
-            StandardRate = PityCalculator(StandardRate, Items.SixStars, (Profile.RollsWithoutSixStar - 50) * 2);
-        if(Profile.Count === 9 && !Profile.TenRolls) {
+        if(BannerProfile.RollsWithoutSixStar > 50) 
+            StandardRate = PityCalculator(StandardRate, Items.SixStars, (BannerProfile.RollsWithoutSixStar - 50) * 2);
+        if(BannerProfile.Count === 9 && !BannerProfile.TenRolls) {
             StandardRate = [
                 { Value: Items.SixStars, Chance: 2 },
                 { Value: Items.FiveStars, Chance: 98 }
@@ -218,15 +232,15 @@ class GachaSystem {
             case BannerTypes.Standard:
                 switch(Result) {
                     case Items.SixStars:
-                        Profile.RollsWithoutSixStar = 0;
-                        if(Profile.Count > 150 && !Profile.Focused) {
+                        BannerProfile.RollsWithoutSixStar = 0;
+                        if(BannerProfile.Count > 150 && !BannerProfile.Focused) {
                             Output = Banner.SixStarsPool.Primary[crypto.randomInt(Banner.SixStarsPool.Primary.length)];
-                            Profile.Focused = true;
+                            BannerProfile.Focused = true;
                         }
                         else if(crypto.randomInt(2) === 0) 
                             Output = Banner.SixStarsPool.Primary[crypto.randomInt(Banner.SixStarsPool.Primary.length)];
                         else Output = Banner.SixStarsPool.Standard[crypto.randomInt(Banner.SixStarsPool.Standard.length)];
-                        Profile.Storage.SixStars.push(Output);
+                        BannerProfile.Storage.SixStars.push(Output);
                         OutputRarity = 6;
                         break;
 
@@ -234,7 +248,7 @@ class GachaSystem {
                         if(crypto.randomInt(2) === 0) 
                             Output = Banner.FiveStarsPool.Primary[crypto.randomInt(Banner.FiveStarsPool.Primary.length)];
                         else Output = Banner.FiveStarsPool.Standard[crypto.randomInt(Banner.FiveStarsPool.Standard.length)];
-                        Profile.Storage.FiveStars.push(Output);
+                        BannerProfile.Storage.FiveStars.push(Output);
                         OutputRarity = 5;
                         break;
 
@@ -246,13 +260,13 @@ class GachaSystem {
                         if(Banner.FourStarsPool.Primary.length && IsRateUp)
                             Output = Banner.FourStarsPool.Primary[crypto.randomInt(Banner.FourStarsPool.Primary.length)]
                         else Output = Banner.FourStarsPool.Standard[crypto.randomInt(Banner.FourStarsPool.Standard.length)];
-                        Profile.Storage.FourStars.push(Output);
+                        BannerProfile.Storage.FourStars.push(Output);
                         OutputRarity = 4;
                         break;
 
                     case Items.ThreeStars:
                         Output = Banner.ThreeStarsPool[crypto.randomInt(Banner.ThreeStarsPool.length)];
-                        Profile.Storage.ThreeStars.push(Output);
+                        BannerProfile.Storage.ThreeStars.push(Output);
                         OutputRarity = 3;
                         break;
                 }
@@ -261,7 +275,7 @@ class GachaSystem {
             case BannerTypes.Limited:
                 switch(Result) {
                     case Items.SixStars:
-                        Profile.RollsWithoutSixStar = 0;
+                        BannerProfile.RollsWithoutSixStar = 0;
                         const LimitedRateUp: GachaItems<RateUp>[] = [
                             { Value: RateUp.Primary, Chance: 70 },
                             { Value: RateUp.Secondary, Chance: 25 },
@@ -282,7 +296,7 @@ class GachaSystem {
                                 Output = Banner.SixStarsPool.Standard[crypto.randomInt(Banner.SixStarsPool.Standard.length)];
                                 break;
                         }
-                        Profile.Storage.SixStars.push(Output);
+                        BannerProfile.Storage.SixStars.push(Output);
                         OutputRarity = 6;
                         break;
                         
@@ -290,7 +304,7 @@ class GachaSystem {
                         if(crypto.randomInt(2) === 0) 
                             Output = Banner.FiveStarsPool.Primary[crypto.randomInt(Banner.FiveStarsPool.Primary.length)];
                         else Output = Banner.FiveStarsPool.Standard[crypto.randomInt(Banner.FiveStarsPool.Standard.length)];
-                        Profile.Storage.FiveStars.push(Output);
+                        BannerProfile.Storage.FiveStars.push(Output);
                         OutputRarity = 5;
                         break;
                         
@@ -302,13 +316,13 @@ class GachaSystem {
                         if(Banner.FourStarsPool.Primary.length && IsRateUp)
                             Output = Banner.FourStarsPool.Primary[crypto.randomInt(Banner.FourStarsPool.Primary.length)]
                         else Output = Banner.FourStarsPool.Standard[crypto.randomInt(Banner.FourStarsPool.Standard.length)];
-                        Profile.Storage.FourStars.push(Output);
+                        BannerProfile.Storage.FourStars.push(Output);
                         OutputRarity = 4;
                         break;
                         
                     case Items.ThreeStars:
                         Output = Banner.ThreeStarsPool[crypto.randomInt(Banner.ThreeStarsPool.length)];
-                        Profile.Storage.ThreeStars.push(Output);
+                        BannerProfile.Storage.ThreeStars.push(Output);
                         OutputRarity = 3;
                         break;
                     }
@@ -317,9 +331,9 @@ class GachaSystem {
             case BannerTypes.Orienteering:
                 switch(Result) {
                     case Items.SixStars:
-                        Profile.RollsWithoutSixStar = 0;
+                        BannerProfile.RollsWithoutSixStar = 0;
                         Output = Banner.SixStarsPool.Primary[crypto.randomInt(Banner.SixStarsPool.Primary.length)];
-                        Profile.Storage.SixStars.push(Output);
+                        BannerProfile.Storage.SixStars.push(Output);
                         OutputRarity = 6;
                         break;
 
@@ -331,19 +345,19 @@ class GachaSystem {
                         if(IsRateUp) 
                             Output = Banner.FiveStarsPool.Primary[crypto.randomInt(Banner.FiveStarsPool.Primary.length)];
                         else Output = Banner.FiveStarsPool.Standard[crypto.randomInt(Banner.FiveStarsPool.Standard.length)];
-                        Profile.Storage.FiveStars.push(Output);
+                        BannerProfile.Storage.FiveStars.push(Output);
                         OutputRarity = 5;
                         break;
 
                     case Items.FourStars:
                         Output = Banner.FourStarsPool.Standard[crypto.randomInt(Banner.FourStarsPool.Standard.length)];
-                        Profile.Storage.FourStars.push(Output);
+                        BannerProfile.Storage.FourStars.push(Output);
                         OutputRarity = 4;
                         break;
 
                     case Items.ThreeStars:
                         Output = Banner.ThreeStarsPool[crypto.randomInt(Banner.ThreeStarsPool.length)];
-                        Profile.Storage.ThreeStars.push(Output);
+                        BannerProfile.Storage.ThreeStars.push(Output);
                         OutputRarity = 3;
                         break;
                 }
@@ -352,15 +366,15 @@ class GachaSystem {
             case BannerTypes.JointOperation:
                 switch(Result) {
                     case Items.SixStars:
-                        Profile.RollsWithoutSixStar = 0;
+                        BannerProfile.RollsWithoutSixStar = 0;
                         Output = Banner.SixStarsPool.Primary[crypto.randomInt(Banner.SixStarsPool.Primary.length)];
-                        Profile.Storage.SixStars.push(Output);
+                        BannerProfile.Storage.SixStars.push(Output);
                         OutputRarity = 6;
                         break;
 
                     case Items.FiveStars:
                         Output = Banner.FiveStarsPool.Primary[crypto.randomInt(Banner.FiveStarsPool.Primary.length)];
-                        Profile.Storage.FiveStars.push(Output);
+                        BannerProfile.Storage.FiveStars.push(Output);
                         OutputRarity = 5;
                         break;
 
@@ -372,13 +386,13 @@ class GachaSystem {
                         if(Banner.FourStarsPool.Primary.length && IsRateUp)
                             Output = Banner.FourStarsPool.Primary[crypto.randomInt(Banner.FourStarsPool.Primary.length)]
                         else Output = Banner.FourStarsPool.Standard[crypto.randomInt(Banner.FourStarsPool.Standard.length)];
-                        Profile.Storage.FourStars.push(Output);
+                        BannerProfile.Storage.FourStars.push(Output);
                         OutputRarity = 4;
                         break;
 
                     case Items.ThreeStars:
                         Output = Banner.ThreeStarsPool[crypto.randomInt(Banner.ThreeStarsPool.length)];
-                        Profile.Storage.ThreeStars.push(Output);
+                        BannerProfile.Storage.ThreeStars.push(Output);
                         OutputRarity = 3;
                         break;
                 }
@@ -387,9 +401,9 @@ class GachaSystem {
             case BannerTypes.TFTW:
                 switch(Result) {
                     case Items.SixStars:
-                        Profile.RollsWithoutSixStar = 0;
+                        BannerProfile.RollsWithoutSixStar = 0;
                         Output = Banner.SixStarsPool.Primary[crypto.randomInt(Banner.SixStarsPool.Primary.length)];
-                        Profile.Storage.SixStars.push(Output);
+                        BannerProfile.Storage.SixStars.push(Output);
                         OutputRarity = 6;
                         break;
 
@@ -401,7 +415,7 @@ class GachaSystem {
                         if(Is5StarsRateUp) 
                             Output = Banner.FiveStarsPool.Primary[crypto.randomInt(Banner.FiveStarsPool.Primary.length)];
                         else Output = Banner.FiveStarsPool.Standard[crypto.randomInt(Banner.FiveStarsPool.Standard.length)];
-                        Profile.Storage.FiveStars.push(Output);
+                        BannerProfile.Storage.FiveStars.push(Output);
                         OutputRarity = 5;
                         break;
 
@@ -413,13 +427,13 @@ class GachaSystem {
                         if(Banner.FourStarsPool.Primary.length && Is4StarsRateUp)
                             Output = Banner.FourStarsPool.Primary[crypto.randomInt(Banner.FourStarsPool.Primary.length)]
                         else Output = Banner.FourStarsPool.Standard[crypto.randomInt(Banner.FourStarsPool.Standard.length)];
-                        Profile.Storage.FourStars.push(Output);
+                        BannerProfile.Storage.FourStars.push(Output);
                         OutputRarity = 4;
                         break;
 
                     case Items.ThreeStars:
                         Output = Banner.ThreeStarsPool[crypto.randomInt(Banner.ThreeStarsPool.length)];
-                        Profile.Storage.ThreeStars.push(Output);
+                        BannerProfile.Storage.ThreeStars.push(Output);
                         OutputRarity = 3;
                         break;
                 }
@@ -431,26 +445,26 @@ class GachaSystem {
         }
 
         if(OutputRarity === 5 || OutputRarity === 6) 
-            Profile.TenRolls = false;
+            BannerProfile.TenRolls = false;
 
         if(WriteDB) {
             this.RefreshStorageSTMT.run(Token, BannerName, OutputRarity, JSON.stringify(
                 OutputRarity === 3 
-                    ? Profile.Storage.ThreeStars
+                    ? BannerProfile.Storage.ThreeStars
                 : OutputRarity === 4 
-                    ? Profile.Storage.FourStars
+                    ? BannerProfile.Storage.FourStars
                 : OutputRarity === 5
-                    ? Profile.Storage.FiveStars
-                : Profile.Storage.SixStars
+                    ? BannerProfile.Storage.FiveStars
+                : BannerProfile.Storage.SixStars
             ));
 
             this.RefreshDataSTMT.run(
                 Token,
                 BannerName,
-                Profile.Count,
-                Profile.RollsWithoutSixStar,
-                Number(Profile.Focused),
-                Number(Profile.TenRolls)
+                BannerProfile.Count,
+                BannerProfile.RollsWithoutSixStar,
+                Number(BannerProfile.Focused),
+                Number(BannerProfile.TenRolls)
             );
         }
         return [Output, OutputRarity];
