@@ -281,7 +281,7 @@ GET /assets/banner/EN A Shared Oath of Guardianship
 
 ### Success Response
 **Status:** `200 OK` <br/>
-**Content-Type:** `image/png`
+**Content-Type:** `text/plain`
 
 ### Error Response
 **Status:** `404 Not Found`
@@ -313,7 +313,7 @@ GET /assets/operator/char_103_angel
 
 ### Success Response
 **Status:** `200 OK` <br/>
-**Content-Type:**`image/png`
+**Content-Type:**`text/plain`
 
 ### Error Response
 **Status:** `404 Not Found`
@@ -344,7 +344,7 @@ GET /asset/e2operator/char_103_angel
 
 ### Success Response
 **Status:** `200 OK` <br/>
-**Content-Type:** `image/png`
+**Content-Type:** `text/plain`
 
 ### Error Response
 **Status:** `404 Not Found`
@@ -375,7 +375,7 @@ GET /assets/operator/char_103_angel
 
 ### Success Response
 **Status:** `200 OK` <br/>
-**Content-Type:**`image/png`
+**Content-Type:**`text/plain`
 
 ### Error Response
 **Status:** `404 Not Found`
@@ -436,7 +436,7 @@ POST /gacha/:BannerName/roll
 
 ### Example
 ```http
-GET /gacha/EN A Shared Oath of Guardianship/roll
+POST /gacha/EN A Shared Oath of Guardianship/roll
 ```
 
 ### Success Response
@@ -495,7 +495,7 @@ POST /gacha/:BannerName/roll/:Count
 
 ### Example
 ```http
-GET /gacha/EN A Shared Oath of Guardianship/roll/10
+POST /gacha/EN A Shared Oath of Guardianship/roll/10
 ```
 
 ### Success Response
