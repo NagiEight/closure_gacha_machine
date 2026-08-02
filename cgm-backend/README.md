@@ -370,7 +370,7 @@ GET /assets/card/:OperatorID
 
 ### Example
 ```http
-GET /assets/operator/char_103_angel
+GET /assets/card/char_103_angel
 ```
 
 ### Success Response
