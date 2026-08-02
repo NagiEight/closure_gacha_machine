@@ -189,7 +189,7 @@ class DataManager {
         for(const Value of Iterable) {
             if(i >= End)
                 break;
-            if (i >= Start)
+            if(i >= Start)
                 yield Value;
             i++;
         }

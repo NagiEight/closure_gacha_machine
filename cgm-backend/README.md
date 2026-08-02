@@ -414,6 +414,60 @@ Create profile successfully.
 
 ---
 
+## Get Gacha Profile
+Get the Gacha profile of a user.
+
+### Request
+```http
+GET /gacha/profile
+```
+
+### Headers
+```json
+{
+    "Session-Token": "<your session token>"
+}
+```
+
+### Success Response
+```typescript
+interface ProfileBanner {
+    Count: number;
+    RollsWithoutSixStar: number;
+    Focused: boolean;
+    TenRolls: boolean;
+    Storage: {
+        SixStars: Record<string, number>;
+        FiveStars: Record<string, number>;
+        FourStars: Record<string, number>;
+        ThreeStars: Record<string, number>;
+    };
+}
+
+type GachaProfile = Record<string, ProfileBanner>;
+```
+**Example:**
+```json
+{
+    "TBA": 0
+}
+```
+
+### Error Response
+**Status:** `404 Not Found`
+```json
+{
+    "message": "Missing session token."
+}
+```
+```json
+{
+    "message": "There are no profile associated with this token."
+}
+```
+
+---
+
 ## Perform a roll
 Perform a gacha roll on a specific banner.
 
