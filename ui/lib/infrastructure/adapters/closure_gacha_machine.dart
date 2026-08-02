@@ -1,107 +1,97 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:ui/domain/entities/api_entities.dart';
+import 'package:ui/domain/ports/gacha_port.dart';
 
-import '../../domain/entities/api_entities.dart';
-import '../../domain/ports/gacha_port.dart';
-
-/// Adapter implementation connecting domain ports to backend HTTP endpoints
+/// Adapter implementing [GachaPort] to interface with Closure's Gacha API.
 class ClosureGachaMachineAdapter implements GachaPort {
   final http.Client _client;
-  final String baseUrl;
+  late final String _baseUrl;
+  late final String _cloudUrl;
 
-  ClosureGachaMachineAdapter({required this.baseUrl, http.Client? client})
-    : _client = client ?? http.Client();
-
-  String _extractErrorMessage(String body, String fallback) {
-    try {
-      final json = jsonDecode(body) as Map<String, dynamic>;
-      return json['message'] as String? ?? fallback;
-    } catch (_) {
-      return fallback;
-    }
+  ClosureGachaMachineAdapter({
+    http.Client? client,
+    String baseUrl = 'http://localhost:3000',
+    String cloudUrl = 'https://nagicloud.uk',
+  }) : _client = client ?? http.Client() {
+    _baseUrl = baseUrl.endsWith('/')
+        ? baseUrl.substring(0, baseUrl.length - 1)
+        : baseUrl;
+    _cloudUrl = cloudUrl.endsWith('/')
+        ? cloudUrl.substring(0, cloudUrl.length - 1)
+        : cloudUrl;
   }
 
   @override
   Future<List<String>> getBannersPage(int page) async {
-    final response = await _client.get(Uri.parse('$baseUrl/api/banners/$page'));
-
-    if (response.statusCode == 200) {
-      final List<dynamic> jsonList = jsonDecode(response.body);
-      print(jsonList);
-      return jsonList.cast<String>();
-    }
-
-    throw Exception(
-      _extractErrorMessage(response.body, 'Failed to fetch banners page.'),
+    final response = await _client.get(
+      Uri.parse('$_baseUrl/api/banners/$page'),
     );
+
+    _checkResponseStatus(response);
+
+    final List<dynamic> data = jsonDecode(response.body);
+    return data.map((item) => item['Name'] as String).toList();
   }
 
   @override
   Future<BannerEntity> getBannerDetails(String bannerName) async {
-    // Split base URL host/port and construct path segments cleanly
-    final baseUri = Uri.parse(baseUrl);
-    final uri = baseUri.replace(
-      pathSegments: [...baseUri.pathSegments, 'api', 'banner', bannerName],
+    final encodedName = Uri.encodeComponent(bannerName);
+    final response = await _client.get(
+      Uri.parse('$_baseUrl/api/banner/$encodedName'),
     );
 
-    final response = await _client.get(uri);
+    _checkResponseStatus(response);
 
-    if (response.statusCode == 200) {
-      final json = jsonDecode(response.body) as Map<String, dynamic>;
-      return BannerEntity.fromJson(json);
-    }
-
-    throw Exception(_extractErrorMessage(response.body, 'Banner not found.'));
+    final Map<String, dynamic> data = jsonDecode(response.body);
+    return BannerEntity.fromJson(data);
   }
 
   @override
-  Future<OperatorEntity> getOperatorDetails(String operatorId) async {
+  Future<Operator> getOperatorDetails(String operatorId) async {
+    final encodedId = Uri.encodeComponent(operatorId);
     final response = await _client.get(
-      Uri.parse('$baseUrl/api/operator/$operatorId'),
+      Uri.parse('$_baseUrl/api/operator/$encodedId'),
     );
 
-    if (response.statusCode == 200) {
-      final json = jsonDecode(response.body) as Map<String, dynamic>;
-      return OperatorEntity.fromJson(json);
-    }
+    _checkResponseStatus(response);
 
-    throw Exception(_extractErrorMessage(response.body, 'Operator not found.'));
+    final Map<String, dynamic> data = jsonDecode(response.body);
+    return Operator.fromJson(data);
   }
 
   @override
   String getBannerCoverUrl(String bannerName) {
-    return '$baseUrl/assets/banner/${Uri.encodeComponent(bannerName)}';
+    return '$_cloudUrl/banners/covers/${Uri.encodeComponent('${bannerName.replaceAll(' ', '_')}.png')}';
   }
 
   @override
   String getOperatorArtUrl(String operatorId) {
-    return '$baseUrl/assets/operator/$operatorId';
+    return '$_cloudUrl/operators/e0/${Uri.encodeComponent('$operatorId.png')}';
+  }
+
+  @override
+  String getOperatorCardUrl(String operatorId) {
+    return '$_cloudUrl/operators/cards/${Uri.encodeComponent('$operatorId.png')}';
   }
 
   @override
   String getOperatorE2ArtUrl(String operatorId) {
-    return '$baseUrl/assets/e2operator/$operatorId';
+    return '$_cloudUrl/operators/e2/${Uri.encodeComponent('$operatorId.png')}';
   }
 
   @override
   Future<GachaSession> createSession() async {
-    final response = await _client.post(Uri.parse('$baseUrl/gacha/create'));
+    final response = await _client.post(Uri.parse('$_baseUrl/gacha/create'));
 
-    if (response.statusCode == 200) {
-      final token =
-          response.headers['session-token'] ??
-          response.headers['Session-Token'];
-      if (token != null && token.isNotEmpty) {
-        return GachaSession(token: token);
-      }
-      throw Exception(
-        'Session creation succeeded but missing Session-Token header.',
-      );
+    _checkResponseStatus(response);
+
+    final sessionToken = response.headers['session-token'];
+    if (sessionToken == null || sessionToken.isEmpty) {
+      throw Exception('Session token missing from server response headers.');
     }
 
-    throw Exception(
-      _extractErrorMessage(response.body, 'Failed to create session.'),
-    );
+    return GachaSession(token: sessionToken);
   }
 
   @override
@@ -109,17 +99,16 @@ class ClosureGachaMachineAdapter implements GachaPort {
     required String bannerName,
     required String sessionToken,
   }) async {
+    final encodedBanner = Uri.encodeComponent(bannerName);
     final response = await _client.post(
-      Uri.parse('$baseUrl/gacha/${Uri.encodeComponent(bannerName)}/roll'),
+      Uri.parse('$_baseUrl/gacha/$encodedBanner/roll'),
       headers: {'Session-Token': sessionToken},
     );
 
-    if (response.statusCode == 200) {
-      final json = jsonDecode(response.body) as Map<String, dynamic>;
-      return json['Result'] as String;
-    }
+    _checkResponseStatus(response);
 
-    throw Exception(_extractErrorMessage(response.body, 'Roll failed.'));
+    final Map<String, dynamic> data = jsonDecode(response.body);
+    return data['Result'] as String;
   }
 
   @override
@@ -128,36 +117,45 @@ class ClosureGachaMachineAdapter implements GachaPort {
     required String sessionToken,
     required int count,
   }) async {
+    final encodedBanner = Uri.encodeComponent(bannerName);
     final response = await _client.post(
-      Uri.parse(
-        '$baseUrl/gacha/${Uri.encodeComponent(bannerName)}/roll/$count',
-      ),
+      Uri.parse('$_baseUrl/gacha/$encodedBanner/roll/$count'),
       headers: {'Session-Token': sessionToken},
     );
 
-    if (response.statusCode == 200) {
-      final json = jsonDecode(response.body) as Map<String, dynamic>;
-      final List<dynamic> results = json['Result'] as List<dynamic>;
-      return results.cast<String>();
-    }
+    _checkResponseStatus(response);
 
-    throw Exception(_extractErrorMessage(response.body, 'Multi-roll failed.'));
+    final Map<String, dynamic> data = jsonDecode(response.body);
+    return (data['Result'] as List<dynamic>).cast<String>();
   }
 
   @override
   Future<void> deleteSession(String sessionToken) async {
-    final request = http.Request('PURGE', Uri.parse('$baseUrl/gacha/delete/'))
+    final request = http.Request('PURGE', Uri.parse('$_baseUrl/gacha/delete/'))
       ..headers['Session-Token'] = sessionToken;
 
     final streamedResponse = await _client.send(request);
     final response = await http.Response.fromStream(streamedResponse);
 
-    if (response.statusCode == 200) {
+    _checkResponseStatus(response);
+  }
+
+  void _checkResponseStatus(http.Response response) {
+    if (response.statusCode >= 200 && response.statusCode < 300) {
       return;
     }
 
-    throw Exception(
-      _extractErrorMessage(response.body, 'Failed to delete session.'),
-    );
+    try {
+      final Map<String, dynamic> body = jsonDecode(response.body);
+      final message =
+          body['message'] ??
+          'Request failed with status ${response.statusCode}';
+      throw Exception(message);
+    } catch (e) {
+      if (e is Exception) rethrow;
+      throw Exception(
+        'Request failed with status ${response.statusCode}: ${response.body}',
+      );
+    }
   }
 }

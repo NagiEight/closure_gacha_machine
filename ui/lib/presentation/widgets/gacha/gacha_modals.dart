@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:ui/domain/entities/api_entities.dart';
+import 'package:ui/domain/ports/gacha_port.dart';
 import 'package:ui/presentation/widgets/gacha/currency_pill.dart';
 
 class TopUpModal extends StatefulWidget {
@@ -192,58 +194,6 @@ class _CustomRollModalState extends State<CustomRollModal> {
           ),
         ],
       ),
-    );
-  }
-}
-
-class GachaResultsDialog extends StatelessWidget {
-  final List<String> results;
-
-  const GachaResultsDialog({super.key, required this.results});
-
-  static Future<void> show(BuildContext context, List<String> results) {
-    return showDialog(
-      context: context,
-      builder: (_) => GachaResultsDialog(results: results),
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return AlertDialog(
-      backgroundColor: const Color(0xFF1E1E1E),
-      title: Text(
-        'Headhunt Acquisition (${results.length})',
-        style: const TextStyle(color: Colors.white),
-      ),
-      content: SizedBox(
-        width: double.maxFinite,
-        child: ListView.separated(
-          shrinkWrap: true,
-          itemCount: results.length,
-          separatorBuilder: (_, __) => const Divider(color: Colors.white12),
-          itemBuilder: (context, index) => ListTile(
-            leading: CircleAvatar(
-              backgroundColor: Colors.amber[700],
-              foregroundColor: Colors.black,
-              child: Text('${index + 1}'),
-            ),
-            title: Text(
-              results[index],
-              style: const TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
-        ),
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(context),
-          child: const Text('Dismiss', style: TextStyle(color: Colors.amber)),
-        ),
-      ],
     );
   }
 }

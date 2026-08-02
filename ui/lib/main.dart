@@ -16,6 +16,7 @@ Future<void> main() async {
   // 1. Initialize Infrastructure Adapters
   final gachaAdapter = ClosureGachaMachineAdapter(
     baseUrl: 'http://localhost:3000',
+    cloudUrl: 'https://nagicloud.uk',
   );
   final currencyAdapter = SharedPrefsCurrencyAdapter();
   final collectionAdapter = SharedPrefsGachaCollectionAdapter();

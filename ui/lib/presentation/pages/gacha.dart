@@ -9,6 +9,7 @@ import 'package:ui/presentation/widgets/gacha/currency_pill.dart';
 import 'package:ui/presentation/widgets/gacha/currency_selector.dart';
 import 'package:ui/presentation/widgets/gacha/gacha_action_button.dart';
 import 'package:ui/presentation/widgets/gacha/gacha_modals.dart';
+import 'package:ui/presentation/widgets/gacha/gacha_result_dialog.dart';
 
 class GachaPage extends StatefulWidget {
   final BannerEntity banner;
@@ -85,7 +86,7 @@ class _GachaPageState extends State<GachaPage> {
       await _loadCurrency();
 
       if (!mounted) return;
-      GachaResultsDialog.show(context, results);
+      GachaResultsDialog.show(context, results, widget.gachaPort);
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
