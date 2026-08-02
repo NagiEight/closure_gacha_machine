@@ -370,7 +370,7 @@ GET /assets/card/:OperatorID
 
 ### Example
 ```http
-GET /assets/operator/char_103_angel
+GET /assets/card/char_103_angel
 ```
 
 ### Success Response
@@ -640,7 +640,7 @@ Delete profile successfully.
 
 # Notes
 
-- All image endpoints return PNG files.
+- All image endpoints return URLs to png files.
 - Banner pagination starts at page `1`.
 - Requests for non-existent banners or operators return a `404` response.
 - Responses are served directly from the application's database manager (`Database.Manager`).
