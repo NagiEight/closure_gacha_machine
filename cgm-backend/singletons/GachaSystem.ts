@@ -493,8 +493,7 @@ export default new class {
         );
     }
     public RollMulti(Token: string, BannerName: string, Count: number): string[] | undefined {
-        const Profile: GachaProfile = this.GachaProfiles[Token];
-        if(!Profile)
+        if(!this.GachaProfiles[Token])
             return;
 
         this.GachaProfiles[Token][BannerName] ??= {
@@ -537,12 +536,12 @@ export default new class {
         }
 
         this.RefreshDataSTMT.run(
-            Token, 
-            BannerName, 
-            BannerProfile.Count, 
-            BannerProfile.RollsWithoutSixStar, 
-            Number(Profile.Focused), 
-            Number(Profile.TenRolls)
+            Token,
+            BannerName,
+            BannerProfile.Count,
+            BannerProfile.RollsWithoutSixStar,
+            Number(BannerProfile.Focused),
+            Number(BannerProfile.TenRolls)
         );
         return Result.map(Item => Item[0]);
     }
