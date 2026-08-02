@@ -94,33 +94,43 @@ interface OperatorsRow {
 }
 
 class DataManager {
-    private readonly Operators: Map<string, Operator> = new Map(
-        (DB.prepare<[], OperatorsRow>("SELECT ID, Name, Rarity, ReleaseDate, Limited FROM Operators").all()).map(Row => 
+    private readonly Operators: Map<string, Operator> = new Map<string, Operator>(
+        DB.prepare<[], OperatorsRow>("SELECT ID, Name, Rarity, ReleaseDate, Limited FROM Operators").all().map(Row => 
             [Row.ID, { Name: Row.Name, Rarity: Row.Rarity, ReleaseDate: Row.ReleaseDate, Limited: !!Row.Limited }]
         )
     );
-    private readonly OperatorIDs: string[] = DB.prepare<[], { Name: string }>("SELECT ID FROM Operators").all().map(Row => Row.Name);
-    private readonly BannerNames: string[] = DB.prepare<[], { Name: string }>("SELECT Name FROM Banners").all().map(Row => Row.Name);
-    private readonly Banners: Map<string, Banner> = new Map(this.BannerNames.map(Name => [Name, {
-        ReleaseDate: 0,
-        Type: BannerTypes.Standard,
-        SixStarsPool: {
-            Primary: [],
-            Secondary: [],
-            Standard: []
-        },
-        FiveStarsPool: {
-            Primary: [],
-            Standard: []
-        },
-        FourStarsPool: {
-            Primary: [],
-            Standard: []
-        },
-        ThreeStarsPool: []
-    }]));
+    private readonly Banners: Map<string, Banner> = new Map<string, Banner>(
+        DB.prepare<[], { Name: string }>("SELECT Name FROM Banners")
+            .all()
+            .map(Row => [Row.Name, {
+                ReleaseDate: 0,
+                Type: BannerTypes.Standard,
+                SixStarsPool: {
+                    Primary: [],
+                    Secondary: [],
+                    Standard: []
+                },
+                FiveStarsPool: {
+                    Primary: [],
+                    Standard: []
+                },
+                FourStarsPool: {
+                    Primary: [],
+                    Standard: []
+                },
+                ThreeStarsPool: []
+            }
+        ])
+    );
 
     public constructor() {
+        const Signals: string[] = ["SIGTERM", "SIGINT"];
+        for(const Signal in Signals) {
+            process.on(Signal, () => {
+                DB.close();
+                process.exit(0);
+            });
+        }
         const Query: BannersRow[] = DB.prepare<[], BannersRow>(`
             SELECT B.Name, B.ReleaseDate, B.Type, BP.Rarity, BP.Prima, BP.Secondary, BP.Standard
             FROM BannerPools BP JOIN Banners B ON BP.BannerName = B.Name
@@ -163,52 +173,69 @@ class DataManager {
         }
     }
 
-    private static Pagination<T>(Page: number, Set: T[]): T[] {
+    private static Pagination<T>(Page: number, Set: Iterable<T>): Iterable<T> {
         const Start: number = (Page - 1) * LoadEnv.PAGE_SIZE;
         const End: number = Start + LoadEnv.PAGE_SIZE;
-        return Set.slice(Start, End);
+        return DataManager.Slice(Set, Start, End);
+    }
+    private static FormMediaURL(Base: string, Name: string): string {
+        const MediaURL: URL = new URL(`${LoadEnv.BASE_MEDIA_URL}/${Base}/${encodeURIComponent(Name).replace(/\ /g, "_")}.png`);
+        MediaURL.pathname = MediaURL.pathname.replace(/\/+/g, '/');
+        return MediaURL.toString(); 
+    };
+    private static *Slice<T>(Iterable: Iterable<T>, Start: number = 0, End: number = Infinity): Generator<T, void> {
+        let i: number = 0;
+
+        for(const Value of Iterable) {
+            if(i >= End)
+                break;
+            if (i >= Start)
+                yield Value;
+            i++;
+        }
     }
 
     public GetBanner(Name: string): Banner | undefined {
         return this.Banners.get(Name);
     }
     public GetBanners(Page: number): { Name: string; Type: BannerTypes; ReleaseDate: number; }[] {
-        return DataManager.Pagination(Page, this.BannerNames).map(B => {
-            const Banner: Banner = this.Banners.get(B)!;
+        return [...DataManager.Pagination(Page, this.Banners.entries())].map(([Name, Banner]) => {
             return {
-                Name: B,
+                Name: Name,
                 Type: Banner.Type,
                 ReleaseDate: Banner.ReleaseDate
-            }
+            };
         });
     }
     public GetBannerCover(Name: string): string | undefined {
-        return this.BannerNames.includes(Name) ? DataManager.FormMediaURL("banners/covers", Name) : undefined;
+        return this.Banners.has(Name) 
+            ? DataManager.FormMediaURL("banners/covers", Name) 
+            : undefined
+        ;
     }
 
     public GetOperator(OperatorID: string): Operator | undefined {
         return this.Operators.get(OperatorID);
     }
     public GetOperatorArt(OperatorID: string): string | undefined {
-        return this.OperatorIDs.includes(OperatorID) ? DataManager.FormMediaURL("operators/e0", OperatorID) : undefined;
+        return this.Operators.has(OperatorID) 
+            ? DataManager.FormMediaURL("operators/e0", OperatorID) 
+            : undefined
+        ;
     }
     public GetOperatorE2Art(OperatorID: string): string | undefined {
-        return this.OperatorIDs.includes(OperatorID) ? DataManager.FormMediaURL("operators/e2", OperatorID) : undefined;
+        return this.Operators.has(OperatorID) 
+            ? DataManager.FormMediaURL("operators/e2", OperatorID) 
+            : undefined
+        ;
     }
     public GetOperatorCard(OperatorID: string): string | undefined {
-        return this.OperatorIDs.includes(OperatorID) ? DataManager.FormMediaURL("operators/cards", OperatorID) : undefined;
+        return this.Operators.has(OperatorID) 
+            ? DataManager.FormMediaURL("operators/cards", OperatorID) 
+            : undefined
+        ;
     }
-
-    private static FormMediaURL(Base: string, Name: string): string {
-        const MediaURL: URL = new URL(`${LoadEnv.BASE_MEDIA_URL}/${Base}/${Name.replace(/\ /g, "_")}.png`);
-        MediaURL.pathname = MediaURL.pathname.replace(/\/+/g, '/');
-        return MediaURL.toString(); 
-    };
 }
-
-const Signals: string[] = ["SIGTERM", "SIGINT"];
-for(const Signal in Signals) 
-    process.on(Signal, () => DB.close());
 
 export default {
     DB,

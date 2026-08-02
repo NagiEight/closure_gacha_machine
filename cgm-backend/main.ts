@@ -147,14 +147,14 @@ Server.post("/gacha/create", (_, Res) => {
     const Token: string | undefined = Req.get("Session-Token");
     
     if(!Token) {
-        Res.status(404).json({ message: `Missing session token.` });
+        Res.status(404).json({ message: "Missing session token." });
         return;
     }
     
     const Profile: GachaProfile | undefined = GachaSystem.GetProfile(Token);
     
     if(!Profile) {
-        Res.status(404).json({ message: `There are no profile associated with this token.` });
+        Res.status(404).json({ message: "There are no profile associated with this token." });
         return;
     }
 
@@ -165,14 +165,14 @@ Server.post("/gacha/create", (_, Res) => {
     const Token: string | undefined = Req.get("Session-Token");
 
     if(!Token) {
-        Res.status(404).json({ message: `Missing session token.` });
+        Res.status(404).json({ message: "Missing session token." });
         return;
     }
     
     const Profile: GachaProfile | undefined = GachaSystem.GetProfile(Token);
     
     if(!Profile) {
-        Res.status(404).json({ message: `There are no profile associated with this token.` });
+        Res.status(404).json({ message: "There are no profile associated with this token." });
         return;
     }
 

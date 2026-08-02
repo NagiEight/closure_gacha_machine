@@ -82,7 +82,7 @@ interface GachaProfileDataRow {
     TenRolls: 0 | 1;
 }
 
-class GachaSystem {
+export default new class {
     private readonly GachaProfiles: Record<string, GachaProfile> = {};
     private readonly CreateGachaProfileSTMT = Database.DB.prepare<[string], void>(`
         INSERT INTO GachaProfiles
@@ -122,6 +122,7 @@ class GachaSystem {
             FROM GachaData GD JOIN GachaProfiles GP ON GP.TOKEN = GD.UserToken
         `).all();
         
+        // this is slow as shit but it's okay because it only runs once
         for(const Token of Database.DB.prepare<[], { Token: string }>("SELECT * FROM GachaProfiles").all().map(Row => Row.Token)) {
             this.GachaProfiles[Token] ??= {};
 
@@ -172,6 +173,7 @@ class GachaSystem {
             }
         }
     }
+    
     public CreateProfile(): string {
         const Token: string = GenerateToken(Token => !!this.GachaProfiles[Token]);
         this.CreateGachaProfileSTMT.run(Token);
@@ -502,6 +504,4 @@ class GachaSystem {
         );
         return Result.map(Roll => Roll[0]);
     }
-}
-
-export default new GachaSystem();
+}();

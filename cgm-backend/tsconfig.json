@@ -29,5 +29,5 @@
     "verbatimModuleSyntax": true
   },
   "include": ["./**/*"],
-  "exclude": ["node_modules", "dist", "DeployCommands.ts", "DeployCommandsT.ts"]
+  "exclude": ["node_modules", "dist", "./dev/**/*", "*test*"]
 }

@@ -1,6 +1,6 @@
 import crypto from "crypto";
 
-const GenerateToken = (Prerequisite: (Token: string) => boolean): string => {
+export default (Prerequisite: (Token: string) => boolean): string => {
     let Token: string;
     
     do {
@@ -9,5 +9,3 @@ const GenerateToken = (Prerequisite: (Token: string) => boolean): string => {
     
     return Token;
 };
-
-export default GenerateToken;

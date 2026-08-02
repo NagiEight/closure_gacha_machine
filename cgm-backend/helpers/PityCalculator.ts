@@ -1,6 +1,6 @@
 import type { GachaItems } from "./Gacha.js";
 
-const PityCalculator = <T>(Rates: GachaItems<T>[], Target: T, Increase: number): GachaItems<T>[] => {
+export default <T>(Rates: GachaItems<T>[], Target: T, Increase: number): GachaItems<T>[] => {
     const TargetItem: GachaItems<T> = Rates.find(Item => Item.Value === Target)!;
     const OldTargetChance: number = TargetItem.Chance;
     const RemainingBefore: number = 100 - OldTargetChance;
@@ -12,5 +12,3 @@ const PityCalculator = <T>(Rates: GachaItems<T>[], Target: T, Increase: number):
         : { ...Rate, Chance: Rate.Chance * Scale }
     );
 };
-
-export default PityCalculator;
