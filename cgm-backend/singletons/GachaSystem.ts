@@ -493,10 +493,24 @@ export default new class {
         );
     }
     public RollMulti(Token: string, BannerName: string, Count: number): string[] | undefined {
-        const Profile: ProfileBanner = this.GachaProfiles[Token][BannerName];
-
+        const Profile: GachaProfile = this.GachaProfiles[Token];
         if(!Profile)
             return;
+
+        this.GachaProfiles[Token][BannerName] ??= {
+            Count: 0,
+            RollsWithoutSixStar: 0,
+            Focused: false,
+            TenRolls: false,
+            Storage: {
+                SixStars: {},
+                FiveStars: {},
+                FourStars: {},
+                ThreeStars: {}
+            }
+        };
+
+        const BannerProfile: ProfileBanner = this.GachaProfiles[Token][BannerName];
 
         const Result: [string, 3 | 4 | 5 | 6][] = [];
         while(Result.push(this.Roll(Token, BannerName, false)!) < Count);
@@ -514,10 +528,10 @@ export default new class {
                 Rarity,
                 OperatorID,
                 {
-                    6: Profile.Storage.SixStars,
-                    5: Profile.Storage.FiveStars,
-                    4: Profile.Storage.FourStars,
-                    3: Profile.Storage.ThreeStars
+                    6: BannerProfile.Storage.SixStars,
+                    5: BannerProfile.Storage.FiveStars,
+                    4: BannerProfile.Storage.FourStars,
+                    3: BannerProfile.Storage.ThreeStars
                 }[Rarity][OperatorID]
             );
         }
@@ -525,8 +539,8 @@ export default new class {
         this.RefreshDataSTMT.run(
             Token, 
             BannerName, 
-            Profile.Count, 
-            Profile.RollsWithoutSixStar, 
+            BannerProfile.Count, 
+            BannerProfile.RollsWithoutSixStar, 
             Number(Profile.Focused), 
             Number(Profile.TenRolls)
         );

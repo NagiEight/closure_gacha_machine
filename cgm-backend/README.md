@@ -18,7 +18,7 @@ Returns an array of banners for a specific page.
 GET /api/banners/:Page
 ```
 
-### Parameters
+### Path Parameters
 | Parameter | Type | Description |
 |------------|--------|-------------|
 | Page | number | Page index (must be greater than 0) |
@@ -119,7 +119,7 @@ Returns information about a specific banner.
 GET /api/banner/:BannerName
 ```
 
-### Parameters
+### Path Parameters
 | Parameter | Type | Description |
 |------------|--------|-------------|
 | BannerName | string | Banner identifier or name |
@@ -214,7 +214,7 @@ Returns information about a specific operator.
 GET /api/operator/:OperatorID
 ```
 
-### Parameters
+### Path Parameters
 | Parameter | Type | Description |
 |------------|--------|-------------|
 | OperatorID | string | Operator identifier |
@@ -269,7 +269,7 @@ Returns the cover image associated with a banner.
 GET /assets/banner/:BannerName
 ```
 
-### Parameters
+### Path Parameters
 | Parameter | Type | Description |
 |------------|--------|-------------|
 | BannerName | string | Banner identifier or name |
@@ -301,7 +301,7 @@ Returns the base artwork image for an operator.
 GET /assets/operator/:OperatorID
 ```
 
-### Parameters
+### Path Parameters
 | Parameter | Type | Description |
 |------------|--------|-------------|
 | OperatorID | string | Operator identifier |
@@ -332,7 +332,7 @@ Returns the Elite 2 (E2) artwork image for an operator.
 ```http
 GET /assets/e2operator/:OperatorID
 ```
-### Parameters
+### Path Parameters
 | Parameter | Type | Description |
 |------------|--------|-------------|
 | OperatorID | string | Operator identifier |
@@ -363,7 +363,7 @@ GET /asset/e2operator/char_103_angel
 GET /assets/card/:OperatorID
 ```
 
-### Parameters
+### Path Parameters
 | Parameter | Type | Description |
 |------------|--------|-------------|
 | OperatorID | string | Operator identifier |
@@ -476,7 +476,7 @@ Perform a gacha roll on a specific banner.
 POST /gacha/:BannerName/roll
 ```
 
-### Parameters
+### Path Parameters
 | Parameter | Type | Description |
 |------------|--------|-------------|
 | BannerName | string | Banner identifier or name |
@@ -534,11 +534,16 @@ Perform multiple gacha rolls on a specific banner.
 POST /gacha/:BannerName/roll/:Count
 ```
 
-### Parameters
+### Path Parameters
 | Parameter | Type | Description |
 |------------|--------|-------------|
 | BannerName | string | Banner identifier or name |
 | Count | number | Amount of times you want to roll (must be greater than 0) |
+
+### Query Parameters
+| Parameter | Type | Description |
+|------------|--------|-------------|
+| Reduced | boolean | Whether to reduce the roll result |
 
 ### Headers
 ```json
@@ -553,6 +558,21 @@ POST /gacha/EN A Shared Oath of Guardianship/roll/10
 ```
 
 ### Success Response
+
+#### If Reduced == "true" or Reduced == "1"
+**Notes:** Will default to false behavior if Reduced is not a valid boolean.
+```typescript
+type ReducedGachaMultiRollResponse = Record<string, number>;
+```
+**Example:**
+```json
+{
+    "char_1046_sbell2": 1,
+    // The rest of the roll result
+}
+```
+
+#### Else
 ```typescript
 interface GachaMultiRollResponse {
     Result: string[];
