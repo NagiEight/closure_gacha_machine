@@ -483,6 +483,15 @@ export default new class {
         }
         return [Output, OutputRarity];
     }
+    public RollMultiReduced(Token: string, BannerName: string, Count: number): Record<string, number> | undefined {
+        return this.RollMulti(Token, BannerName, Count)?.reduce(
+            (Acc: Record<string, number>, Item: string): Record<string, number> => {
+                Acc[Item] ??= 0;
+                Acc[Item]++;
+                return Acc;
+            }, {}
+        );
+    }
     public RollMulti(Token: string, BannerName: string, Count: number): string[] | undefined {
         const Profile: ProfileBanner = this.GachaProfiles[Token][BannerName];
 
@@ -491,30 +500,25 @@ export default new class {
 
         const Result: [string, 3 | 4 | 5 | 6][] = [];
         while(Result.push(this.Roll(Token, BannerName, false)!) < Count);
-        const OperatorMap: Record<string, { Count: number, Rarity: 3 | 4 | 5 | 6 }> = Result.reduce(
-            (Acc: Record<string, { Count: number, Rarity: 3 | 4 | 5 | 6 }>, Item: [string, 3 | 4 | 5 | 6]) => {
-                Acc[Item[0]] ??= {
-                    Count: 0,
-                    Rarity: Item[1]
-                };
-                Acc[Item[0]].Count++;
+        const OperatorMap: Record<string, 3 | 4 | 5 | 6> = Result.reduce(
+            (Acc: Record<string, 3 | 4 | 5 | 6 >, Item: [string, 3 | 4 | 5 | 6]): Record<string, 3 | 4 | 5 | 6 > => {
+                Acc[Item[0]] ??= Item[1];
                 return Acc;
-            }, 
-            {}
+            }, {}
         );
         
-        for(const [ID, Roll] of Object.entries(OperatorMap)) {
+        for(const [OperatorID, Rarity] of Object.entries(OperatorMap)) {
             this.RefreshStorageSTMT.run(
                 Token,
                 BannerName,
-                Roll.Rarity,
-                ID,
+                Rarity,
+                OperatorID,
                 {
                     6: Profile.Storage.SixStars,
                     5: Profile.Storage.FiveStars,
                     4: Profile.Storage.FourStars,
                     3: Profile.Storage.ThreeStars
-                }[Roll.Rarity][ID]
+                }[Rarity][OperatorID]
             );
         }
 
@@ -526,6 +530,6 @@ export default new class {
             Number(Profile.Focused), 
             Number(Profile.TenRolls)
         );
-        return Result.map(Roll => Roll[0]);
+        return Result.map(Item => Item[0]);
     }
 }();
