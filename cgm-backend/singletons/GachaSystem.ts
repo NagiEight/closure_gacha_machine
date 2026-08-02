@@ -26,7 +26,7 @@ Database.DB.exec(`
         UserToken TEXT NOT NULL,
         Banner TEXT NOT NULL,
         Rarity INTEGER NOT NULL,
-        ID TEXT NOT NOT NULL,
+        ID TEXT NOT NULL,
 
         Count INTEGER NOT NULL,
 
@@ -95,7 +95,7 @@ export default new class {
     private readonly RefreshStorageSTMT = Database.DB.prepare<[string, string, number, string, number], void>(`
         INSERT INTO GachaStorage
         (UserToken, Banner, Rarity, ID, Count)
-        VALUES(?, ?, ?, ?, ?, ?)
+        VALUES(?, ?, ?, ?, ?)
         ON CONFLICT(UserToken, Banner, Rarity, ID) DO UPDATE SET
             Count = excluded.Count
     `);
@@ -117,7 +117,7 @@ export default new class {
 
     public constructor() {
         const StorageQuery: GachaProfileStorageRow[] = Database.DB.prepare<[], GachaProfileStorageRow>(`
-            SELECT GP.Token, GS.Banner, GS.Rarity, GS.Storage
+            SELECT GP.Token, GS.Banner, GS.Rarity, GS.ID, GS.Count
             FROM GachaStorage GS JOIN GachaProfiles GP ON GP.Token = GS.UserToken
         `).all();
         const DataQuery: GachaProfileDataRow[] = Database.DB.prepare<[], GachaProfileDataRow>(`

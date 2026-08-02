@@ -119,12 +119,11 @@ class DataManager {
                     Standard: []
                 },
                 ThreeStarsPool: []
-            }
-        ])
+            }])
     );
 
     public constructor() {
-        const Signals: string[] = ["SIGTERM", "SIGINT"];
+        const Signals: string[] = ["SIGTERM", "SIGINT", "uncaughtException", "unhandledRejection"];
         for(const Signal in Signals) {
             process.on(Signal, () => {
                 DB.close();
