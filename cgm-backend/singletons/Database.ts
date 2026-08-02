@@ -180,7 +180,7 @@ class DataManager {
     private static FormMediaURL(Base: string, Name: string): string {
         const MediaURL: URL = new URL(`${LoadEnv.BASE_MEDIA_URL}/${Base}/${encodeURIComponent(Name).replace(/\ /g, "_")}.png`);
         MediaURL.pathname = MediaURL.pathname.replace(/\/+/g, '/');
-        return MediaURL.toString(); 
+        return MediaURL.toString();
     };
     private static *Slice<T>(Iterable: Iterable<T>, Start: number = 0, End: number = Infinity): Generator<T, void> {
         let i: number = 0;

@@ -543,7 +543,7 @@ POST /gacha/:BannerName/roll/:Count
 ### Query Parameters
 | Parameter | Type | Description |
 |------------|--------|-------------|
-| Reduced | boolean | Whether to reduce the roll result |
+| reduced | boolean | Whether to reduce the roll result |
 
 ### Headers
 ```json
@@ -559,8 +559,8 @@ POST /gacha/EN A Shared Oath of Guardianship/roll/10
 
 ### Success Response
 
-#### If Reduced == "true" or Reduced == "1"
-**Notes:** Will default to false behavior if Reduced is not a valid boolean.
+#### If reduced == "true" or reduced == "1"
+**Notes:** Will default to false behavior if reduced is not a valid boolean.
 ```typescript
 type ReducedGachaMultiRollResponse = Record<string, number>;
 ```

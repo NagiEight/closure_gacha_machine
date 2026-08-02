@@ -465,10 +465,10 @@ export default new class {
 
         if(WriteDB) {
             this.RefreshStorageSTMT.run(
-                Token, 
-                BannerName, 
-                OutputRarity, 
-                Output, 
+                Token,
+                BannerName,
+                OutputRarity,
+                Output,
                 ToWrite
             );
 
