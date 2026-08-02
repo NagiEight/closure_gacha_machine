@@ -163,14 +163,14 @@ class BannerEntity {
 
 /// Operator Entity
 @immutable
-class OperatorEntity {
+class Operator {
   final String id;
   final String name;
   final int rarity;
   final DateTime releaseDate;
   final bool isLimited;
 
-  const OperatorEntity({
+  const Operator({
     required this.id,
     required this.name,
     required this.rarity,
@@ -178,11 +178,11 @@ class OperatorEntity {
     required this.isLimited,
   });
 
-  factory OperatorEntity.fromJson(Map<String, dynamic> json) {
+  factory Operator.fromJson(Map<String, dynamic> json) {
     final rawDate =
         json['ReleaseDate'] ?? json['releaseDate'] ?? json['release_date'];
 
-    return OperatorEntity(
+    return Operator(
       id: json['ID'] as String? ?? json['id'] as String? ?? '',
       name: json['Name'] as String? ?? json['name'] as String? ?? '',
       rarity: (json['Rarity'] as int?) ?? (json['rarity'] as int?) ?? 0,

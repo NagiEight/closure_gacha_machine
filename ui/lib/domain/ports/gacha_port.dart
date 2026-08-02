@@ -9,13 +9,16 @@ abstract interface class GachaPort {
   Future<BannerEntity> getBannerDetails(String bannerName);
 
   /// Fetches operator metadata by ID.
-  Future<OperatorEntity> getOperatorDetails(String operatorId);
+  Future<Operator> getOperatorDetails(String operatorId);
 
   /// Constructs the asset URL for a banner cover image.
   String getBannerCoverUrl(String bannerName);
 
   /// Constructs the asset URL for an operator's base artwork.
   String getOperatorArtUrl(String operatorId);
+
+  /// Construct the asset URL for an operator's card
+  String getOperatorCardUrl(String operatorId);
 
   /// Constructs the asset URL for an operator's Elite 2 artwork.
   String getOperatorE2ArtUrl(String operatorId);
