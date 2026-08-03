@@ -99,10 +99,24 @@ class DataManager {
             [Row.ID, { Name: Row.Name, Rarity: Row.Rarity, ReleaseDate: Row.ReleaseDate, Limited: !!Row.Limited }]
         )
     );
-    private readonly Banners: Map<string, Banner> = new Map<string, Banner>(
-        DB.prepare<[], { Name: string }>("SELECT Name FROM Banners")
-            .all()
-            .map(Row => [Row.Name, {
+    private readonly Banners: Map<string, Banner>;
+
+    public constructor() {
+        const Signals: string[] = ["SIGTERM", "SIGINT", "uncaughtException", "unhandledRejection"];
+        for(const Signal in Signals) {
+            process.on(Signal, (): void => {
+                DB.close();
+                process.exit(0);
+            });
+        }
+        const Query: BannersRow[] = DB.prepare<[], BannersRow>(`
+            SELECT B.Name, B.ReleaseDate, B.Type, BP.Rarity, BP.Prima, BP.Secondary, BP.Standard
+            FROM BannerPools BP JOIN Banners B ON BP.BannerName = B.Name
+        `).all();
+        const Banners: Map<string, Banner> = new Map();
+        for(const Row of Query) {
+            const Name: string = Row.Name;
+            const Banner: Banner = {
                 ReleaseDate: 0,
                 Type: BannerTypes.Standard,
                 SixStarsPool: {
@@ -119,27 +133,7 @@ class DataManager {
                     Standard: []
                 },
                 ThreeStarsPool: []
-            }])
-    );
-
-    public constructor() {
-        const Signals: string[] = ["SIGTERM", "SIGINT", "uncaughtException", "unhandledRejection"];
-        for(const Signal in Signals) {
-            process.on(Signal, (): void => {
-                DB.close();
-                process.exit(0);
-            });
-        }
-        const Query: BannersRow[] = DB.prepare<[], BannersRow>(`
-            SELECT B.Name, B.ReleaseDate, B.Type, BP.Rarity, BP.Prima, BP.Secondary, BP.Standard
-            FROM BannerPools BP JOIN Banners B ON BP.BannerName = B.Name
-        `).all();
-        for(const Row of Query) {
-            const Name: string = Row.Name;
-            const Banner: Banner | undefined = this.Banners.get(Name);
-
-            if(!Banner)
-                continue;
+            };
 
             Banner.ReleaseDate = Row.ReleaseDate;
             Banner.Type = Row.Type;
@@ -169,9 +163,10 @@ class DataManager {
                     Banner.SixStarsPool.Standard = JSON.parse(Row.Standard);
                     break;
             }
+            Banners.set(Name, Banner);
         }
 
-        this.Banners = new Map([...this.Banners.entries()].sort((A, B) => B[1].ReleaseDate - A[1].ReleaseDate));
+        this.Banners = new Map([...Banners.entries()].sort((A, B) => B[1].ReleaseDate - A[1].ReleaseDate));
     }
 
     private static Pagination<T>(Page: number, Set: Iterable<T>): Iterable<T> {

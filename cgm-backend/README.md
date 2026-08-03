@@ -230,7 +230,7 @@ GET /api/operator/char_103_angel
 interface GetOperatorResponse {
     ID: string;
     Name: string;
-    Rarity: number;
+    Rarity: 3 | 4 | 5 | 6;
     ReleaseDate: number;
     Limited: boolean;
 }

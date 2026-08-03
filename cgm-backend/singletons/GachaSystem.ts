@@ -502,7 +502,7 @@ export default new class {
         const Result: [string, 3 | 4 | 5 | 6][] = [];
         while(Result.push(this.Roll(Token, BannerName, false)!) < Count);
         const OperatorMap: Record<string, 3 | 4 | 5 | 6> = Result.reduce(
-            (Acc: Record<string, 3 | 4 | 5 | 6 >, Item: [string, 3 | 4 | 5 | 6]): Record<string, 3 | 4 | 5 | 6 > => {
+            (Acc: Record<string, 3 | 4 | 5 | 6>, Item: [string, 3 | 4 | 5 | 6]): Record<string, 3 | 4 | 5 | 6 > => {
                 Acc[Item[0]] ??= Item[1];
                 return Acc;
             }, {}

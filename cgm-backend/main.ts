@@ -1,9 +1,21 @@
 import express, { type Express } from "express";
-import LoadEnv from "./singletons/LoadEnv.js";
+import rateLimit, { type RateLimitRequestHandler } from "express-rate-limit";
 import Database, { type Banner, type Operator } from "./singletons/Database.js";
 import GachaSystem, { type GachaProfile } from "./singletons/GachaSystem.js";
+import LoadEnv from "./singletons/LoadEnv.js";
 
 const Server: Express = express();
+const Limiter: RateLimitRequestHandler = rateLimit({
+    windowMs: 1000,
+    limit: 50,
+    message: {
+        error: "Too many requests, please try again later."
+    },
+    standardHeaders: true,
+    legacyHeaders: false
+});
+
+Server.use(Limiter);
 
 // API endpoint
 Server.get("/api/banners/:Page", (Req, Res) => {
