@@ -5,37 +5,36 @@ import 'package:ui/domain/ports/gacha_port.dart';
 
 class HiveGachaRepository implements GachaPort {
   final GachaPort _remoteAdapter;
-  late final Box<String> _operatorBox;
-  late final Box<String> _bannerBox;
+  final Box<String> operatorBox;
+  final Box<String> bannerBox;
 
   HiveGachaRepository(
     this._remoteAdapter, {
-    required Box<String> operatorBox,
-    required Box<String> bannerBox,
-  }) : _operatorBox = operatorBox,
-       _bannerBox = bannerBox;
+    required this.operatorBox,
+    required this.bannerBox,
+  });
 
   @override
   Future<Operator> getOperatorDetails(String operatorId) async {
-    if (_operatorBox.containsKey(operatorId)) {
-      final jsonString = _operatorBox.get(operatorId)!;
+    if (operatorBox.containsKey(operatorId)) {
+      final jsonString = operatorBox.get(operatorId)!;
       return Operator.fromJson(jsonDecode(jsonString));
     }
 
     final operatorData = await _remoteAdapter.getOperatorDetails(operatorId);
-    await _operatorBox.put(operatorId, jsonEncode(operatorData.toJson()));
+    await operatorBox.put(operatorId, jsonEncode(operatorData.toJson()));
     return operatorData;
   }
 
   @override
   Future<BannerEntity> getBannerDetails(String bannerName) async {
-    if (_bannerBox.containsKey(bannerName)) {
-      final jsonString = _bannerBox.get(bannerName)!;
+    if (bannerBox.containsKey(bannerName)) {
+      final jsonString = bannerBox.get(bannerName)!;
       return BannerEntity.fromJson(jsonDecode(jsonString));
     }
 
     final bannerData = await _remoteAdapter.getBannerDetails(bannerName);
-    await _bannerBox.put(bannerName, jsonEncode(bannerData.toJson()));
+    await bannerBox.put(bannerName, jsonEncode(bannerData.toJson()));
     return bannerData;
   }
 

@@ -61,7 +61,7 @@ class HistoryItemTile extends StatelessWidget {
                     gachaPort.getOperatorCardUrl(entry.operatorId),
                     fit: BoxFit.cover,
                     alignment: const Alignment(0.0, -0.6),
-                    errorBuilder: (_, __, ___) => Container(
+                    errorBuilder: (_, _, _) => Container(
                       color: Colors.grey[900],
                       child: const Icon(
                         Icons.person_rounded,

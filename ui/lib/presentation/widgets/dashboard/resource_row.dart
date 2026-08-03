@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
 
 class ResourceRow extends StatelessWidget {
   final String label;
@@ -8,6 +7,7 @@ class ResourceRow extends StatelessWidget {
   final Color color;
 
   const ResourceRow({
+    super.key,
     required this.label,
     required this.value,
     required this.icon,

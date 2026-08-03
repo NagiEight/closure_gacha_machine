@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
 import 'package:ui/presentation/widgets/analytics/analytics_card.dart';
 import 'package:ui/presentation/widgets/dashboard/stat_display.dart';
 
@@ -7,7 +6,11 @@ class OverviewSection extends StatelessWidget {
   final int totalPulls;
   final int uniqueOps;
 
-  const OverviewSection({required this.totalPulls, required this.uniqueOps});
+  const OverviewSection({
+    super.key,
+    required this.totalPulls,
+    required this.uniqueOps,
+  });
 
   @override
   Widget build(BuildContext context) {

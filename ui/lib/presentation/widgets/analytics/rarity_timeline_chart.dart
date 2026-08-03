@@ -154,7 +154,7 @@ class RarityTimelineChart extends StatelessWidget {
                       horizontalLines: [
                         HorizontalLine(
                           y: 6.0,
-                          color: Colors.orangeAccent.withOpacity(0.3),
+                          color: Colors.orangeAccent.withValues(alpha: 0.3),
                           strokeWidth: 1,
                           dashArray: [4, 4],
                           label: HorizontalLineLabel(
@@ -175,7 +175,7 @@ class RarityTimelineChart extends StatelessWidget {
                       LineChartBarData(
                         spots: spots,
                         isCurved: false,
-                        color: Colors.amber.withOpacity(0.25),
+                        color: Colors.amber.withValues(alpha: 0.25),
                         barWidth: 1.5,
                         dotData: FlDotData(
                           show: true,
@@ -206,7 +206,7 @@ class RarityTimelineChart extends StatelessWidget {
                             final entry = sortedHistory[pullIndex - 1];
 
                             return LineTooltipItem(
-                              'Pull #${pullIndex}\nOperator: ${entry.operatorId}\nRarity: $rarity★',
+                              'Pull #$pullIndex\nOperator: ${entry.operatorId}\nRarity: $rarity★',
                               TextStyle(
                                 color: _getRarityColor(rarity),
                                 fontFamily: 'monospace',

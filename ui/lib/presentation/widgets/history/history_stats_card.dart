@@ -18,7 +18,7 @@ class HistoryStatsCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: const Color(0xFF1E1E1E),
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Colors.amber.withOpacity(0.3)),
+        border: Border.all(color: Colors.amber.withValues()),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,

@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
 import 'package:ui/presentation/widgets/analytics/analytics_card.dart';
 import 'package:ui/presentation/widgets/dashboard/resource_row.dart';
 
 class InvestmentCard extends StatelessWidget {
   final int totalPulls;
 
-  const InvestmentCard({required this.totalPulls});
+  const InvestmentCard({super.key, required this.totalPulls});
 
   @override
   Widget build(BuildContext context) {

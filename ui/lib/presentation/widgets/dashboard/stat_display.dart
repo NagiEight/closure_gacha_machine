@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
 
 class StatDisplay extends StatelessWidget {
   final String label;
   final String value;
 
-  const StatDisplay({required this.label, required this.value});
+  const StatDisplay({super.key, required this.label, required this.value});
 
   @override
   Widget build(BuildContext context) {

@@ -92,7 +92,7 @@ class _BannerDetailsWidgetState extends State<BannerDetailsWidget> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             decoration: BoxDecoration(
-              color: Colors.amber[700]!.withOpacity(0.15),
+              color: Colors.amber[700]!.withValues(),
               borderRadius: BorderRadius.circular(4),
               border: Border.all(color: Colors.amber[700]!),
             ),
@@ -156,7 +156,7 @@ class _BannerDetailsWidgetState extends State<BannerDetailsWidget> {
                       return Chip(
                         backgroundColor: const Color(0xFF2C2C2C),
                         side: BorderSide(
-                          color: rarityColor.withOpacity(0.5),
+                          color: rarityColor.withValues(),
                           width: 1,
                         ),
                         label: Text(

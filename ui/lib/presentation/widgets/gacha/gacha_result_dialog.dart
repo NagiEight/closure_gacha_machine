@@ -150,8 +150,8 @@ class _GachaResultsDialogState extends State<GachaResultsDialog> {
       margin: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
       padding: const EdgeInsets.all(8),
       decoration: BoxDecoration(
-        color: Colors.black.withOpacity(0.6),
-        border: Border.all(color: Colors.amber.withOpacity(0.4)),
+        color: Colors.black.withValues(),
+        border: Border.all(color: Colors.amber.withValues()),
         borderRadius: BorderRadius.circular(4),
       ),
       child: ListView.builder(
@@ -186,7 +186,7 @@ class _GachaResultsDialogState extends State<GachaResultsDialog> {
     final int halfLength = (widget.operatorIds.length / 2).ceil();
 
     return Dialog.fullscreen(
-      backgroundColor: Colors.black.withOpacity(0.85),
+      backgroundColor: Colors.black.withValues(),
       child: Column(
         children: [
           SafeArea(
@@ -265,7 +265,7 @@ class _GachaResultsDialogState extends State<GachaResultsDialog> {
                               child: Container(
                                 padding: const EdgeInsets.all(8),
                                 decoration: BoxDecoration(
-                                  color: Colors.black.withOpacity(0.6),
+                                  color: Colors.black.withValues(),
                                   shape: BoxShape.circle,
                                 ),
                                 child: const Icon(
