@@ -176,13 +176,11 @@ Server.post("/gacha/create", (_, Res) => {
     }
 
     const Reduced: string | undefined = Req.query.reduced?.toString().trim().toLowerCase();
-    if(Reduced === "true" || Reduced === "1") {
-        Res.json(GachaSystem.RollMultiReduced(Token, BannerName, Count)!);
-        return;
-    }
-
-    const Result: string[] = GachaSystem.RollMulti(Token, BannerName, Count)!;
-    Res.json({ Result });
+    Res.json({ 
+        Result: Reduced === "true" || Reduced === "1"
+            ? GachaSystem.RollMultiReduced(Token, BannerName, Count)!
+            : GachaSystem.RollMulti(Token, BannerName, Count)!
+    });
 })
 .purge("/gacha/delete", (Req, Res) => {
     const Token: string | undefined = Req.get("Session-Token");

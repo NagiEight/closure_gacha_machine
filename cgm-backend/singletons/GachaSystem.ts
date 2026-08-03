@@ -471,15 +471,15 @@ export default new class {
         }
         return [Output, OutputRarity];
     }
+
     public RollMultiReduced(Token: string, BannerName: string, Count: number): Record<string, number> | undefined {
-        return this.RollMulti(Token, BannerName, Count)?.reduce(
-            (Acc: Record<string, number>, Item: string): Record<string, number> => {
-                Acc[Item] ??= 0;
-                Acc[Item]++;
-                return Acc;
-            }, {}
-        );
+        return this.RollMulti(Token, BannerName, Count)?.reduce((Acc: Record<string, number>, Item: string) => {
+            Acc[Item] ??= 0;
+            Acc[Item]++;
+            return Acc;
+        }, {});
     }
+
     public RollMulti(Token: string, BannerName: string, Count: number): string[] | undefined {
         if(!this.GachaProfiles[Token])
             return;
