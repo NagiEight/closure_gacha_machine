@@ -256,6 +256,38 @@ interface GetOperatorResponse {
 
 ---
 
+### Get All Banner Names
+Returns the names of all banners in the database.
+
+### Request
+```http
+GET /api/banner/all
+```
+
+### Success Response
+**Status:** `200 OK`
+```typescript
+type GetAllBannerNamesResponse = string[];
+```
+**Example:**
+```json
+[
+    "EN 600 Meters Over The Facts",
+    "EN A Shared Oath of Guardianship",
+    "EN A Wanderer in the Wind",
+    "EN Abyss Corrosion",
+    "EN An Eternity Aflame",
+    "EN Anchor In The Deep",
+    "EN Anchor In The Deep Rerun",
+    "EN And the Canoe'll Carry Us to You",
+    "EN Arbiter Aequissimus",
+    "EN Arbiter Aequissimus Rerun",
+    // The rest of the database
+]
+```
+
+---
+
 # Asset Endpoints
 These endpoints return PNG image files.
 

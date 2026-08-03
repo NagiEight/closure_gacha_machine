@@ -55,6 +55,9 @@ Server.get("/api/banners/:Page", (Req, Res) => {
         ID: OperatorID,
         ...Operator
     });
+})
+.get("/api/banners/all", (_, Res) => {
+    Res.json(Database.DB.prepare<[], { Name: string; }>("SELECT Name FROM Banners").all().map(Row => Row.Name));
 });
 
 // Assets endpoint
