@@ -1,5 +1,7 @@
 name: Flutter CI Pipeline
-
+defaults:
+  run:
+    working-directory: ui
 on:
   push:
     branches: [ main, master, develop ]
