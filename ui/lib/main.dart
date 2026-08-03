@@ -7,12 +7,16 @@ import 'package:ui/infrastructure/repositories/shared_prefs_currency_repository.
 import 'package:ui/infrastructure/repositories/shared_prefs_gacha_collection_adapter.dart';
 import 'package:ui/infrastructure/repositories/shared_prefs_sanity_timer_adapter.dart';
 import 'package:ui/presentation/pages/banners.dart';
+import 'package:ui/presentation/pages/dashboard.dart';
+import 'package:ui/presentation/pages/history.dart';
+import 'package:ui/presentation/pages/settings.dart';
 import 'package:ui/presentation/pages/timer.dart';
 import 'package:ui/presentation/widgets/main_nav_bar.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   final prefs = await SharedPreferences.getInstance();
+
   // 1. Initialize Infrastructure Adapters
   final gachaAdapter = ClosureGachaMachineAdapter(
     baseUrl: 'http://localhost:3000',
@@ -75,7 +79,8 @@ class GachaSimulatorApp extends StatelessWidget {
       home: MainShellPage(
         gachaAdapter: gachaAdapter,
         currencyAdapter: currencyAdapter,
-        timerAdapter: timerAdapter, // Pass it here!
+        collectionAdapter: collectionAdapter,
+        timerAdapter: timerAdapter,
         getBannersUseCase: getBannersUseCase,
         getGachaRollUseCase: getGachaRollUseCase,
       ),
@@ -86,7 +91,8 @@ class GachaSimulatorApp extends StatelessWidget {
 class MainShellPage extends StatefulWidget {
   final ClosureGachaMachineAdapter gachaAdapter;
   final SharedPrefsCurrencyAdapter currencyAdapter;
-  final SharedPreferencesSanityTimerRepository timerAdapter; // Add here!
+  final SharedPrefsGachaCollectionAdapter collectionAdapter;
+  final SharedPreferencesSanityTimerRepository timerAdapter;
   final GetBanners getBannersUseCase;
   final GetGachaRoll getGachaRollUseCase;
 
@@ -94,6 +100,7 @@ class MainShellPage extends StatefulWidget {
     super.key,
     required this.gachaAdapter,
     required this.currencyAdapter,
+    required this.collectionAdapter,
     required this.timerAdapter,
     required this.getBannersUseCase,
     required this.getGachaRollUseCase,
@@ -108,34 +115,26 @@ class _MainShellPageState extends State<MainShellPage> {
 
   @override
   Widget build(BuildContext context) {
+    // main.dart
+
     final pages = [
-      SanityTimerPage(
-        timerRepository: widget.timerAdapter,
-      ), // Now you can instantiate it properly!
-      const Center(
-        child: Text(
-          'History Placeholder',
-          style: TextStyle(color: Colors.white54),
-        ),
+      SanityTimerPage(timerRepository: widget.timerAdapter),
+      HistoryPage(
+        collectionRepo: widget.collectionAdapter,
+        gachaPort: widget.gachaAdapter,
       ),
       BannersPage(
+        collectionRepo: widget.collectionAdapter,
         getBannersUseCase: widget.getBannersUseCase,
         gachaPort: widget.gachaAdapter,
         currencyRepo: widget.currencyAdapter,
         performGachaRollUseCase: widget.getGachaRollUseCase,
       ),
-      const Center(
-        child: Text(
-          'Inventory Placeholder',
-          style: TextStyle(color: Colors.white54),
-        ),
+      DashboardPage(
+        collectionRepo: widget.collectionAdapter,
+        gachaPort: widget.gachaAdapter,
       ),
-      const Center(
-        child: Text(
-          'Settings Placeholder',
-          style: TextStyle(color: Colors.white54),
-        ),
-      ),
+      SettingsPage(collectionRepo: widget.collectionAdapter),
     ];
 
     return Scaffold(

@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:ui/domain/entities/api_entities.dart';
-import 'package:ui/domain/ports/gacha_port.dart';
 import 'package:ui/presentation/widgets/gacha/currency_pill.dart';
 
 class TopUpModal extends StatefulWidget {

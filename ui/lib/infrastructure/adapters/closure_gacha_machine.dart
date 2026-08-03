@@ -86,8 +86,15 @@ class ClosureGachaMachineAdapter implements GachaPort {
 
     _checkResponseStatus(response);
 
-    final sessionToken = response.headers['session-token'];
-    if (sessionToken == null || sessionToken.isEmpty) {
+    // Case-insensitive header check
+    final sessionToken = response.headers.entries
+        .firstWhere(
+          (e) => e.key.toLowerCase() == 'session-token',
+          orElse: () => const MapEntry('', ''),
+        )
+        .value;
+
+    if (sessionToken.isEmpty) {
       throw Exception('Session token missing from server response headers.');
     }
 
@@ -126,7 +133,13 @@ class ClosureGachaMachineAdapter implements GachaPort {
     _checkResponseStatus(response);
 
     final Map<String, dynamic> data = jsonDecode(response.body);
-    return (data['Result'] as List<dynamic>).cast<String>();
+    final resultsList = data['Result'] as List<dynamic>?;
+
+    if (resultsList == null) {
+      throw Exception(data['Message'] ?? 'Backend returned null result');
+    }
+
+    return resultsList.cast<String>();
   }
 
   @override

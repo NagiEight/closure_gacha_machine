@@ -1,4 +1,3 @@
-// domain/entities/currency.dart
 class Currency {
   final int permitTen;
   final int permitOne;
@@ -43,28 +42,65 @@ class Currency {
   }
 }
 
-// domain/entities/gacha_collection.dart
+class HistoryEntry {
+  final String operatorId;
+  final String bannerName;
+  final DateTime timestamp;
+  final bool isNew;
+
+  const HistoryEntry({
+    required this.operatorId,
+    this.bannerName = '',
+    required this.timestamp,
+    this.isNew = false,
+  });
+
+  Map<String, dynamic> toJson() => {
+    'operatorId': operatorId,
+    'bannerName': bannerName,
+    'timestamp': timestamp.toIso8601String(),
+    'isNew': isNew,
+  };
+
+  factory HistoryEntry.fromJson(Map<String, dynamic> json) {
+    return HistoryEntry(
+      operatorId: json['operatorId'] as String? ?? '',
+      bannerName:
+          json['bannerName'] as String? ?? json['banner_name'] as String? ?? '',
+      timestamp:
+          DateTime.tryParse(json['timestamp'] as String? ?? '') ??
+          DateTime.now(),
+      isNew: json['isNew'] as bool? ?? false,
+    );
+  }
+}
+
 class GachaCollection {
   final List<String> acquiredOperatorIds;
+  final List<HistoryEntry> history;
   final int totalRolls;
 
   const GachaCollection({
     this.acquiredOperatorIds = const [],
+    this.history = const [],
     this.totalRolls = 0,
   });
 
   GachaCollection copyWith({
     List<String>? acquiredOperatorIds,
+    List<HistoryEntry>? history,
     int? totalRolls,
   }) {
     return GachaCollection(
       acquiredOperatorIds: acquiredOperatorIds ?? this.acquiredOperatorIds,
+      history: history ?? this.history,
       totalRolls: totalRolls ?? this.totalRolls,
     );
   }
 
   Map<String, dynamic> toJson() => {
     'acquiredOperatorIds': acquiredOperatorIds,
+    'history': history.map((e) => e.toJson()).toList(),
     'totalRolls': totalRolls,
   };
 
@@ -75,12 +111,16 @@ class GachaCollection {
               ?.map((e) => e as String)
               .toList() ??
           const [],
+      history:
+          (json['history'] as List<dynamic>?)
+              ?.map((e) => HistoryEntry.fromJson(e as Map<String, dynamic>))
+              .toList() ??
+          const [],
       totalRolls: json['totalRolls'] as int? ?? 0,
     );
   }
 }
 
-// domain/entities/sanity_timer.dart
 class SanityTimer {
   final String id;
   final String label;

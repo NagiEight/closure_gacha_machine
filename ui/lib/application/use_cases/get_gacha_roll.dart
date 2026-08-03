@@ -1,3 +1,5 @@
+// application/use_cases/get_gacha_roll.dart
+
 import 'package:ui/domain/entities/local_entities.dart';
 import 'package:ui/domain/ports/gacha_port.dart';
 import 'package:ui/domain/repositories/currency_repository.dart';
@@ -42,20 +44,37 @@ class GetGachaRoll {
     // 3. Persist deducted currency
     await _currencyRepo.saveCurrency(updatedCurrency);
 
-    // 4. Update collection with new operators and roll stats
+    // 4. Update collection with history and acquired ops
     final currentCollection = await _collectionRepo.getCollection();
-    final updatedOperators = [
-      ...currentCollection.acquiredOperatorIds,
-      ...results,
-    ];
+    final existingIds = currentCollection.acquiredOperatorIds.toSet();
+    final now = DateTime.now();
+
+    final newHistoryEntries = <HistoryEntry>[];
+    final updatedIds = [...currentCollection.acquiredOperatorIds];
+
+    for (final id in results) {
+      final isNew = !existingIds.contains(id);
+      newHistoryEntries.add(
+        HistoryEntry(
+          operatorId: id,
+          bannerName: bannerName,
+          timestamp: now,
+          isNew: isNew,
+        ),
+      );
+      existingIds.add(id);
+      updatedIds.add(id);
+    }
 
     final updatedCollection = currentCollection.copyWith(
-      acquiredOperatorIds: updatedOperators,
+      acquiredOperatorIds: updatedIds,
+      history: [...currentCollection.history, ...newHistoryEntries],
       totalRolls: currentCollection.totalRolls + count,
     );
 
     await _collectionRepo.saveCollection(updatedCollection);
 
+    // Explicit non-null return!
     return results;
   }
 
@@ -64,9 +83,8 @@ class GetGachaRoll {
     RollCurrencyType currencyType,
     int count,
   ) {
-    switch (currencyType) {
-      case RollCurrencyType.permitTen:
-        // Requires 1 Permit x10 per 10 rolls
+    return switch (currencyType) {
+      RollCurrencyType.permitTen => () {
         final requiredPermits = (count / 10).ceil();
         if (currency.permitTen < requiredPermits) {
           throw Exception('Insufficient 10-Headhunt Permits');
@@ -74,23 +92,21 @@ class GetGachaRoll {
         return currency.copyWith(
           permitTen: currency.permitTen - requiredPermits,
         );
-
-      case RollCurrencyType.permitOne:
+      }(),
+      RollCurrencyType.permitOne => () {
         if (currency.permitOne < count) {
           throw Exception('Insufficient Headhunt Permits');
         }
         return currency.copyWith(permitOne: currency.permitOne - count);
-
-      case RollCurrencyType.orundum:
-        // Arknights standard: 600 Orundum per roll
+      }(),
+      RollCurrencyType.orundum => () {
         final requiredOrundum = count * 600;
         if (currency.orundum < requiredOrundum) {
           throw Exception('Insufficient Orundum');
         }
         return currency.copyWith(orundum: currency.orundum - requiredOrundum);
-
-      case RollCurrencyType.originite:
-        // Arknights standard: 1 Originite Prime = 180 Orundum
+      }(),
+      RollCurrencyType.originite => () {
         final requiredOriginite = ((count * 600) / 180).ceil();
         if (currency.originite < requiredOriginite) {
           throw Exception('Insufficient Originite Prime');
@@ -98,6 +114,7 @@ class GetGachaRoll {
         return currency.copyWith(
           originite: currency.originite - requiredOriginite,
         );
-    }
+      }(),
+    };
   }
 }
