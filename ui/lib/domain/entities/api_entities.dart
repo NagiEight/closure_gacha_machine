@@ -17,6 +17,8 @@ enum BannerType {
       orElse: () => BannerType.standard,
     );
   }
+
+  int toInt() => value;
 }
 
 int parseTimestamp(dynamic value) {
@@ -62,11 +64,23 @@ class SixStarsPool {
 
   factory SixStarsPool.fromJson(Map<String, dynamic> json) {
     return SixStarsPool(
-      primary: List<String>.from(json['Primary'] ?? []),
-      secondary: List<String>.from(json['Secondary'] ?? []),
-      standard: List<String>.from(json['Standard'] ?? []),
+      primary: List<String>.from(
+        (json['Primary'] ?? json['primary']) as List<dynamic>? ?? [],
+      ),
+      secondary: List<String>.from(
+        (json['Secondary'] ?? json['secondary']) as List<dynamic>? ?? [],
+      ),
+      standard: List<String>.from(
+        (json['Standard'] ?? json['standard']) as List<dynamic>? ?? [],
+      ),
     );
   }
+
+  Map<String, dynamic> toJson() => {
+    'primary': primary,
+    'secondary': secondary,
+    'standard': standard,
+  };
 }
 
 /// Pool of 5-Star / 4-Star operators
@@ -79,10 +93,16 @@ class TieredOperatorPool {
 
   factory TieredOperatorPool.fromJson(Map<String, dynamic> json) {
     return TieredOperatorPool(
-      primary: List<String>.from(json['Primary'] ?? []),
-      standard: List<String>.from(json['Standard'] ?? []),
+      primary: List<String>.from(
+        (json['Primary'] ?? json['primary']) as List<dynamic>? ?? [],
+      ),
+      standard: List<String>.from(
+        (json['Standard'] ?? json['standard']) as List<dynamic>? ?? [],
+      ),
     );
   }
+
+  Map<String, dynamic> toJson() => {'primary': primary, 'standard': standard};
 }
 
 /// Complete Operator Pool structure per Banner
@@ -102,12 +122,34 @@ class OperatorPool {
 
   factory OperatorPool.fromJson(Map<String, dynamic> json) {
     return OperatorPool(
-      sixStars: SixStarsPool.fromJson(json['SixStarsPool'] ?? {}),
-      fiveStars: TieredOperatorPool.fromJson(json['FiveStarsPool'] ?? {}),
-      fourStars: TieredOperatorPool.fromJson(json['FourStarsPool'] ?? {}),
-      threeStars: List<String>.from(json['ThreeStarsPool'] ?? []),
+      sixStars: SixStarsPool.fromJson(
+        (json['SixStarsPool'] ?? json['sixStarsPool'])
+                as Map<String, dynamic>? ??
+            {},
+      ),
+      fiveStars: TieredOperatorPool.fromJson(
+        (json['FiveStarsPool'] ?? json['fiveStarsPool'])
+                as Map<String, dynamic>? ??
+            {},
+      ),
+      fourStars: TieredOperatorPool.fromJson(
+        (json['FourStarsPool'] ?? json['fourStarsPool'])
+                as Map<String, dynamic>? ??
+            {},
+      ),
+      threeStars: List<String>.from(
+        (json['ThreeStarsPool'] ?? json['threeStarsPool']) as List<dynamic>? ??
+            [],
+      ),
     );
   }
+
+  Map<String, dynamic> toJson() => {
+    'sixStarsPool': sixStars.toJson(),
+    'fiveStarsPool': fiveStars.toJson(),
+    'fourStarsPool': fourStars.toJson(),
+    'threeStarsPool': threeStars,
+  };
 }
 
 /// Banner Entity
@@ -126,7 +168,6 @@ class BannerEntity {
   });
 
   factory BannerEntity.fromJson(Map<String, dynamic> json) {
-    // Check root level first, then fall back to inside OperatorPool
     final operatorPoolJson =
         json['OperatorPool'] as Map<String, dynamic>? ??
         json['operatorPool'] as Map<String, dynamic>? ??
@@ -159,6 +200,13 @@ class BannerEntity {
       operatorPool: OperatorPool.fromJson(operatorPoolJson),
     );
   }
+
+  Map<String, dynamic> toJson() => {
+    'name': name,
+    'releaseDate': releaseDate.millisecondsSinceEpoch,
+    'type': type.toInt(),
+    'operatorPool': operatorPool.toJson(),
+  };
 }
 
 /// Operator Entity
@@ -194,6 +242,14 @@ class Operator {
           (json['Limited'] as bool?) ?? (json['isLimited'] as bool?) ?? false,
     );
   }
+
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'name': name,
+    'rarity': rarity,
+    'releaseDate': releaseDate.millisecondsSinceEpoch,
+    'isLimited': isLimited,
+  };
 }
 
 /// Gacha Session Profile Entity

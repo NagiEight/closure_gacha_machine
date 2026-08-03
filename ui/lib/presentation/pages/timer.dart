@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:ui/domain/entities/local_entities.dart';
 import 'package:ui/domain/repositories/sanity_timer_repository.dart';
 import 'package:ui/presentation/painter/sanity.dart';
@@ -23,13 +24,33 @@ class _SanityTimerPageState extends State<SanityTimerPage> {
   int _currentSanity = 175;
   DateTime? _lastSavedAt;
   Timer? _ticker;
+  bool _wasFull = false;
+  late final FlutterLocalNotificationsPlugin _notificationsPlugin;
 
   @override
   void initState() {
     super.initState();
-    _lastSavedAt = DateTime.now(); // Initialize this immediately, peon!
+    _initNotifications();
+    _lastSavedAt = DateTime.now();
     _loadTimer();
     _ticker = Timer.periodic(const Duration(seconds: 1), (_) => _tick());
+  }
+
+  Future<void> _initNotifications() async {
+    _notificationsPlugin = FlutterLocalNotificationsPlugin();
+    const androidSettings = AndroidInitializationSettings(
+      '@mipmap/ic_launcher',
+    );
+    const iosSettings = DarwinInitializationSettings();
+    const linuxSettings = LinuxInitializationSettings(
+      defaultActionName: 'Open notification',
+    );
+    const initSettings = InitializationSettings(
+      android: androidSettings,
+      iOS: iosSettings,
+      linux: linuxSettings,
+    );
+    await _notificationsPlugin.initialize(settings: initSettings);
   }
 
   @override
@@ -47,9 +68,9 @@ class _SanityTimerPageState extends State<SanityTimerPage> {
         _currentSanity = timer.currentSanity;
         _lastSavedAt = timer.createdAt;
       } else {
-        _lastSavedAt =
-            DateTime.now(); // Fallback so the clock starts ticking immediately!
+        _lastSavedAt = DateTime.now();
       }
+      _wasFull = _currentSanity >= widget.maxSanity;
     });
   }
 
@@ -65,21 +86,53 @@ class _SanityTimerPageState extends State<SanityTimerPage> {
         0,
         widget.maxSanity,
       );
+
+      final isNowFull = updatedSanity >= widget.maxSanity;
+      if (isNowFull && !_wasFull) {
+        _sendSanityNotification();
+      }
+
       setState(() {
         _currentSanity = updatedSanity;
         _lastSavedAt = _lastSavedAt!.add(Duration(seconds: recovered * 360));
+        _wasFull = isNowFull;
       });
     } else {
-      // Re-trigger rebuild to update second-by-second countdown
       setState(() {});
     }
   }
 
+  Future<void> _sendSanityNotification() async {
+    const androidDetails = AndroidNotificationDetails(
+      'sanity_channel',
+      'Sanity Timer',
+      channelDescription: 'Notifications for when Sanity is full',
+      importance: Importance.max,
+      priority: Priority.high,
+    );
+    const iosDetails = DarwinNotificationDetails();
+    const linuxDetails = LinuxNotificationDetails();
+    const details = NotificationDetails(
+      android: androidDetails,
+      iOS: iosDetails,
+      linux: linuxDetails,
+    );
+
+    await _notificationsPlugin.show(
+      id: 0,
+      title: '[Sanity Full]',
+      body: 'Your Sanity has reached maximum capacity',
+      notificationDetails: details,
+    );
+  }
+
   Future<void> _saveSanity(int newSanity) async {
     final now = DateTime.now();
+    final isNowFull = newSanity >= widget.maxSanity;
     setState(() {
       _currentSanity = newSanity;
       _lastSavedAt = now;
+      _wasFull = isNowFull;
     });
     final timer = SanityTimer(
       id: 'default',
@@ -104,6 +157,101 @@ class _SanityTimerPageState extends State<SanityTimerPage> {
     final progress = (angle / (2 * math.pi)).clamp(0.0, 1.0);
     final calculatedSanity = (progress * widget.maxSanity).round();
     _saveSanity(calculatedSanity.clamp(0, widget.maxSanity));
+  }
+
+  void _showResetModal() {
+    final sanityController = TextEditingController(text: '0');
+    final minutesController = TextEditingController(text: '0');
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: const Color(0xFF1E1E1E),
+        title: const Text(
+          'Custom Sanity Reset',
+          style: TextStyle(color: Colors.white),
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: sanityController,
+              keyboardType: TextInputType.number,
+              style: const TextStyle(color: Colors.white),
+              decoration: const InputDecoration(
+                labelText: 'Target Sanity',
+                labelStyle: TextStyle(color: Colors.white54),
+                enabledBorder: UnderlineInputBorder(
+                  borderSide: BorderSide(color: Colors.white24),
+                ),
+                focusedBorder: UnderlineInputBorder(
+                  borderSide: BorderSide(color: Colors.amber),
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: minutesController,
+              keyboardType: TextInputType.number,
+              style: const TextStyle(color: Colors.white),
+              decoration: const InputDecoration(
+                labelText: 'Minutes Ago (Offset)',
+                labelStyle: TextStyle(color: Colors.white54),
+                enabledBorder: UnderlineInputBorder(
+                  borderSide: BorderSide(color: Colors.white24),
+                ),
+                focusedBorder: UnderlineInputBorder(
+                  borderSide: BorderSide(color: Colors.amber),
+                ),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text(
+              'Cancel',
+              style: TextStyle(color: Colors.white54),
+            ),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.amber,
+              foregroundColor: Colors.black,
+            ),
+            onPressed: () {
+              final sanity =
+                  int.tryParse(sanityController.text) ?? _currentSanity;
+              final minutes = int.tryParse(minutesController.text) ?? 0;
+
+              final targetSanity = sanity.clamp(0, widget.maxSanity);
+              final adjustedTime = DateTime.now().subtract(
+                Duration(minutes: minutes),
+              );
+
+              setState(() {
+                _currentSanity = targetSanity;
+                _lastSavedAt = adjustedTime;
+                _wasFull = targetSanity >= widget.maxSanity;
+              });
+
+              final timer = SanityTimer(
+                id: 'default',
+                label: 'Sanity Recovery',
+                targetSanity: widget.maxSanity,
+                currentSanity: targetSanity,
+                createdAt: adjustedTime,
+              );
+              widget.timerRepository.saveTimer(timer);
+
+              Navigator.pop(context);
+            },
+            child: const Text('Apply'),
+          ),
+        ],
+      ),
+    );
   }
 
   String _formatRemainingTime() {
@@ -242,6 +390,44 @@ class _SanityTimerPageState extends State<SanityTimerPage> {
                         fontWeight: FontWeight.bold,
                       ),
                     ),
+                  ),
+                  const SizedBox(height: 16),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      ElevatedButton.icon(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF1E1E1E),
+                          foregroundColor: primaryColor,
+                          side: BorderSide(
+                            color: primaryColor.withValues(alpha: 0.5),
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                        ),
+                        onPressed: _showResetModal,
+                        icon: const Icon(Icons.edit, size: 18),
+                        label: const Text('Custom Reset'),
+                      ),
+                      const SizedBox(width: 12),
+                      ElevatedButton.icon(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF1E1E1E),
+                          foregroundColor: Colors.amber,
+                          side: const BorderSide(color: Colors.amberAccent),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                        ),
+                        onPressed: () {
+                          _saveSanity(widget.maxSanity);
+                          _sendSanityNotification();
+                        },
+                        icon: const Icon(Icons.bolt, size: 18),
+                        label: const Text('Test Full'),
+                      ),
+                    ],
                   ),
                 ],
               ),
