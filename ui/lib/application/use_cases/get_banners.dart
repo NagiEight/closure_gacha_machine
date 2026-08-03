@@ -1,3 +1,5 @@
+import 'package:flutter/foundation.dart';
+
 import '../../domain/entities/api_entities.dart';
 import '../../domain/ports/gacha_port.dart';
 
@@ -39,9 +41,11 @@ class GetBanners {
         try {
           return await _gachaPort.getBannerDetails(name);
         } catch (e) {
-          print(
-            '[DEBUG GetBanners] Failed to fetch details for banner "$name": $e',
-          );
+          if (kDebugMode) {
+            print(
+              '[DEBUG GetBanners] Failed to fetch details for banner "$name": $e',
+            );
+          }
           rethrow;
         }
       }),

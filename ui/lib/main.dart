@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:sentry_flutter/sentry_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:ui/application/use_cases/get_banners.dart';
 import 'package:ui/application/use_cases/get_gacha_roll.dart';
@@ -18,43 +20,76 @@ import 'package:ui/presentation/widgets/main_nav_bar.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  final prefs = await SharedPreferences.getInstance();
 
-  // 1. Initialize Infrastructure Adapters & Cached Repository
-  final gachaAdapter = ClosureGachaMachineAdapter(
-    baseUrl: 'http://localhost:3000',
-    cloudUrl: 'https://nagicloud.uk',
-  );
-  await Hive.initFlutter();
-  final operatorBox = await Hive.openBox<String>('operators');
-  final bannerBox = await Hive.openBox<String>('banners');
+  // Load environment variables from .env asset with fallback support
+  try {
+    await dotenv.load(fileName: ".env");
+  } catch (e) {
+    debugPrint('[Env] Warning: Could not load .env file: $e');
+  }
 
-  final GachaPort gachaRepository = HiveGachaRepository(
-    gachaAdapter,
-    operatorBox: operatorBox,
-    bannerBox: bannerBox,
-  );
+  final sentryDsn = dotenv.env['SENTRY_DSN'] ??
+      const String.fromEnvironment('SENTRY_DSN');
+  final environment = dotenv.env['ENVIRONMENT'] ??
+      const String.fromEnvironment('ENVIRONMENT', defaultValue: 'development');
 
-  final currencyAdapter = SharedPrefsCurrencyAdapter();
-  final collectionAdapter = SharedPrefsGachaCollectionAdapter();
-  final timerAdapter = SharedPreferencesSanityTimerRepository(prefs);
+  await SentryFlutter.init(
+    (options) {
+      options.dsn = sentryDsn;
+      options.environment = environment;
+      options.tracesSampleRate = 1.0;
+    },
+    appRunner: () async {
+      final baseUrl = dotenv.env['BASE_URL'] ??
+          const String.fromEnvironment(
+            'BASE_URL',
+            defaultValue: 'http://localhost:3000',
+          );
+      final cloudUrl = dotenv.env['CLOUD_URL'] ??
+          const String.fromEnvironment(
+            'CLOUD_URL',
+            defaultValue: 'https://nagicloud.uk',
+          );
 
-  // 2. Initialize Application Use Cases
-  final getBannersUseCase = GetBanners(gachaRepository);
-  final performGachaRollUseCase = GetGachaRoll(
-    collectionAdapter,
-    gachaRepository,
-  );
+      final prefs = await SharedPreferences.getInstance();
 
-  runApp(
-    GachaSimulatorApp(
-      gachaAdapter: gachaRepository,
-      currencyAdapter: currencyAdapter,
-      collectionAdapter: collectionAdapter,
-      timerAdapter: timerAdapter,
-      getBannersUseCase: getBannersUseCase,
-      getGachaRollUseCase: performGachaRollUseCase,
-    ),
+      // 1. Initialize Infrastructure Adapters & Cached Repository
+      final gachaAdapter = ClosureGachaMachineAdapter(
+        baseUrl: baseUrl,
+        cloudUrl: cloudUrl,
+      );
+      await Hive.initFlutter();
+      final operatorBox = await Hive.openBox<String>('operators');
+      final bannerBox = await Hive.openBox<String>('banners');
+
+      final GachaPort gachaRepository = HiveGachaRepository(
+        gachaAdapter,
+        operatorBox: operatorBox,
+        bannerBox: bannerBox,
+      );
+
+      final currencyAdapter = SharedPrefsCurrencyAdapter();
+      final collectionAdapter = SharedPrefsGachaCollectionAdapter();
+      final timerAdapter = SharedPreferencesSanityTimerRepository(prefs);
+
+      // 2. Initialize Application Use Cases
+      final getBannersUseCase = GetBanners(gachaRepository);
+      final performGachaRollUseCase = GetGachaRoll(
+        collectionAdapter,
+        gachaRepository,
+      );
+
+      runApp(
+        GachaSimulatorApp(
+          gachaAdapter: gachaRepository,
+          currencyAdapter: currencyAdapter,
+          collectionAdapter: collectionAdapter,
+          timerAdapter: timerAdapter,
+          getBannersUseCase: getBannersUseCase,
+          getGachaRollUseCase: performGachaRollUseCase,
+        ),
+      );
+    },
   );
 }
 
@@ -81,6 +116,9 @@ class GachaSimulatorApp extends StatelessWidget {
     return MaterialApp(
       title: 'Arknights Gacha Simulator',
       debugShowCheckedModeBanner: false,
+      navigatorObservers: [
+        SentryNavigatorObserver(),
+      ],
       theme: ThemeData.dark().copyWith(
         scaffoldBackgroundColor: const Color(0xFF121212),
         colorScheme: const ColorScheme.dark(

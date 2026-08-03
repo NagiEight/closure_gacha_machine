@@ -135,7 +135,7 @@ class _GachaLoadingScreenState extends State<GachaLoadingScreen> {
             Text(
               _getStepStatus(_progress),
               style: TextStyle(
-                color: Colors.white.withOpacity(0.7),
+                color: Colors.white.withValues(),
                 fontFamily: 'monospace',
                 fontSize: 11,
                 letterSpacing: 1.5,

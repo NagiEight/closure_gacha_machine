@@ -120,36 +120,41 @@ class _SettingsPageState extends State<SettingsPage> {
               borderRadius: BorderRadius.circular(8),
               border: Border.all(color: Colors.white12),
             ),
-            child: ListTile(
-              leading: const Icon(
-                Icons.delete_forever_rounded,
-                color: Colors.redAccent,
-              ),
-              title: const Text(
-                'Reset Gacha History',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w600,
+            child: Material(
+              color: Colors.transparent,
+              borderRadius: BorderRadius.circular(8),
+              clipBehavior: Clip.antiAlias,
+              child: ListTile(
+                leading: const Icon(
+                  Icons.delete_forever_rounded,
+                  color: Colors.redAccent,
                 ),
-              ),
-              subtitle: const Text(
-                'Clear acquired operators, roll counts, and logs',
-                style: TextStyle(color: Colors.white38, fontSize: 12),
-              ),
-              trailing: _isResetting
-                  ? const SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        color: Colors.redAccent,
+                title: const Text(
+                  'Reset Gacha History',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                subtitle: const Text(
+                  'Clear acquired operators, roll counts, and logs',
+                  style: TextStyle(color: Colors.white38, fontSize: 12),
+                ),
+                trailing: _isResetting
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.redAccent,
+                        ),
+                      )
+                    : const Icon(
+                        Icons.chevron_right_rounded,
+                        color: Colors.white38,
                       ),
-                    )
-                  : const Icon(
-                      Icons.chevron_right_rounded,
-                      color: Colors.white38,
-                    ),
-              onTap: _isResetting ? null : _resetCollectionHistory,
+                onTap: _isResetting ? null : _resetCollectionHistory,
+              ),
             ),
           ),
         ],

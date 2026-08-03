@@ -114,7 +114,10 @@ class _CustomRollModalState extends State<CustomRollModal> {
         fontFamily: 'bender',
         fontSize: 14,
       ),
-      onChanged: (_) => setState(() {}),
+      onChanged: (_) {
+        _saveCachedValues();
+        setState(() {});
+      },
       decoration: InputDecoration(
         labelText: label,
         prefixIcon: Icon(icon, color: Colors.amber, size: 18),
@@ -255,7 +258,7 @@ class _CustomRollModalState extends State<CustomRollModal> {
           Container(
             padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
-              color: Colors.black.withOpacity(0.5),
+              color: Colors.black.withValues(),
               borderRadius: BorderRadius.circular(6),
               border: Border.all(color: Colors.white10),
             ),
@@ -311,7 +314,7 @@ class _CustomRollModalState extends State<CustomRollModal> {
                       await prefs.setInt('cache_single_permits', 0);
                       await prefs.setInt('cache_ten_permits', 0);
 
-                      if (!mounted) return;
+                      if (!context.mounted) return;
                       Navigator.pop(context);
                       widget.onConfirm(rolls);
                     }

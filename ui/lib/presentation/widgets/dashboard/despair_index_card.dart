@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
 import 'package:ui/presentation/widgets/analytics/analytics_card.dart';
 import 'package:ui/presentation/widgets/dashboard/stat_display.dart';
 
@@ -8,6 +7,7 @@ class DespairIndexCard extends StatelessWidget {
   final double despairIndex;
 
   const DespairIndexCard({
+    super.key,
     required this.currentPityCount,
     required this.despairIndex,
   });
