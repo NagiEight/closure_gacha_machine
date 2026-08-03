@@ -471,16 +471,30 @@ export default new class {
         }
         return [Output, OutputRarity];
     }
-    public RollMultiReduced(Token: string, BannerName: string, Count: number): Record<string, number> | undefined {
-        return this.RollMulti(Token, BannerName, Count)?.reduce(
-            (Acc: Record<string, number>, Item: string): Record<string, number> => {
+
+    public RollMultiReduced(Token: string, BannerName: string, Count: number): Record<string, { Count: number; Rarity: 3 | 4 | 5 | 6; }>;
+    public RollMultiReduced(Token: string, BannerName: string, Count: number, PreserveRarity: true): Record<string, { Count: number; Rarity: 3 | 4 | 5 | 6; }>;
+    public RollMultiReduced(Token: string, BannerName: string, Count: number, PreserveRarity: boolean = false): Record<string, number> | Record<string, { Count: number; Rarity: 3 | 4 | 5 | 6; }> | undefined {
+        return PreserveRarity
+            ? this.RollMulti(Token, BannerName, Count, true)?.reduce((Acc: Record<string, { Count: number; Rarity: 3 | 4 | 5 | 6; }>, Item: [string, 3 | 4 | 5 | 6]) => {
+                Acc[Item[0]] ??= {
+                    Count: 0,
+                    Rarity: Item[1]
+                };
+                Acc[Item[0]].Count++;
+                return Acc;
+            }, {})
+            : this.RollMulti(Token, BannerName, Count)?.reduce((Acc: Record<string, number>, Item: string) => {
                 Acc[Item] ??= 0;
                 Acc[Item]++;
                 return Acc;
-            }, {}
-        );
+            }, {})
+        ;
     }
-    public RollMulti(Token: string, BannerName: string, Count: number): string[] | undefined {
+
+    public RollMulti(Token: string, BannerName: string, Count: number): string[] | undefined;
+    public RollMulti(Token: string, BannerName: string, Count: number, PreserveRarity: true): [string, 3 | 4 | 5 | 6][] | undefined;
+    public RollMulti(Token: string, BannerName: string, Count: number, PreserveRarity: boolean = false): string[] | [string, 3 | 4 | 5 | 6][] | undefined {
         if(!this.GachaProfiles[Token])
             return;
 
@@ -531,6 +545,9 @@ export default new class {
             Number(BannerProfile.Focused),
             Number(BannerProfile.TenRolls)
         );
-        return Result.map(Item => Item[0]);
+        return PreserveRarity 
+            ? Result
+            : Result.map(Item => Item[0])
+        ;
     }
 }();

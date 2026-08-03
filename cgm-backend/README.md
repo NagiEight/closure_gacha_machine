@@ -481,6 +481,11 @@ POST /gacha/:BannerName/roll
 |------------|--------|-------------|
 | BannerName | string | Banner identifier or name |
 
+### Query Parameters
+| Parameter | Type | Description |
+|------------|--------|-------------|
+| preserverarity | boolean | Whether to include result's rarity in the response |
+
 ### Headers
 ```json
 {
@@ -494,6 +499,21 @@ POST /gacha/EN A Shared Oath of Guardianship/roll
 ```
 
 ### Success Response
+#### If preserverarity == "true" or preserverarity == "1"
+**Notes:** Will default to false behavior if preserverarity is not a valid boolean.
+```typescript
+interface GachaRollResponse {
+    Result: [string, 3 | 4 | 5 | 6];
+}
+```
+**Example:**
+```json
+{
+    "Result": ["char_1046_sbell2", 6]
+}
+```
+
+#### Else
 ```typescript
 interface GachaRollResponse {
     Result: string;
@@ -544,6 +564,8 @@ POST /gacha/:BannerName/roll/:Count
 | Parameter | Type | Description |
 |------------|--------|-------------|
 | reduced | boolean | Whether to reduce the roll result |
+| preserverarity | boolean | Whether to include result's rarity in the response |
+**Notes:** Will default to false behavior if reduced or preserverarity aren't valid booleans.
 
 ### Headers
 ```json
@@ -559,8 +581,24 @@ POST /gacha/EN A Shared Oath of Guardianship/roll/10
 
 ### Success Response
 
-#### If reduced == "true" or reduced == "1"
-**Notes:** Will default to false behavior if reduced is not a valid boolean.
+#### If reduced == "true" or reduced == "1" and preserverarity == "true" or preserverarity == "1"
+```typescript
+type ReducedGachaMultiRollResponse = Record<string, {
+    Count: number;
+    Rarity: 3 | 4 | 5 | 6;
+}>;
+```
+**Example:**
+```json
+{
+    "char_1046_sbell2": {
+        "Count": 1,
+        "Rarity": 6
+    },
+    // The rest of the roll result
+}
+```
+#### Else if reduced == "true" or reduced == "1" and preserverarity == "false" or preserverarity == "0"
 ```typescript
 type ReducedGachaMultiRollResponse = Record<string, number>;
 ```
@@ -569,6 +607,22 @@ type ReducedGachaMultiRollResponse = Record<string, number>;
 {
     "char_1046_sbell2": 1,
     // The rest of the roll result
+}
+```
+
+#### Else if reduced == "false" or reduced == "0" and preserverarity == "true" or preserverarity == "1"
+```typescript
+interface GachaMultiRollResponse {
+    Result: [string, 3 | 4 | 5 | 6][];
+}
+```
+**Example:**
+```json
+{
+    "Result": [
+        ["char_1046_sbell2", 6],
+        // The rest of the roll result
+    ]
 }
 ```
 
@@ -583,7 +637,7 @@ interface GachaMultiRollResponse {
 {
     "Result": [
         "char_1046_sbell2",
-        "<9 more character ids>"
+        // The rest of the roll result
     ]
 }
 ```

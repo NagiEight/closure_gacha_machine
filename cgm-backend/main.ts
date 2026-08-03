@@ -142,8 +142,13 @@ Server.post("/gacha/create", (_, Res) => {
         return;
     }
 
-    const Result: string = GachaSystem.Roll(Token, BannerName)![0];
-    Res.json({ Result });
+    const PreserveRarity: string | undefined = Req.query.preserverarity?.toString().trim().toLowerCase();
+    const Result: [string, 3 | 4 | 5 | 6] = GachaSystem.Roll(Token, BannerName)!;
+    if(PreserveRarity === "true" || PreserveRarity === "1") {
+        Res.json({ Result });
+        return;
+    }
+    Res.json({ Result: Result[0] });
 })
 .post("/gacha/:BannerName/roll/:Count", (Req, Res) => {
     const BannerName: string = Req.params.BannerName;
@@ -176,13 +181,19 @@ Server.post("/gacha/create", (_, Res) => {
     }
 
     const Reduced: string | undefined = Req.query.reduced?.toString().trim().toLowerCase();
+    const PreserveRarity: string | undefined = Req.query.preserverarity?.toString().trim().toLowerCase();
     if(Reduced === "true" || Reduced === "1") {
-        Res.json(GachaSystem.RollMultiReduced(Token, BannerName, Count)!);
+        Res.json(PreserveRarity === "true" || PreserveRarity === "1"
+            ? GachaSystem.RollMultiReduced(Token, BannerName, Count, true)!
+            : GachaSystem.RollMultiReduced(Token, BannerName, Count)!
+        );
         return;
     }
-
-    const Result: string[] = GachaSystem.RollMulti(Token, BannerName, Count)!;
-    Res.json({ Result });
+    Res.json({ 
+        Result: PreserveRarity === "true" || PreserveRarity === "1"
+            ? GachaSystem.RollMulti(Token, BannerName, Count, true)!
+            : GachaSystem.RollMulti(Token, BannerName, Count)!
+    });
 })
 .purge("/gacha/delete", (Req, Res) => {
     const Token: string | undefined = Req.get("Session-Token");
