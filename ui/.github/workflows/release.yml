@@ -1,0 +1,66 @@
+name: Release Pipeline
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+  workflow_dispatch:
+
+jobs:
+  release:
+    name: Build & Publish Release
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Setup Flutter SDK
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+
+      - name: Install Dependencies
+        run: flutter pub get
+
+      - name: Create Production .env
+        run: |
+          if [ -n "${{ secrets.SENTRY_DSN }}" ]; then
+            echo "SENTRY_DSN=${{ secrets.SENTRY_DSN }}" >> .env
+            echo "ENVIRONMENT=production" >> .env
+            echo "BASE_URL=${{ secrets.BASE_URL }}" >> .env
+            echo "CLOUD_URL=${{ secrets.CLOUD_URL }}" >> .env
+          else
+            cp .env.example .env
+          fi
+
+      - name: Build Web Release
+        run: flutter build web --release
+
+      - name: Package Web Build
+        run: |
+          cd build/web && zip -r ../../web-release.zip .
+
+      - name: Build Android APK
+        run: flutter build apk --release
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            web-release.zip
+            build/app/outputs/flutter-apk/app-release.apk
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

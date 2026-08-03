@@ -114,7 +114,10 @@ class _CustomRollModalState extends State<CustomRollModal> {
         fontFamily: 'bender',
         fontSize: 14,
       ),
-      onChanged: (_) => setState(() {}),
+      onChanged: (_) {
+        _saveCachedValues();
+        setState(() {});
+      },
       decoration: InputDecoration(
         labelText: label,
         prefixIcon: Icon(icon, color: Colors.amber, size: 18),
