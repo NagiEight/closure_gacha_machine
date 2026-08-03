@@ -10,6 +10,9 @@ jobs:
   analyze-and-test:
     name: Lint & Test
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ui
 
     steps:
       - name: Checkout Code
@@ -50,6 +53,9 @@ jobs:
     name: Build Verification
     needs: analyze-and-test
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ui
 
     steps:
       - name: Checkout Code
