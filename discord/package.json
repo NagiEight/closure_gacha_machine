@@ -1,0 +1,18 @@
+{
+  "devDependencies": {
+    "@types/better-sqlite3": "^9.6.0",
+    "@types/node": "^26.1.1"
+  },
+  "dependencies": {
+    "better-sqlite3": "^13.0.2",
+    "discord.js": "^14.27.0",
+    "dotenv": "^17.4.2"
+  },
+  "type": "module",
+  "scripts": {
+    "dev": "tsx main.ts",
+    "start": "node public/main.js",
+    "deploy": "tsx DeployCommands.ts",
+    "build": "tsc"
+  }
+}
