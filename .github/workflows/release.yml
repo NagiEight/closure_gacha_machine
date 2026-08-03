@@ -10,6 +10,9 @@ jobs:
   release:
     name: Build & Publish Release
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ui
 
     permissions:
       contents: write
