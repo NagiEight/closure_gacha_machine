@@ -4,10 +4,13 @@ import 'package:ui/domain/entities/api_entities.dart';
 import 'package:ui/domain/entities/local_entities.dart';
 import 'package:ui/domain/ports/gacha_port.dart';
 import 'package:ui/domain/repositories/currency_repository.dart';
+import 'package:ui/domain/repositories/gacha_collection_repository.dart';
+import 'package:ui/presentation/pages/history.dart';
 import 'package:ui/presentation/widgets/gacha/banner_details.dart';
 import 'package:ui/presentation/widgets/gacha/currency_pill.dart';
 import 'package:ui/presentation/widgets/gacha/currency_selector.dart';
 import 'package:ui/presentation/widgets/gacha/gacha_action_button.dart';
+import 'package:ui/presentation/widgets/gacha/gacha_loading_screen.dart';
 import 'package:ui/presentation/widgets/gacha/gacha_modals.dart';
 import 'package:ui/presentation/widgets/gacha/gacha_result_dialog.dart';
 
@@ -16,6 +19,7 @@ class GachaPage extends StatefulWidget {
   final GachaPort gachaPort;
   final String sessionToken;
   final CurrencyRepository currencyRepo;
+  final GachaCollectionRepository collectionRepo;
   final GetGachaRoll performGachaRollUseCase;
 
   const GachaPage({
@@ -24,6 +28,7 @@ class GachaPage extends StatefulWidget {
     required this.gachaPort,
     required this.sessionToken,
     required this.currencyRepo,
+    required this.collectionRepo,
     required this.performGachaRollUseCase,
   });
 
@@ -76,17 +81,26 @@ class _GachaPageState extends State<GachaPage> {
     setState(() => _isRolling = true);
 
     try {
-      final results = await widget.performGachaRollUseCase.execute(
-        bannerName: widget.banner.name,
-        sessionToken: widget.sessionToken,
-        currencyType: _mapToRollCurrencyType(_selectedCurrency),
-        count: count,
+      await Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (context) => GachaLoadingScreen(
+            gachaPort: widget.gachaPort,
+            fetchGachaResults: () => widget.performGachaRollUseCase.execute(
+              bannerName: widget.banner.name,
+              sessionToken: widget.sessionToken,
+              currencyType: _mapToRollCurrencyType(_selectedCurrency),
+              count: count,
+            ),
+            onComplete: (results) async {
+              Navigator.of(context).pop(); // Dismiss loading screen
+              await _loadCurrency();
+
+              if (!mounted) return;
+              GachaResultsDialog.show(context, results, widget.gachaPort);
+            },
+          ),
+        ),
       );
-
-      await _loadCurrency();
-
-      if (!mounted) return;
-      GachaResultsDialog.show(context, results, widget.gachaPort);
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -135,6 +149,22 @@ class _GachaPageState extends State<GachaPage> {
           style: TextStyle(color: Colors.white, fontSize: 16),
         ),
         centerTitle: true,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.history_rounded, color: Colors.amber),
+            tooltip: 'Recruitment History',
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (context) => HistoryPage(
+                    collectionRepo: widget.collectionRepo,
+                    gachaPort: widget.gachaPort,
+                  ),
+                ),
+              );
+            },
+          ),
+        ],
       ),
       body: SafeArea(
         child: Column(

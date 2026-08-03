@@ -38,8 +38,8 @@ class MainNavBar extends StatelessWidget {
             onTap: () => onTap(2),
           ),
           _NavBarItem(
-            icon: Icons.inventory_2_outlined,
-            label: 'Inventory',
+            icon: Icons.dashboard_outlined,
+            label: 'Dashboard',
             isSelected: currentIndex == 3,
             onTap: () => onTap(3),
           ),
