@@ -486,6 +486,8 @@ POST /gacha/:BannerName/roll
 |------------|--------|-------------|
 | preserverarity | boolean | Whether to include result's rarity in the response |
 
+**Notes:** Will default to false behavior if preserverarity is not a valid boolean.
+
 ### Headers
 ```json
 {
@@ -500,7 +502,6 @@ POST /gacha/EN A Shared Oath of Guardianship/roll
 
 ### Success Response
 #### If preserverarity == "true" or preserverarity == "1"
-**Notes:** Will default to false behavior if preserverarity is not a valid boolean.
 ```typescript
 interface GachaRollResponse {
     Result: [string, 3 | 4 | 5 | 6];
@@ -565,6 +566,7 @@ POST /gacha/:BannerName/roll/:Count
 |------------|--------|-------------|
 | reduced | boolean | Whether to reduce the roll result |
 | preserverarity | boolean | Whether to include result's rarity in the response |
+
 **Notes:** Will default to false behavior if reduced or preserverarity aren't valid booleans.
 
 ### Headers
