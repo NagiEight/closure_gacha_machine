@@ -688,6 +688,7 @@ Delete profile successfully.
 |-------------|-------------|
 | 200 | Request completed successfully |
 | 404 | Resource not found or invalid parameter |
+| 429 | Exceeded API rate limit |
 
 ---
 
@@ -697,3 +698,4 @@ Delete profile successfully.
 - Banner pagination starts at page `1`.
 - Requests for non-existent banners or operators return a `404` response.
 - Responses are served directly from the application's database manager (`Database.Manager`).
+- API limit: 50 requests/sec (can be set in .env).

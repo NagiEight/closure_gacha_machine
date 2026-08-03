@@ -7,7 +7,7 @@ import LoadEnv from "./singletons/LoadEnv.js";
 const Server: Express = express();
 const Limiter: RateLimitRequestHandler = rateLimit({
     windowMs: 1000,
-    limit: 50,
+    limit: LoadEnv.RATE_LIMIT,
     message: {
         error: "Too many requests, please try again later."
     },
