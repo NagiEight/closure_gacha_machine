@@ -125,7 +125,7 @@ class DataManager {
     public constructor() {
         const Signals: string[] = ["SIGTERM", "SIGINT", "uncaughtException", "unhandledRejection"];
         for(const Signal in Signals) {
-            process.on(Signal, () => {
+            process.on(Signal, (): void => {
                 DB.close();
                 process.exit(0);
             });
@@ -170,6 +170,8 @@ class DataManager {
                     break;
             }
         }
+
+        this.Banners = new Map([...this.Banners.entries()].sort((A, B) => B[1].ReleaseDate - A[1].ReleaseDate));
     }
 
     private static Pagination<T>(Page: number, Set: Iterable<T>): Iterable<T> {
