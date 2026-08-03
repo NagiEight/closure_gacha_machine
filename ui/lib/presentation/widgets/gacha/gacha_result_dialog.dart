@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:ui/domain/ports/gacha_port.dart';
 
@@ -30,14 +31,57 @@ class GachaResultsDialog extends StatefulWidget {
 class _GachaResultsDialogState extends State<GachaResultsDialog> {
   final ScrollController _scrollController = ScrollController();
   bool _showRightArrow = false;
+  late final List<bool> _revealed;
 
   @override
   void initState() {
     super.initState();
+    _revealed = List.filled(widget.operatorIds.length, false);
+
     if (widget.operatorIds.length > 10) {
       _showRightArrow = true;
       _scrollController.addListener(_onScroll);
     }
+
+    _revealCardsRandomly();
+  }
+
+  final List<String> _terminalLogs = [];
+  final ScrollController _terminalScrollController = ScrollController();
+
+  // 2. Append fake logs during your reveal sequence
+  Future<void> _revealCardsRandomly() async {
+    final count = widget.operatorIds.length;
+    final indices = List.generate(count, (i) => i)..shuffle();
+
+    // Clamp overall reveal sequence to ~1.5 to 3 seconds max
+    final totalDurationMs = (count * 50).clamp(1500, 3000);
+    final intervalMs = (totalDurationMs / count).round();
+
+    _addLog('[SYS_INIT] Initializing batch acquisition ($count units)...');
+
+    for (final index in indices) {
+      await Future.delayed(Duration(milliseconds: intervalMs));
+      if (!mounted) return;
+
+      setState(() {
+        _revealed[index] = true;
+        _addLog('[ACQUIRED] Op_ID: ${widget.operatorIds[index]} resolved.');
+      });
+    }
+
+    _addLog('[SUCCESS] All $count signals decrypted.');
+  }
+
+  void _addLog(String log) {
+    _terminalLogs.add(log);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_terminalScrollController.hasClients) {
+        _terminalScrollController.jumpTo(
+          _terminalScrollController.position.maxScrollExtent,
+        );
+      }
+    });
   }
 
   void _onScroll() {
@@ -59,31 +103,68 @@ class _GachaResultsDialogState extends State<GachaResultsDialog> {
     super.dispose();
   }
 
-  Widget _buildSingleOperatorCard(String id, double height) {
-    final width = height * 0.5; // Maintains 180:360 ratio at natural scale
+  Widget _buildOperatorCard({
+    required String id,
+    required double width,
+    required double height,
+    required int index,
+  }) {
+    final isRevealed = _revealed[index];
+
     return SizedBox(
       width: width,
       height: height,
-      child: Image.network(
-        widget.gachaPort.getOperatorCardUrl(id),
-        fit: BoxFit.cover,
-        alignment: Alignment.center,
-        errorBuilder: (_, __, ___) =>
-            const Icon(Icons.person, color: Colors.white, size: 36),
+      child: Stack(
+        children: [
+          Positioned.fill(
+            child: CachedNetworkImage(
+              imageUrl: widget.gachaPort.getOperatorCardUrl(id),
+              fit: BoxFit.cover,
+              alignment: Alignment.center,
+            ),
+          ),
+          ClipRect(
+            child: Align(
+              alignment: Alignment.bottomCenter,
+              child: AnimatedFractionallySizedBox(
+                duration: const Duration(milliseconds: 350),
+                curve: Curves.easeInOut,
+                heightFactor: isRevealed ? 0.0 : 1.0,
+                widthFactor: 1.0,
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 150),
+                  // Flashes white briefly as it begins revealing!
+                  color: isRevealed ? Colors.white : Colors.amber,
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
 
-  Widget _buildGridOperatorCard(String id, double width, double height) {
-    return SizedBox(
-      width: width,
-      height: height,
-      child: Image.network(
-        widget.gachaPort.getOperatorCardUrl(id),
-        fit: BoxFit.cover,
-        alignment: Alignment.center,
-        errorBuilder: (_, __, ___) =>
-            const Icon(Icons.person, color: Colors.white, size: 36),
+  Widget _buildTerminalOverlay() {
+    return Container(
+      height: 60,
+      margin: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+      padding: const EdgeInsets.all(8),
+      decoration: BoxDecoration(
+        color: Colors.black.withOpacity(0.6),
+        border: Border.all(color: Colors.amber.withOpacity(0.4)),
+        borderRadius: BorderRadius.circular(4),
+      ),
+      child: ListView.builder(
+        controller: _terminalScrollController,
+        itemCount: _terminalLogs.length,
+        itemBuilder: (_, index) => Text(
+          _terminalLogs[index],
+          style: const TextStyle(
+            color: Colors.amberAccent,
+            fontFamily: 'monospace',
+            fontSize: 11,
+          ),
+        ),
       ),
     );
   }
@@ -96,13 +177,13 @@ class _GachaResultsDialogState extends State<GachaResultsDialog> {
 
     final isSingle = widget.operatorIds.length == 1;
 
-    // Grid measurements for multiple operators
     final cardWidth = screenWidth * 0.20;
     final cardHeight = cardWidth * 2;
 
+    final singleHeight = screenHeight * 0.6;
+    final singleWidth = singleHeight * 0.5;
+
     final int halfLength = (widget.operatorIds.length / 2).ceil();
-    final row1 = widget.operatorIds.take(halfLength).toList();
-    final row2 = widget.operatorIds.skip(halfLength).toList();
 
     return Dialog.fullscreen(
       backgroundColor: Colors.black.withOpacity(0.85),
@@ -112,11 +193,12 @@ class _GachaResultsDialogState extends State<GachaResultsDialog> {
             child: Padding(
               padding: const EdgeInsets.all(16.0),
               child: Text(
-                'Headhunt Acquisition (${widget.operatorIds.length})',
+                '-HEADHUNT ACQUISITION (${widget.operatorIds.length})-',
                 style: const TextStyle(
                   color: Colors.white,
                   fontSize: 20,
-                  fontWeight: FontWeight.bold,
+                  fontFamily: 'bender',
+                  letterSpacing: 2.0,
                 ),
               ),
             ),
@@ -124,9 +206,11 @@ class _GachaResultsDialogState extends State<GachaResultsDialog> {
           Expanded(
             child: isSingle
                 ? Center(
-                    child: _buildSingleOperatorCard(
-                      widget.operatorIds.first,
-                      screenHeight * 0.6, // Displays at full natural size
+                    child: _buildOperatorCard(
+                      id: widget.operatorIds.first,
+                      width: singleWidth,
+                      height: singleHeight,
+                      index: 0,
                     ),
                   )
                 : Stack(
@@ -141,28 +225,31 @@ class _GachaResultsDialogState extends State<GachaResultsDialog> {
                             children: [
                               Row(
                                 mainAxisSize: MainAxisSize.min,
-                                children: row1
-                                    .map(
-                                      (id) => _buildGridOperatorCard(
-                                        id,
-                                        cardWidth,
-                                        cardHeight,
-                                      ),
-                                    )
-                                    .toList(),
+                                children: List.generate(
+                                  halfLength,
+                                  (i) => _buildOperatorCard(
+                                    id: widget.operatorIds[i],
+                                    width: cardWidth,
+                                    height: cardHeight,
+                                    index: i,
+                                  ),
+                                ),
                               ),
-                              if (row2.isNotEmpty)
+                              if (widget.operatorIds.length > 1)
                                 Row(
                                   mainAxisSize: MainAxisSize.min,
-                                  children: row2
-                                      .map(
-                                        (id) => _buildGridOperatorCard(
-                                          id,
-                                          cardWidth,
-                                          cardHeight,
-                                        ),
-                                      )
-                                      .toList(),
+                                  children: List.generate(
+                                    widget.operatorIds.length - halfLength,
+                                    (i) {
+                                      final index = halfLength + i;
+                                      return _buildOperatorCard(
+                                        id: widget.operatorIds[index],
+                                        width: cardWidth,
+                                        height: cardHeight,
+                                        index: index,
+                                      );
+                                    },
+                                  ),
                                 ),
                             ],
                           ),
@@ -193,6 +280,7 @@ class _GachaResultsDialogState extends State<GachaResultsDialog> {
                     ],
                   ),
           ),
+          _buildTerminalOverlay(),
           SafeArea(
             child: Padding(
               padding: const EdgeInsets.all(16.0),

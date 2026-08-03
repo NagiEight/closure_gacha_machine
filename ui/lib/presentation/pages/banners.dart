@@ -8,6 +8,8 @@ import 'package:ui/domain/repositories/gacha_collection_repository.dart';
 import 'package:ui/presentation/widgets/banners/banner_card.dart';
 import 'package:ui/presentation/widgets/banners/region_pill.dart';
 
+enum BannerSortOption { newest, oldest, name }
+
 class BannersPage extends StatefulWidget {
   final GetBanners getBannersUseCase;
   final GachaPort gachaPort;
@@ -30,6 +32,10 @@ class BannersPage extends StatefulWidget {
 
 class _BannersPageState extends State<BannersPage> {
   ServerRegion _selectedRegion = ServerRegion.en;
+  final TextEditingController _searchController = TextEditingController();
+  bool _isSearching = false;
+  String _searchQuery = '';
+  BannerSortOption _sortOption = BannerSortOption.newest;
 
   final List<BannerEntity> _banners = [];
   bool _isLoading = false;
@@ -40,9 +46,20 @@ class _BannersPageState extends State<BannersPage> {
   @override
   void initState() {
     super.initState();
+    _searchController.addListener(() {
+      setState(() {
+        _searchQuery = _searchController.text.trim().toLowerCase();
+      });
+    });
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _fetchNextBannerPage();
     });
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
   }
 
   Future<void> _fetchNextBannerPage() async {
@@ -93,18 +110,98 @@ class _BannersPageState extends State<BannersPage> {
     await _fetchNextBannerPage();
   }
 
+  List<BannerEntity> get _filteredAndSortedBanners {
+    var list = _banners.where((banner) {
+      if (_searchQuery.isEmpty) return true;
+      return banner.name.toLowerCase().contains(_searchQuery);
+    }).toList();
+
+    list.sort((a, b) {
+      switch (_sortOption) {
+        case BannerSortOption.newest:
+          return b.releaseDate.compareTo(a.releaseDate);
+        case BannerSortOption.oldest:
+          return a.releaseDate.compareTo(b.releaseDate);
+        case BannerSortOption.name:
+          return a.name.compareTo(b.name);
+      }
+    });
+
+    return list;
+  }
+
   @override
   Widget build(BuildContext context) {
+    final displayedBanners = _filteredAndSortedBanners;
+
+    // Determine the true newest banner from all fetched banners to keep it active correctly
+    BannerEntity? newestBanner;
+    if (_banners.isNotEmpty) {
+      newestBanner = _banners.reduce(
+        (curr, next) =>
+            curr.releaseDate.isAfter(next.releaseDate) ? curr : next,
+      );
+    }
+
     return Scaffold(
       backgroundColor: const Color(0xFF121212),
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        title: RegionSelectorPill(
-          selectedRegion: _selectedRegion,
-          onRegionChanged: _onRegionChanged,
-        ),
         centerTitle: true,
+        title: _isSearching
+            ? TextField(
+                controller: _searchController,
+                autofocus: true,
+                style: const TextStyle(color: Colors.white, fontSize: 16),
+                decoration: const InputDecoration(
+                  hintText: 'Search banners...',
+                  hintStyle: TextStyle(color: Colors.white54),
+                  border: InputBorder.none,
+                ),
+              )
+            : RegionSelectorPill(
+                selectedRegion: _selectedRegion,
+                onRegionChanged: _onRegionChanged,
+              ),
+        leading: _isSearching
+            ? IconButton(
+                icon: const Icon(Icons.arrow_back, color: Colors.white),
+                onPressed: () {
+                  setState(() {
+                    _isSearching = false;
+                    _searchController.clear();
+                    _searchQuery = '';
+                  });
+                },
+              )
+            : null,
+        actions: [
+          if (!_isSearching)
+            IconButton(
+              icon: const Icon(Icons.search, color: Colors.amber),
+              onPressed: () => setState(() => _isSearching = true),
+            ),
+          PopupMenuButton<BannerSortOption>(
+            icon: const Icon(Icons.sort, color: Colors.amber),
+            color: const Color(0xFF1E1E1E),
+            onSelected: (value) => setState(() => _sortOption = value),
+            itemBuilder: (context) => const [
+              PopupMenuItem(
+                value: BannerSortOption.newest,
+                child: Text('Newest', style: TextStyle(color: Colors.white)),
+              ),
+              PopupMenuItem(
+                value: BannerSortOption.oldest,
+                child: Text('Oldest', style: TextStyle(color: Colors.white)),
+              ),
+              PopupMenuItem(
+                value: BannerSortOption.name,
+                child: Text('Name', style: TextStyle(color: Colors.white)),
+              ),
+            ],
+          ),
+        ],
       ),
       body: NotificationListener<ScrollNotification>(
         onNotification: (ScrollNotification scrollInfo) {
@@ -126,11 +223,13 @@ class _BannersPageState extends State<BannersPage> {
           child: CustomScrollView(
             physics: const AlwaysScrollableScrollPhysics(),
             slivers: [
-              if (_banners.isEmpty && !_isLoading && _errorMessage == null)
+              if (displayedBanners.isEmpty &&
+                  !_isLoading &&
+                  _errorMessage == null)
                 const SliverFillRemaining(
                   child: Center(
                     child: Text(
-                      'No banners found for this region.',
+                      'No banners found.',
                       style: TextStyle(color: Colors.white54),
                     ),
                   ),
@@ -155,13 +254,15 @@ class _BannersPageState extends State<BannersPage> {
                     ),
                   ),
                 ),
-              if (_banners.isNotEmpty)
+              if (displayedBanners.isNotEmpty)
                 SliverPadding(
                   padding: const EdgeInsets.all(16),
                   sliver: SliverList(
                     delegate: SliverChildBuilderDelegate((context, index) {
-                      final banner = _banners[index];
-                      final isActive = index == 0;
+                      final banner = displayedBanners[index];
+                      final isActive =
+                          newestBanner != null &&
+                          banner.name == newestBanner.name;
 
                       return Padding(
                         padding: const EdgeInsets.only(bottom: 16),
@@ -175,7 +276,7 @@ class _BannersPageState extends State<BannersPage> {
                               widget.performGachaRollUseCase,
                         ),
                       );
-                    }, childCount: _banners.length),
+                    }, childCount: displayedBanners.length),
                   ),
                 ),
               if (_isLoading)

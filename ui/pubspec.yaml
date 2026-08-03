@@ -7,9 +7,13 @@ environment:
   sdk: ^3.12.2
 
 dependencies:
+  cached_network_image: ^3.4.1
   fl_chart: ^1.2.0
   flutter:
     sdk: flutter
+  flutter_local_notifications: ^22.2.0
+  hive: ^2.2.3
+  hive_flutter: ^1.1.0
   http: ^1.6.0
   shared_preferences: ^2.2.2
 

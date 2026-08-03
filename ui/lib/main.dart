@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:ui/application/use_cases/get_banners.dart';
 import 'package:ui/application/use_cases/get_gacha_roll.dart';
+import 'package:ui/domain/ports/gacha_port.dart';
 import 'package:ui/infrastructure/adapters/closure_gacha_machine.dart';
+import 'package:ui/infrastructure/repositories/gacha_repository.dart';
 import 'package:ui/infrastructure/repositories/shared_prefs_currency_repository.dart';
 import 'package:ui/infrastructure/repositories/shared_prefs_gacha_collection_adapter.dart';
 import 'package:ui/infrastructure/repositories/shared_prefs_sanity_timer_adapter.dart';
@@ -17,26 +20,35 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   final prefs = await SharedPreferences.getInstance();
 
-  // 1. Initialize Infrastructure Adapters
+  // 1. Initialize Infrastructure Adapters & Cached Repository
   final gachaAdapter = ClosureGachaMachineAdapter(
     baseUrl: 'http://localhost:3000',
     cloudUrl: 'https://nagicloud.uk',
   );
+  await Hive.initFlutter();
+  final operatorBox = await Hive.openBox<String>('operators');
+  final bannerBox = await Hive.openBox<String>('banners');
+
+  final GachaPort gachaRepository = HiveGachaRepository(
+    gachaAdapter,
+    operatorBox: operatorBox,
+    bannerBox: bannerBox,
+  );
+
   final currencyAdapter = SharedPrefsCurrencyAdapter();
   final collectionAdapter = SharedPrefsGachaCollectionAdapter();
   final timerAdapter = SharedPreferencesSanityTimerRepository(prefs);
 
   // 2. Initialize Application Use Cases
-  final getBannersUseCase = GetBanners(gachaAdapter);
+  final getBannersUseCase = GetBanners(gachaRepository);
   final performGachaRollUseCase = GetGachaRoll(
-    currencyAdapter,
     collectionAdapter,
-    gachaAdapter,
+    gachaRepository,
   );
 
   runApp(
     GachaSimulatorApp(
-      gachaAdapter: gachaAdapter,
+      gachaAdapter: gachaRepository,
       currencyAdapter: currencyAdapter,
       collectionAdapter: collectionAdapter,
       timerAdapter: timerAdapter,
@@ -47,7 +59,7 @@ Future<void> main() async {
 }
 
 class GachaSimulatorApp extends StatelessWidget {
-  final ClosureGachaMachineAdapter gachaAdapter;
+  final GachaPort gachaAdapter;
   final SharedPrefsCurrencyAdapter currencyAdapter;
   final SharedPrefsGachaCollectionAdapter collectionAdapter;
   final SharedPreferencesSanityTimerRepository timerAdapter;
@@ -89,7 +101,7 @@ class GachaSimulatorApp extends StatelessWidget {
 }
 
 class MainShellPage extends StatefulWidget {
-  final ClosureGachaMachineAdapter gachaAdapter;
+  final GachaPort gachaAdapter;
   final SharedPrefsCurrencyAdapter currencyAdapter;
   final SharedPrefsGachaCollectionAdapter collectionAdapter;
   final SharedPreferencesSanityTimerRepository timerAdapter;
@@ -115,8 +127,6 @@ class _MainShellPageState extends State<MainShellPage> {
 
   @override
   Widget build(BuildContext context) {
-    // main.dart
-
     final pages = [
       SanityTimerPage(timerRepository: widget.timerAdapter),
       HistoryPage(

@@ -1,20 +1,79 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:ui/domain/entities/api_entities.dart';
+import 'package:ui/domain/ports/gacha_port.dart';
 
-class BannerDetails extends StatelessWidget {
+class BannerDetailsWidget extends StatefulWidget {
   final BannerEntity banner;
-  final String imageUrl;
+  final GachaPort gachaPort;
 
-  const BannerDetails({
+  const BannerDetailsWidget({
     super.key,
     required this.banner,
-    required this.imageUrl,
+    required this.gachaPort,
   });
 
   @override
+  State<BannerDetailsWidget> createState() => _BannerDetailsWidgetState();
+}
+
+class _BannerDetailsWidgetState extends State<BannerDetailsWidget> {
+  final Map<String, String> _operatorNames = {};
+  final Map<String, int> _operatorRarities = {};
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadOperatorInfo();
+  }
+
+  Future<void> _loadOperatorInfo() async {
+    final featuredSixStars = widget.banner.operatorPool.sixStars.primary;
+    final featuredFiveStars = widget.banner.operatorPool.fiveStars.primary;
+    final allFeaturedIds = [...featuredSixStars, ...featuredFiveStars];
+
+    final names = <String, String>{};
+    final rarities = <String, int>{};
+
+    for (final id in allFeaturedIds) {
+      try {
+        final operator = await widget.gachaPort.getOperatorDetails(id);
+        names[id] = operator.name;
+        rarities[id] = operator.rarity;
+      } catch (_) {
+        names[id] = id;
+        rarities[id] = featuredSixStars.contains(id) ? 6 : 5;
+      }
+    }
+
+    if (mounted) {
+      setState(() {
+        _operatorNames.addAll(names);
+        _operatorRarities.addAll(rarities);
+        _isLoading = false;
+      });
+    }
+  }
+
+  Color _getRarityColor(int rarity) {
+    switch (rarity) {
+      case 6:
+        return Colors.amber;
+      case 5:
+        return Colors.orangeAccent;
+      case 4:
+        return Colors.purpleAccent;
+      default:
+        return Colors.blueAccent;
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final featuredSixStars = banner.operatorPool.sixStars.primary;
-    final featuredFiveStars = banner.operatorPool.fiveStars.primary;
+    final imageUrl = widget.gachaPort.getBannerCoverUrl(widget.banner.name);
+    final featuredSixStars = widget.banner.operatorPool.sixStars.primary;
+    final featuredFiveStars = widget.banner.operatorPool.fiveStars.primary;
     final allFeatured = [...featuredSixStars, ...featuredFiveStars];
 
     return SingleChildScrollView(
@@ -26,20 +85,7 @@ class BannerDetails extends StatelessWidget {
             borderRadius: BorderRadius.circular(12),
             child: AspectRatio(
               aspectRatio: 16 / 9,
-              child: Image.network(
-                imageUrl,
-                fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) => Container(
-                  color: Colors.grey[900],
-                  child: const Center(
-                    child: Icon(
-                      Icons.broken_image,
-                      color: Colors.white38,
-                      size: 48,
-                    ),
-                  ),
-                ),
-              ),
+              child: CachedNetworkImage(imageUrl: imageUrl, fit: BoxFit.cover),
             ),
           ),
           const SizedBox(height: 16),
@@ -51,7 +97,7 @@ class BannerDetails extends StatelessWidget {
               border: Border.all(color: Colors.amber[700]!),
             ),
             child: Text(
-              banner.type.name.toUpperCase(),
+              widget.banner.type.name.toUpperCase(),
               style: TextStyle(
                 color: Colors.amber[400],
                 fontSize: 11,
@@ -62,7 +108,7 @@ class BannerDetails extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            banner.name,
+            widget.banner.name,
             style: const TextStyle(
               color: Colors.white,
               fontSize: 22,
@@ -88,14 +134,42 @@ class BannerDetails extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 6),
-            Text(
-              allFeatured.join('  •  '),
-              style: TextStyle(
-                color: Colors.grey[300],
-                fontSize: 14,
-                height: 1.4,
-              ),
-            ),
+            _isLoading
+                ? const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 8.0),
+                    child: SizedBox(
+                      height: 20,
+                      width: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Colors.amber,
+                      ),
+                    ),
+                  )
+                : Wrap(
+                    spacing: 8,
+                    runSpacing: 4,
+                    children: allFeatured.map((id) {
+                      final rarity = _operatorRarities[id] ?? 5;
+                      final rarityColor = _getRarityColor(rarity);
+
+                      return Chip(
+                        backgroundColor: const Color(0xFF2C2C2C),
+                        side: BorderSide(
+                          color: rarityColor.withOpacity(0.5),
+                          width: 1,
+                        ),
+                        label: Text(
+                          _operatorNames[id] ?? id,
+                          style: TextStyle(
+                            color: rarityColor,
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      );
+                    }).toList(),
+                  ),
           ],
         ],
       ),
