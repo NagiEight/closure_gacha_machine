@@ -13,6 +13,7 @@ import CommandManager from "../singletons/CommandManager.js";
 import Paginate from "../helpers/Paginate.js";
 import GetMaxPage from "../helpers/GetMaxPage.js";
 import ActionRowIDBuilder from "../helpers/ActionRowIDBuilder.js";
+import SendMessage from "../helpers/SendMessage.js";
 
 enum ButtonType {
     BackwardToStart,
@@ -50,7 +51,7 @@ export default {
 
         const Embed: EmbedBuilder = new EmbedBuilder()
             .setColor(0x00ffff)
-            .setTitle(`Help command.`)
+            .setTitle("Help command.")
             .addFields(
                 ...CommandPages.map(Command => ({
                     name: `/${Command.Command.name} ${
@@ -76,11 +77,7 @@ export default {
             )
         ;
 
-        await Interaction.editReply({
-            embeds: [Embed],
-            components: MaxPage > 1 ? [ButtonRow] : undefined,
-            allowedMentions: { repliedUser: false }
-        })
+        await SendMessage(Interaction, [Embed], MaxPage > 1 ? [ButtonRow] : []);
     },
     Button: async (Interaction: ButtonInteraction): Promise<void> => {
         const [, ActionMeta, Owner]: string[] = Interaction.customId.split(":");
@@ -147,20 +144,12 @@ export default {
         const ForwardToEndButton: ButtonBuilder = ConstructButton(ButtonType.ForwardToEnd, NextPage, Owner);
         const ButtonRow: ActionRowBuilder<ButtonBuilder> = new ActionRowBuilder<ButtonBuilder>()
             .addComponents(
-                ...(
-                    NextPage === 1 
-                        ? [ForwardButton, ForwardToEndButton]
-                    : NextPage === MaxPage
-                        ? [BackwardToStartButton, BackwardButton]
-                    : [BackwardToStartButton, BackwardButton, ForwardButton, ForwardToEndButton]
+                ...[BackwardToStartButton, BackwardButton, ForwardButton, ForwardToEndButton].slice(
+                    ...(NextPage === 1 ? [0, 2] : NextPage === MaxPage ? [2, 4] : [0, 4])
                 )
             )
         ;
 
-        await Interaction.update({
-            embeds: [Embed],
-            components: MaxPage > 1 ? [ButtonRow] : undefined,
-            allowedMentions: { repliedUser: false }
-        });
+        await SendMessage(Interaction, [Embed], MaxPage > 1 ? [ButtonRow] : []);
     }
 } satisfies Command;

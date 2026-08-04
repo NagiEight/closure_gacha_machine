@@ -192,12 +192,8 @@ export default {
         );
         const ButtonRow: ActionRowBuilder<ButtonBuilder> = new ActionRowBuilder<ButtonBuilder>()
             .addComponents(
-                ...(
-                    NextPage === 1 
-                        ? [ForwardButton, ForwardToEndButton]
-                    : NextPage === MaxPage
-                        ? [BackwardToStartButton, BackwardButton]
-                    : [BackwardToStartButton, BackwardButton, ForwardButton, ForwardToEndButton]
+                ...[BackwardToStartButton, BackwardButton, ForwardButton, ForwardToEndButton].slice(
+                    ...(NextPage === 1 ? [0, 2] : NextPage === MaxPage ? [2, 4] : [0, 4])
                 )
             )
         ;
