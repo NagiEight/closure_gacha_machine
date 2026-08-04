@@ -3,6 +3,7 @@ import type { Command } from "../types/Command.js";
 import Database from "../singletons/Database.js";
 import Roll from "../helpers/Roll.js";
 import RollMulti from "../helpers/RollMulti.js";
+import SendMessage from "../helpers/SendMessage.js";
 
 export default {
     Command: new SlashCommandBuilder()
@@ -27,17 +28,17 @@ export default {
         const Count: number = Interaction.options.getInteger("count", false) ?? 1;
         const Banner: string = Interaction.options.getString("banner", true);
         if(!Database.Manager.GetToken(UserID)) 
-            return await Database.Manager.SendMessage(Interaction, "You don't have a gacha profile.");
+            return await SendMessage(Interaction, "You don't have a gacha profile.");
 
         if(Count < 1) 
-            return await Database.Manager.SendMessage(Interaction, "Roll count has to be 1 or higher.");
+            return await SendMessage(Interaction, "Roll count has to be 1 or higher.");
 
         try {
             await Database.Manager.GetBannerInfo(Banner);
         }
         catch(Err) {
             if(Err instanceof Error && Err.name === "UnknownBannerError") 
-                return await Database.Manager.SendMessage(Interaction, Err.message);
+                return await SendMessage(Interaction, Err.message);
             throw Err;
         }
 

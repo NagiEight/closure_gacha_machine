@@ -2,16 +2,15 @@ import type { ChatInputCommandInteraction } from "discord.js";
 import type { Operator, User } from "../singletons/Database.js";
 import APIConnector from "../singletons/APIConnector.js";
 import Database from "../singletons/Database.js";
+import SendMessage from "./SendMessage.js";
 
 export default async (Interaction: ChatInputCommandInteraction, BannerName: string, Count: number): Promise<void> => {
     const UserID: string = Interaction.user.id;
 
     const UserProfile: User = Database.Manager.Users.get(UserID)!;
     const Response: Response = await APIConnector.RollMulti(BannerName, Count, UserProfile.Token);
-    if(!Response.ok) {
-        await Database.Manager.SendMessage(Interaction, (await Response.json() as { message: string }).message);
-        return;
-    }
+    if(!Response.ok) 
+        return await SendMessage(Interaction, (await Response.json() as { message: string }).message);
 
     const Result: Record<string, number> = await Response.json() as Record<string, number>;
     const Operators: [string, Operator][] = [];

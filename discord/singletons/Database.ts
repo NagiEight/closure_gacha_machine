@@ -1,7 +1,8 @@
+import { EmbedBuilder, type ChatInputCommandInteraction } from "discord.js";
 import Database, { type Database as DatabaseType, type Statement } from "better-sqlite3";
 import APIConnector from "./APIConnector.js";
 import LoadEnv from "./LoadEnv.js";
-import { EmbedBuilder, MessageFlags, type ChatInputCommandInteraction } from "discord.js";
+import SendMessage from "../helpers/SendMessage.js";
 
 const DB: DatabaseType = new Database("Mapping.db");
 DB.pragma("journal_mode = WAL");
@@ -409,13 +410,6 @@ class DataManager {
         }
     }
 
-    public async SendMessage(Interaction: ChatInputCommandInteraction, Message: string): Promise<void> {
-        await Interaction.reply({
-            content: Message,
-            allowedMentions: { repliedUser: false },
-            flags: MessageFlags.Ephemeral
-        });
-    }
     public BuildGachaEmbed(Interaction: ChatInputCommandInteraction, GachaResult: Record<string, number>, Rarity: 3 | 4 | 5 | 6): EmbedBuilder {
         return new EmbedBuilder()
             .setColor(this.RarityColorMap[Rarity])
@@ -452,7 +446,6 @@ class DataManager {
 
         return OperatorData;
     }
-
     public async GetBannerInfo(BannerName: string): Promise<Banner> {
         if(this.CachedBanners.has(BannerName))
             return this.CachedBanners.get(BannerName)!;
@@ -485,6 +478,7 @@ class DataManager {
 
         return BannerData;
     }
+
     public async GetAllBanners(): Promise<string[]> {
         if(this.BannerNames)
             return this.BannerNames;
@@ -498,10 +492,8 @@ class DataManager {
     }
     public async Delete(Interaction: ChatInputCommandInteraction): Promise<void> {
         const UserID: string = Interaction.user.id;
-        if(!this.Users.has(UserID)) {
-            await this.SendMessage(Interaction, `${Interaction.user.id}(${Interaction.user.username}) doesn't have a profile.`);
-            return;
-        }
+        if(!this.Users.has(UserID)) 
+            return await SendMessage(Interaction, `${Interaction.user.id}(${Interaction.user.username}) doesn't have a profile.`);
 
         const Token: string = this.Users.get(UserID)!.Token;
 
@@ -511,21 +503,17 @@ class DataManager {
         this.RemoveTokenSTMT(UserID);
         this.TimeoutSTMT.run(UserID, Date.now() + LoadEnv.TIMEOUT_DURATION * 1000);
 
-        await this.SendMessage(Interaction, "Profile deleted successfully.");
+        await SendMessage(Interaction, "Profile deleted successfully.");
     }
     public async CreateToken(Interaction: ChatInputCommandInteraction): Promise<void> {
         const UserID: string = Interaction.user.id;
-        if(this.Users.has(UserID)) {
-            await this.SendMessage(Interaction, `${Interaction.user.id}(${Interaction.user.username}) already have a profile.`);
-            return;
-        }
+        if(this.Users.has(UserID)) 
+            return await SendMessage(Interaction, `${Interaction.user.id}(${Interaction.user.username}) already have a profile.`);
 
         const Timeout: number | undefined = this.TimeoutZone.get(UserID);
         if(Timeout) {
-            if(Timeout > Date.now()) {
-                await this.SendMessage(Interaction, `${Interaction.user.id}(${Interaction.user.username}) is still in timeout, timeout will expire <t:${Math.ceil((Timeout - Date.now()) / 1000)}:R>.`);
-                return;
-            }
+            if(Timeout > Date.now()) 
+                return await SendMessage(Interaction, `${Interaction.user.id}(${Interaction.user.username}) is still in timeout, timeout will expire <t:${Math.ceil((Timeout - Date.now()) / 1000)}:R>.`);
             else {
                 this.RemoveTimeoutSTMT.run(UserID);
                 this.TimeoutZone.delete(UserID);
@@ -541,12 +529,11 @@ class DataManager {
             Profile: {}
         });
 
-        await this.SendMessage(Interaction, "Profile created successfully.");
+        await SendMessage(Interaction, "Profile created successfully.");
     }
 }
 
 export default {
     DB,
-    Manager: new DataManager(),
-    DataManager
+    Manager: new DataManager()
 };

@@ -1,14 +1,7 @@
-import { AutocompleteInteraction, ChatInputCommandInteraction, MessageFlags, SlashCommandBuilder } from "discord.js";
+import { AutocompleteInteraction, ChatInputCommandInteraction, SlashCommandBuilder } from "discord.js";
 import type { Command } from "../types/Command.js";
 import CommandManager from "../singletons/CommandManager.js";
-
-const SendMessage = async (Interaction: ChatInputCommandInteraction, Message: string): Promise<void> => {
-    await Interaction.reply({
-        content: Message,
-        allowedMentions: { repliedUser: false },
-        flags: MessageFlags.Ephemeral
-    });
-};
+import SendMessage from "../helpers/SendMessage.js";
 
 export default {
     Command: new SlashCommandBuilder()
@@ -26,34 +19,33 @@ export default {
         const Target: string = Interaction.options.getString("command", true);
         const Command: Command | undefined = CommandManager.Get(Target);
 
-        if(!Command) {
-            await SendMessage(Interaction, `Command "${Interaction.commandName}" doesn't exist.`);
-            return;
-        }
+        if(!Command) 
+            return await SendMessage(Interaction, `Command "${Interaction.commandName}" doesn't exist.`);
 
-        if(!Command.Cancelable) {
-            await SendMessage(Interaction, `Command "${Interaction.commandName}" is not cancelable.`);
-            return;
-        }
+        if(!Command.Cancelable) 
+            return await SendMessage(Interaction, `Command "${Interaction.commandName}" is not cancelable.`);
 
         const Controller: AbortController | undefined = Command.Cancelable.Pool.get(Interaction.user.id);
 
-        if(!Controller) {
-            await SendMessage(Interaction, `Command "${Interaction.commandName}" is currently not running.`);
-            return;
-        }
-
+        if(!Controller) 
+            return await SendMessage(Interaction, `Command "${Interaction.commandName}" is currently not running.`);
+        
         Controller.abort();
         await SendMessage(Interaction, `Cancelled "${Target}".`);
     },
     Autocomplete: async (Interaction: AutocompleteInteraction): Promise<void> => {
         await Interaction.respond(
-            [...CommandManager.Values()].filter(
-                Command => Command.Cancelable && Command.Cancelable.Pool.has(Interaction.user.id)
-            ).map(Command => ({
-                name: Command.Command.name,
-                value: Command.Command.name
-            }))
+            [...CommandManager.Values()]
+                .filter(
+                    Command => 
+                        Command.Cancelable &&
+                        Command.Cancelable.Pool.has(Interaction.user.id) &&
+                        Command.Command.name.toLowerCase().includes(Interaction.options.getFocused().trim().toLowerCase())
+                )
+                .map(Command => ({
+                    name: Command.Command.name,
+                    value: Command.Command.name
+                }))
         );
     }
 } satisfies Command;

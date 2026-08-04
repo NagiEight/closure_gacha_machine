@@ -1,6 +1,38 @@
-import { ChatInputCommandInteraction, EmbedBuilder, MessageFlags, SlashCommandBuilder, type APIApplicationCommandOption, type ToAPIApplicationCommandOptions } from "discord.js";
+import {
+    ActionRowBuilder,
+    ButtonBuilder,
+    ButtonInteraction,
+    ButtonStyle,
+    ChatInputCommandInteraction,
+    EmbedBuilder,
+    MessageFlags,
+    SlashCommandBuilder
+} from "discord.js";
 import type { Command } from "../types/Command.js";
 import CommandManager from "../singletons/CommandManager.js";
+import Paginate from "../helpers/Paginate.js";
+import GetMaxPage from "../helpers/GetMaxPage.js";
+import ActionRowIDBuilder from "../helpers/ActionRowIDBuilder.js";
+
+enum ButtonType {
+    BackwardToStart,
+    Backward,
+    Forward,
+    ForwardToEnd
+}
+const ButtonEmoji: Record<ButtonType, string> = {
+    [ButtonType.BackwardToStart]: "⏪",
+    [ButtonType.Backward]: "◀️",
+    [ButtonType.Forward]: "▶️",
+    [ButtonType.ForwardToEnd]: "⏩"
+};
+
+const ConstructButton = (Type: ButtonType, PageIndex: number, Owner: string): ButtonBuilder => 
+    new ButtonBuilder()
+        .setCustomId(ActionRowIDBuilder("help", [Type.toString(), PageIndex.toString()], Owner))
+        .setEmoji({ name: ButtonEmoji[Type] })
+        .setStyle(ButtonStyle.Primary)
+;
 
 export default {
     Command: new SlashCommandBuilder()
@@ -11,31 +43,124 @@ export default {
         await Interaction.deferReply({
             flags: MessageFlags.Ephemeral
         });
+
+        const Commands: Command[] = [...CommandManager.Values()];
+        const CommandPages: Command[] = Paginate(Commands, 1, 25);
+        const MaxPage: number = GetMaxPage(Commands, 25);
+
         const Embed: EmbedBuilder = new EmbedBuilder()
             .setColor(0x00ffff)
             .setTitle(`Help command.`)
             .addFields(
-                ...[...CommandManager.Values()].map(Command => {
-                    const Options: ToAPIApplicationCommandOptions[] = Command.Command.options;
-                    return {
-                        name: `/${Command.Command.name} ${
-                            Options.map(Option => {
-                                const JSON: APIApplicationCommandOption = Option.toJSON()
-                                return `[${JSON.name}${JSON.required ? "*" : ""}]`
-                            }).join(" ")
-                        }`.trim(),
-                        value: `${Command.Command.description}`,
-                        inline: true 
-                    }
-                })
+                ...CommandPages.map(Command => ({
+                    name: `/${Command.Command.name} ${
+                        Command.Command.options.map(
+                            Option => `[${Option.toJSON().name}${Option.toJSON().required ? "*" : ""}]`
+                        ).join(" ")
+                    }`.trim(),
+                    value: `${Command.Command.description}`,
+                    inline: true 
+                }))
             )
             .setFooter({ 
                 text: "* = required options, (Administrator Command) = commands only the bot administrators can run, (Cancelable) = long running commands that can be cancel with /cancel."
              })
         ;
+
+        const ForwardButton: ButtonBuilder = ConstructButton(ButtonType.Forward, 1, Interaction.user.id);
+        const ForwardToEndButton: ButtonBuilder = ConstructButton(ButtonType.ForwardToEnd, 1, Interaction.user.id);
+        const ButtonRow: ActionRowBuilder<ButtonBuilder> = new ActionRowBuilder<ButtonBuilder>()
+            .addComponents(
+                ForwardButton,
+                ForwardToEndButton
+            )
+        ;
+
         await Interaction.editReply({
             embeds: [Embed],
+            components: MaxPage > 1 ? [ButtonRow] : undefined,
             allowedMentions: { repliedUser: false }
         })
+    },
+    Button: async (Interaction: ButtonInteraction): Promise<void> => {
+        const [, ActionMeta, Owner]: string[] = Interaction.customId.split(":");
+        const [Type, Page]: string[] = ActionMeta.split("/");
+        const Commands: Command[] = [...CommandManager.Values()];
+        const MaxPage: number = GetMaxPage(Commands, 25);
+
+        if(Interaction.user.id !== Owner)
+            return;
+
+        let NextPage: number;
+
+        switch(Type) {
+            case "0":
+                if(Number(Page) === 1)
+                    return;
+                NextPage = 1;
+                break;
+
+            case "1":
+                if(Number(Page) === 1)
+                    return;
+                NextPage = Number(Page) - 1;
+                break;
+
+            case "2":
+                if(Number(Page) === MaxPage)
+                    return;
+                NextPage = Number(Page) + 1;
+                break;
+
+            case "3":
+                if(Number(Page) === MaxPage)
+                    return;
+                NextPage = MaxPage;
+                break;
+            
+            default: return;
+        }
+
+        const CommandPages: Command[] = Paginate(Commands, NextPage, 25);
+        const Embed: EmbedBuilder = new EmbedBuilder()
+            .setColor(0x00ffff)
+            .setTitle(`Help command.`)
+            .addFields(
+                ...CommandPages.map(Command => ({
+                    name: `/${Command.Command.name} ${
+                        Command.Command.options.map(
+                            Option => `[${Option.toJSON().name}${Option.toJSON().required ? "*" : ""}]`
+                        ).join(" ")
+                    }`.trim(),
+                    value: `${Command.Command.description}`,
+                    inline: true 
+                }))
+            )
+            .setFooter({ 
+                text: "* = required options, (Administrator Command) = commands only the bot administrators can run, (Cancelable) = long running commands that can be cancel with /cancel."
+             })
+        ;
+
+        const BackwardToStartButton: ButtonBuilder = ConstructButton(ButtonType.BackwardToStart, NextPage, Owner);
+        const BackwardButton: ButtonBuilder = ConstructButton(ButtonType.Backward, NextPage, Owner);
+        const ForwardButton: ButtonBuilder = ConstructButton(ButtonType.Forward, NextPage, Owner);
+        const ForwardToEndButton: ButtonBuilder = ConstructButton(ButtonType.ForwardToEnd, NextPage, Owner);
+        const ButtonRow: ActionRowBuilder<ButtonBuilder> = new ActionRowBuilder<ButtonBuilder>()
+            .addComponents(
+                ...(
+                    NextPage === 1 
+                        ? [ForwardButton, ForwardToEndButton]
+                    : NextPage === MaxPage
+                        ? [BackwardToStartButton, BackwardButton]
+                    : [BackwardToStartButton, BackwardButton, ForwardButton, ForwardToEndButton]
+                )
+            )
+        ;
+
+        await Interaction.update({
+            embeds: [Embed],
+            components: MaxPage > 1 ? [ButtonRow] : undefined,
+            allowedMentions: { repliedUser: false }
+        });
     }
 } satisfies Command;

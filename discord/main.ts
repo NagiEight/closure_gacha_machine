@@ -2,6 +2,7 @@ import { Client as C, GatewayIntentBits, Events, MessageFlags } from "discord.js
 import type { Command } from "./types/Command.js";
 import CommandManager from "./singletons/CommandManager.js";
 import LoadEnv from "./singletons/LoadEnv.js";
+import SendMessage from "./helpers/SendMessage.js";
 
 await CommandManager.LoadCommands();
 
@@ -20,19 +21,60 @@ Client.on(Events.InteractionCreate, async Interaction => {
             if(Command.Administrator && !LoadEnv.ADMINISTRATOR_IDS.includes(Interaction.user.id)) 
                 return;
             
-            await Command.Autocomplete(Interaction);
+            await Command.Autocomplete(Interaction, Client);
         }
         return;
     }
 
     if(Interaction.isButton()) {
         const [CommandName] = Interaction.customId.split(":");
-        const Command = CommandManager.Get(CommandName);
+        const Command: Command | undefined = CommandManager.Get(CommandName);
         if(!Command?.Button) 
             return;
 
-        await Command.Button(Interaction);
-        return;
+        return await Command.Button(Interaction, Client);
+    }
+
+    if(Interaction.isAnySelectMenu()) {
+        const [CommandName] = Interaction.customId.split(":");
+        const Command: Command | undefined = CommandManager.Get(CommandName);
+
+        if(!Command)
+            return;
+
+        switch(true) {
+            case Interaction.isStringSelectMenu():
+                if(!Command.StringMenu)
+                    return;
+
+                return await Command.StringMenu(Interaction, Client);
+            
+            case Interaction.isUserSelectMenu():
+                if(!Command.UserMenu)
+                    return;
+                
+                return await Command.UserMenu(Interaction, Client);
+
+            case Interaction.isRoleSelectMenu():
+                if(!Command.RoleMenu)
+                    return;
+                
+                return await Command.RoleMenu(Interaction, Client);
+            
+            case Interaction.isChannelSelectMenu():
+                if(!Command.ChannelMenu)
+                    return;
+                
+                return await Command.ChannelMenu(Interaction, Client);
+
+            case Interaction.isMentionableSelectMenu():
+                if(!Command.MentionableMenu)
+                    return;
+                
+                return await Command.MentionableMenu(Interaction, Client);
+            
+            default: return;
+        }
     }
 
     if(!Interaction.isChatInputCommand()) 
@@ -42,48 +84,28 @@ Client.on(Events.InteractionCreate, async Interaction => {
     if(!Command)
         return;
     
-    let Arg2: AbortController | undefined = undefined;
     if(Command.Cancelable) {
         const Existing: AbortController | undefined = Command.Cancelable.Pool.get(Interaction.user.id);
-        if(Existing) {
-            await Interaction.reply({
-                content: Command.Cancelable.Message ?? "This command is still running.",
-                allowedMentions: { repliedUser: false },
-                flags: MessageFlags.Ephemeral
-            });
-            return;
-        }
+        if(Existing) 
+            return await SendMessage(Interaction, Command.Cancelable.Message ?? "This command is still running.");
         
-        const Controller: AbortController = new AbortController();
-        Arg2 = Controller;
-        Command.Cancelable.Pool.set(Interaction.user.id, Controller);
+        Command.Cancelable.Pool.set(Interaction.user.id, new AbortController());
     }
 
     try {
         console.log(`${Interaction.user.id}(${Interaction.user.username}) used ${Interaction.commandName}.`);
-        if(Command.Administrator && !LoadEnv.ADMINISTRATOR_IDS.includes(Interaction.user.id)) {
-            await Interaction.reply({
-                content: "You are not permitted to use this command.",
-                allowedMentions: { repliedUser: false },
-                flags: MessageFlags.Ephemeral
-            });
-            return;
-        }
+        if(Command.Administrator && !LoadEnv.ADMINISTRATOR_IDS.includes(Interaction.user.id)) 
+            return await SendMessage(Interaction, "You are not permitted to use this command.");
 
-        await Command.Action(Interaction, Arg2?.signal);
+        await Command.Action(Interaction, Command.Cancelable?.Pool.get(Interaction.user.id)?.signal, Client);
     }
     catch(Err) {
         console.error(Err);
 
-        if(Interaction.replied || Interaction.deferred) {
-            await Interaction.followUp({
-                content: "Something went wrong.",
-                allowedMentions: { repliedUser: false },
-                flags: MessageFlags.Ephemeral
-            });
-            return;
-        }
-        await Interaction.reply({
+        if(!Interaction.replied && !Interaction.deferred) 
+            return await SendMessage(Interaction, "Something went wrong.");
+        
+        await Interaction.followUp({
             content: "Something went wrong.",
             allowedMentions: { repliedUser: false },
             flags: MessageFlags.Ephemeral
