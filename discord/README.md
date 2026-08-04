@@ -1,5 +1,5 @@
-# claires-bot-template
-Template repository for my Discord bot projects. All future projects involving Discord bots will be forks of this repository. Feel free to use this template.
+# closure_gacha_machine
+Discord bot version of closure_gacha_machine.
 
 ## Build Instructions (just boilerplate because i'm too lazy to copy over)
 ### Prerequisites
@@ -23,9 +23,11 @@ npm run build
 # required:
 DISCORD_TOKEN= # bot token. do not fucking share this shit with anyone that has no business having it
 CLIENT_ID= # bot id
+BASE_API_URL= # base api of a closure_gacha_machine backend
 
 # optional:
 ADMINISTRATOR_IDS= # an array of ids of bot admins as strings. this is an empty array by default
+TIMEOUT_DURATION= # amount of time to time someone out after they delete their profile, this is 604800 seconds (1 week) by default
 ```
 2. Register your bot's command: (Note: rerun this every time you modified the commands' property (name, description, options), or just make it run every time the bot starts)
 ```bash

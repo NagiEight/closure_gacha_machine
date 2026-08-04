@@ -1,8 +1,5 @@
-import { EmbedBuilder, type ChatInputCommandInteraction } from "discord.js";
 import Database, { type Database as DatabaseType, type Statement } from "better-sqlite3";
 import APIConnector from "./APIConnector.js";
-import LoadEnv from "./LoadEnv.js";
-import SendMessage from "../helpers/SendMessage.js";
 
 const DB: DatabaseType = new Database("Mapping.db");
 DB.pragma("journal_mode = WAL");
@@ -410,25 +407,6 @@ class DataManager {
         }
     }
 
-    public BuildGachaEmbed(Interaction: ChatInputCommandInteraction, GachaResult: Record<string, number>, Rarity: 3 | 4 | 5 | 6): EmbedBuilder {
-        return new EmbedBuilder()
-            .setColor(this.RarityColorMap[Rarity])
-            .setAuthor({
-                name: Interaction.user.username,
-                url: `https://discord.com/users/${Interaction.user.id}`,
-                iconURL: Interaction.user.displayAvatarURL({ size: 256 })
-            })
-            .setThumbnail(Interaction.user.displayAvatarURL({ size: 512 }))
-            .setTitle(`${Interaction.user.username}'s gacha result`)
-            .addFields(
-                ...Object.entries(GachaResult).map(([Operator, Count]) => ({
-                    name: Operator,
-                    value: `x${Count}`
-                }))
-            )
-        ;
-    }
-
     public async GetOperatorInfo(OperatorID: string): Promise<Operator> {
         if(this.CachedOperators.has(OperatorID))
             return this.CachedOperators.get(OperatorID)!;
@@ -489,47 +467,6 @@ class DataManager {
 
     public GetToken(UserID: string): string | undefined {
         return this.Users.get(UserID)?.Token;
-    }
-    public async Delete(Interaction: ChatInputCommandInteraction): Promise<void> {
-        const UserID: string = Interaction.user.id;
-        if(!this.Users.has(UserID)) 
-            return await SendMessage(Interaction, `${Interaction.user.id}(${Interaction.user.username}) doesn't have a profile.`);
-
-        const Token: string = this.Users.get(UserID)!.Token;
-
-        await APIConnector.DeleteToken(Token);
-
-        this.Users.delete(UserID);
-        this.RemoveTokenSTMT(UserID);
-        this.TimeoutSTMT.run(UserID, Date.now() + LoadEnv.TIMEOUT_DURATION * 1000);
-
-        await SendMessage(Interaction, "Profile deleted successfully.");
-    }
-    public async CreateToken(Interaction: ChatInputCommandInteraction): Promise<void> {
-        const UserID: string = Interaction.user.id;
-        if(this.Users.has(UserID)) 
-            return await SendMessage(Interaction, `${Interaction.user.id}(${Interaction.user.username}) already have a profile.`);
-
-        const Timeout: number | undefined = this.TimeoutZone.get(UserID);
-        if(Timeout) {
-            if(Timeout > Date.now()) 
-                return await SendMessage(Interaction, `${Interaction.user.id}(${Interaction.user.username}) is still in timeout, timeout will expire <t:${Math.ceil((Timeout - Date.now()) / 1000)}:R>.`);
-            else {
-                this.RemoveTimeoutSTMT.run(UserID);
-                this.TimeoutZone.delete(UserID);
-            }
-        }
-
-        const Response: Response = await APIConnector.CreateToken();
-        const Token: string = Response.headers.get("Seession-Token")!;
-
-        this.AddTokenSTMT.run(UserID, Token);
-        this.Users.set(UserID, {
-            Token,
-            Profile: {}
-        });
-
-        await SendMessage(Interaction, "Profile created successfully.");
     }
 }
 

@@ -3,6 +3,8 @@ import type { Operator, User } from "../singletons/Database.js";
 import APIConnector from "../singletons/APIConnector.js";
 import Database from "../singletons/Database.js";
 import SendMessage from "./SendMessage.js";
+import BuildGachaEmbed from "./BuildGachaEmbed.js";
+import AsyncMap from "./AsyncMap.js";
 
 export default async (Interaction: ChatInputCommandInteraction, BannerName: string, Count: number): Promise<void> => {
     const UserID: string = Interaction.user.id;
@@ -13,17 +15,12 @@ export default async (Interaction: ChatInputCommandInteraction, BannerName: stri
         return await SendMessage(Interaction, (await Response.json() as { message: string }).message);
 
     const Result: Record<string, number> = await Response.json() as Record<string, number>;
-    const Operators: [string, Operator][] = [];
-    for(const ID of Object.keys(Result)) {
-        Operators.push([ID, await Database.Manager.GetOperatorInfo(ID)]);
-    }
-
-    Interaction.reply({
-        embeds: [Database.Manager.BuildGachaEmbed(Interaction, Object.fromEntries(
-            Operators.map(Operator => [Operator[1].Name, Result[Operator[0]]])
-        ), Math.max(...Operators.map(Operator => Operator[1].Rarity)) as 3 | 4 | 5 | 6)],
-        allowedMentions: { repliedUser: false }
-    });
+    const Operators: Record<string, { Count: number; Rarity: 3 | 4 | 5 | 6; ID: string; }> = Object.fromEntries(
+        (await AsyncMap(
+            Object.keys(Result),
+            async (ID): Promise<[string, Operator]> => [ID, await Database.Manager.GetOperatorInfo(ID)]
+        )).map(([ID, Operator]) => [Operator.Name, { Count: Result[ID], Rarity: Operator.Rarity, ID }])
+    );
 
     UserProfile.Profile[BannerName] ??= {
         Count: 0,
@@ -36,28 +33,39 @@ export default async (Interaction: ChatInputCommandInteraction, BannerName: stri
     };
     const Banner = UserProfile.Profile[BannerName];
 
-    for(const Operator of Operators) {
-        const OperatorID: string = Operator[0];
+    for(const [, Data] of Object.entries(Operators)) {
         let ToWrite: number;
-        switch(Operator[1].Rarity) {
+        switch(Data.Rarity) {
             case 3:
-                Banner.Storage.ThreeStars[OperatorID] ??= 0;
-                ToWrite = ++Banner.Storage.ThreeStars[OperatorID];
+                Banner.Storage.ThreeStars[Data.ID] ??= 0;
+                ToWrite = ++Banner.Storage.ThreeStars[Data.ID];
                 break;
             case 4:
-                Banner.Storage.FourStars[OperatorID] ??= 0;
-                ToWrite = ++Banner.Storage.FourStars[OperatorID];
+                Banner.Storage.FourStars[Data.ID] ??= 0;
+                ToWrite = ++Banner.Storage.FourStars[Data.ID];
                 break;
             case 5:
-                Banner.Storage.FiveStars[OperatorID] ??= 0;
-                ToWrite = ++Banner.Storage.FiveStars[OperatorID];
+                Banner.Storage.FiveStars[Data.ID] ??= 0;
+                ToWrite = ++Banner.Storage.FiveStars[Data.ID];
                 break;
             case 6:
-                Banner.Storage.SixStars[OperatorID] ??= 0;
-                ToWrite = ++Banner.Storage.SixStars[OperatorID];
+                Banner.Storage.SixStars[Data.ID] ??= 0;
+                ToWrite = ++Banner.Storage.SixStars[Data.ID];
                 break;
         }
-        Database.Manager.RefreshStorageSTMT.run(UserID, BannerName, Operator[1].Rarity, OperatorID, ToWrite);
+        Database.Manager.RefreshStorageSTMT.run(UserID, BannerName, Data.Rarity, Data.ID, ToWrite);
     }
     Database.Manager.RefreshDataSTMT.run(UserID, BannerName, Banner.Count += Count);
+    
+    await SendMessage(
+        Interaction,
+        [BuildGachaEmbed(
+            Interaction, 
+            Object.fromEntries(
+                Object.entries(Operators).map(([Operator, Data]) => [Operator, Data.Count])
+            ), 
+            Math.max(...Object.values(Operators).map(Operator => Operator.Rarity)) as 3 | 4 | 5 | 6
+        )],
+        []
+    );
 };

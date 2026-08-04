@@ -2,6 +2,7 @@ import type { ChatInputCommandInteraction } from "discord.js";
 import Database, { type User, type Operator } from "../singletons/Database.js";
 import APIConnector from "../singletons/APIConnector.js";
 import SendMessage from "./SendMessage.js";
+import BuildGachaEmbed from "./BuildGachaEmbed.js";
 
 export default async (Interaction: ChatInputCommandInteraction, BannerName: string): Promise<void> => {
     const UserID: string = Interaction.user.id;
@@ -12,11 +13,6 @@ export default async (Interaction: ChatInputCommandInteraction, BannerName: stri
     
     const Result: { Result: string; } = await Response.json() as { Result: string; };
     const Operator: Operator = await Database.Manager.GetOperatorInfo(Result.Result);
-
-    Interaction.reply({
-        embeds: [Database.Manager.BuildGachaEmbed(Interaction, { [Operator.Name]: 1 }, Operator.Rarity)],
-        allowedMentions: { repliedUser: false }
-    });
 
     Database.Manager.Users.get(UserID)!.Profile[BannerName] ??= {
         Count: 0,
@@ -51,4 +47,6 @@ export default async (Interaction: ChatInputCommandInteraction, BannerName: stri
     }
     Database.Manager.RefreshStorageSTMT.run(UserID, BannerName, Operator.Rarity, OperatorID, ToWrite);
     Database.Manager.RefreshDataSTMT.run(UserID, BannerName, ++Banner.Count);
+
+    await SendMessage(Interaction, [BuildGachaEmbed(Interaction, { [Operator.Name]: 1 }, Operator.Rarity)], []);
 };

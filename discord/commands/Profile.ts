@@ -62,7 +62,7 @@ export default {
         const Profile: Profile | undefined = Database.Manager.Users.get(User.id);
 
         if(!Profile) 
-            return await SendMessage(Interaction, `${User.username} doesn't exist or doesn't have a profile`);
+            return await SendMessage(Interaction, "You don't have a gacha profile.");
         
         await Interaction.deferReply();
         

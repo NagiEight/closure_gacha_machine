@@ -1,4 +1,4 @@
-import { Client as C, GatewayIntentBits, Events, MessageFlags } from "discord.js";
+import { Client as C, GatewayIntentBits, Events } from "discord.js";
 import type { Command } from "./types/Command.js";
 import CommandManager from "./singletons/CommandManager.js";
 import LoadEnv from "./singletons/LoadEnv.js";
@@ -101,15 +101,7 @@ Client.on(Events.InteractionCreate, async Interaction => {
     }
     catch(Err) {
         console.error(Err);
-
-        if(!Interaction.replied && !Interaction.deferred) 
-            return await SendMessage(Interaction, "Something went wrong.");
-        
-        await Interaction.followUp({
-            content: "Something went wrong.",
-            allowedMentions: { repliedUser: false },
-            flags: MessageFlags.Ephemeral
-        });
+        await SendMessage(Interaction, "Something went wrong.");
     }
     finally {
         if(Command.Cancelable) {
