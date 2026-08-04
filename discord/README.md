@@ -41,6 +41,3 @@ npm run start
 ```bash
 npm run dev
 ```
-
-## License
-This project is licensed under the [GNU General Public License 3.0](LICENSE).
