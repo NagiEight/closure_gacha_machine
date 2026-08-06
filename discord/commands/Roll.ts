@@ -1,9 +1,21 @@
-import { AutocompleteInteraction, ChatInputCommandInteraction, SlashCommandBuilder } from "discord.js";
+import {
+    ActionRowBuilder,
+    AutocompleteInteraction,
+    ButtonBuilder,
+    ButtonInteraction,
+    ChatInputCommandInteraction,
+    EmbedBuilder,
+    SlashCommandBuilder
+} from "discord.js";
 import type { Command } from "../types/Command.js";
+import GachaResultLifetimeManager, { type GachaResult } from "../singletons/GachaResultLifetimeManager.js";
 import Database from "../singletons/Database.js";
 import Roll from "../helpers/Roll.js";
 import RollMulti from "../helpers/RollMulti.js";
 import SendMessage from "../helpers/SendMessage.js";
+import GetMaxPage from "../helpers/GetMaxPage.js";
+import Paginate from "../helpers/Paginate.js";
+import BuildGachaEmbed from "../helpers/BuildGachaEmbed.js";
 
 export default {
     Command: new SlashCommandBuilder()
@@ -54,6 +66,64 @@ export default {
                 name: Banner,
                 value: Banner
             }))
+        );
+    },
+    Button: async (Interaction: ButtonInteraction): Promise<void> => {
+        const [, ActionMeta, Owner] = Interaction.customId.split(":");
+
+        if(Owner !== Interaction.user.id)
+            return;
+        
+        const [ActionName, Page, PoolID] = ActionMeta.split("/");
+        const GachaResult: GachaResult | undefined = GachaResultLifetimeManager.GetPool(Owner, PoolID);
+        
+        if(!GachaResult)
+            return;
+        
+        const MaxPage: number = GetMaxPage(Object.keys(GachaResult), 20);
+        let NextPageIndex: number;
+
+        switch(ActionName) {
+            case "0":
+                if(Number(Page) === 1)
+                    return;
+                NextPageIndex = 1;
+                break;
+                
+            case "1":
+                if(Number(Page) === 1)
+                    return;
+                NextPageIndex = Number(Page) - 1;
+                break;
+
+            case "2":
+                if(Number(Page) === MaxPage)
+                    return;
+                NextPageIndex = Number(Page) + 1;
+                break;
+
+            case "3":
+                if(Number(Page) === MaxPage)
+                    return;
+                NextPageIndex = MaxPage;
+                break;
+
+            default: return;
+        }
+
+        const NextPage: Record<string, { Count: number; Rarity: 3 | 4 | 5 | 6; }> = Object.fromEntries(
+            Paginate(Object.entries(GachaResult), NextPageIndex, 20)
+        );
+        const Embed: {
+            Embed: EmbedBuilder;
+            ButtonRow: ActionRowBuilder<ButtonBuilder>;
+        } = BuildGachaEmbed(
+            Interaction,
+            NextPage,
+            "roll",
+            NextPageIndex,
+            MaxPage,
+            PoolID
         );
     }
 } satisfies Command;

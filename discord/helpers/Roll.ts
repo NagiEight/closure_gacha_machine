@@ -1,4 +1,4 @@
-import type { ChatInputCommandInteraction } from "discord.js";
+import type { ChatInputCommandInteraction, EmbedBuilder } from "discord.js";
 import Database, { type User, type Operator } from "../singletons/Database.js";
 import APIConnector from "../singletons/APIConnector.js";
 import SendMessage from "./SendMessage.js";
@@ -48,5 +48,10 @@ export default async (Interaction: ChatInputCommandInteraction, BannerName: stri
     Database.Manager.RefreshStorageSTMT.run(UserID, BannerName, Operator.Rarity, OperatorID, ToWrite);
     Database.Manager.RefreshDataSTMT.run(UserID, BannerName, ++Banner.Count);
 
-    await SendMessage(Interaction, [BuildGachaEmbed(Interaction, { [Operator.Name]: 1 }, Operator.Rarity)], []);
+    const Embed: EmbedBuilder = BuildGachaEmbed(
+        Interaction, 
+        { [Operator.Name]: { Count: 1, Rarity: Operator.Rarity } }
+    );
+
+    await SendMessage(Interaction, [Embed], []);
 };

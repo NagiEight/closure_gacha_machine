@@ -3,7 +3,6 @@ import {
     AutocompleteInteraction,
     ButtonBuilder,
     ButtonInteraction,
-    ButtonStyle,
     ChatInputCommandInteraction,
     Client,
     EmbedBuilder,
@@ -12,31 +11,11 @@ import {
 } from "discord.js";
 import type { Command } from "../types/Command.js";
 import Database, { type User as Profile } from "../singletons/Database.js";
+import ConstructButtonRow from "../helpers/ConstructButtonRow.js";
 import SendMessage from "../helpers/SendMessage.js";
-import ActionRowIDBuilder from "../helpers/ActionRowIDBuilder.js";
 import ProcessUserProfile from "../helpers/ProcessUserProfile.js";
 import Paginate from "../helpers/Paginate.js";
 import GetMaxPage from "../helpers/GetMaxPage.js";
-
-enum ButtonType {
-    BackwardToStart,
-    Backward,
-    Forward,
-    ForwardToEnd
-}
-const ButtonEmoji: Record<ButtonType, string> = {
-    [ButtonType.BackwardToStart]: "⏪",
-    [ButtonType.Backward]: "◀️",
-    [ButtonType.Forward]: "▶️",
-    [ButtonType.ForwardToEnd]: "⏩"
-};
-
-const ConstructButton = (Type: ButtonType, BannerName: string, PageIndex: number, User: string, Owner: string): ButtonBuilder => 
-    new ButtonBuilder()
-        .setCustomId(ActionRowIDBuilder("profile", [Type.toString(), BannerName, PageIndex.toString(), User], Owner))
-        .setEmoji({ name: ButtonEmoji[Type] })
-        .setStyle(ButtonStyle.Primary)
-;
 
 export default {
     Command: new SlashCommandBuilder()
@@ -90,39 +69,23 @@ export default {
             )
         ;
                 
-        const ForwardButton: ButtonBuilder = ConstructButton(
-            ButtonType.Forward,
-            BannerName,
+        const ButtonRow: ActionRowBuilder<ButtonBuilder> = ConstructButtonRow(
+            "profile",
             1,
-            User.id,
+            MaxPage,
+            [BannerName, User.id],
             Interaction.user.id
         );
-        const ForwardToEndButton: ButtonBuilder = ConstructButton(
-            ButtonType.ForwardToEnd,
-            BannerName,
-            1,
-            User.id,
-            Interaction.user.id
-        );
-        const ButtonRow: ActionRowBuilder<ButtonBuilder> = new ActionRowBuilder<ButtonBuilder>()
-            .addComponents(
-                ForwardButton,
-                ForwardToEndButton
-            )
-        ;
         
-        await Interaction.editReply({
-            embeds: [Embed],
-            components: MaxPage > 1 ? [ButtonRow] : undefined
-        });
+        await SendMessage(Interaction, [Embed], MaxPage > 1 ? [ButtonRow] : []);
     },
     Button: async (Interaction: ButtonInteraction, Client: Client): Promise<void> => {
         const [, ActionMeta, Owner]: string[] = Interaction.customId.split(":");
-        const [ActionName, BannerName, Page, UserID]: string[] = ActionMeta.split("/");
-
+        
         if(Interaction.user.id !== Owner)
             return;
-
+        
+        const [ActionName, Page, BannerName, UserID]: string[] = ActionMeta.split("/");
         const Profile: Profile = Database.Manager.Users.get(UserID)!;
         const ProcessedUserBannerProfile: {
             Name: string;
@@ -162,41 +125,13 @@ export default {
             default: return;
         }
 
-        const BackwardToStartButton: ButtonBuilder = ConstructButton(
-            ButtonType.BackwardToStart,
-            BannerName,
+        const ButtonRow: ActionRowBuilder<ButtonBuilder> = ConstructButtonRow(
+            "profile",
             NextPage,
-            UserID,
-            Owner
+            MaxPage,
+            [BannerName, User.id],
+            Interaction.user.id
         );
-        const BackwardButton: ButtonBuilder = ConstructButton(
-            ButtonType.Backward,
-            BannerName,
-            NextPage,
-            UserID,
-            Owner
-        );
-        const ForwardButton: ButtonBuilder = ConstructButton(
-            ButtonType.Forward,
-            BannerName,
-            NextPage,
-            UserID,
-            Owner
-        );
-        const ForwardToEndButton: ButtonBuilder = ConstructButton(
-            ButtonType.ForwardToEnd,
-            BannerName,
-            NextPage,
-            UserID,
-            Owner
-        );
-        const ButtonRow: ActionRowBuilder<ButtonBuilder> = new ActionRowBuilder<ButtonBuilder>()
-            .addComponents(
-                ...[BackwardToStartButton, BackwardButton, ForwardButton, ForwardToEndButton].slice(
-                    ...(NextPage === 1 ? [0, 2] : NextPage === MaxPage ? [2, 4] : [0, 4])
-                )
-            )
-        ;
         
         const Embed: EmbedBuilder = new EmbedBuilder()
             .setAuthor({
@@ -215,10 +150,7 @@ export default {
             )
         ;
 
-        await Interaction.update({
-            embeds: [Embed],
-            components: MaxPage > 1 ? [ButtonRow] : undefined
-        });
+        await SendMessage(Interaction, [Embed], MaxPage > 1 ? [ButtonRow] : []);
     },
     Autocomplete: async (Interaction: AutocompleteInteraction): Promise<void> => {
         const UserID: string = Interaction.options.data.find(

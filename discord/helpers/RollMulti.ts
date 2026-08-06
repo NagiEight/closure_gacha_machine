@@ -1,10 +1,18 @@
-import type { ChatInputCommandInteraction } from "discord.js";
+import { 
+    ActionRowBuilder,
+    ButtonBuilder,
+    EmbedBuilder,
+    ChatInputCommandInteraction
+} from "discord.js";
 import type { Operator, User } from "../singletons/Database.js";
 import APIConnector from "../singletons/APIConnector.js";
 import Database from "../singletons/Database.js";
 import SendMessage from "./SendMessage.js";
 import BuildGachaEmbed from "./BuildGachaEmbed.js";
 import AsyncMap from "./AsyncMap.js";
+import GachaResultLifetimeManager from "../singletons/GachaResultLifetimeManager.js";
+import GetMaxPage from "./GetMaxPage.js";
+import Paginate from "./Paginate.js";
 
 export default async (Interaction: ChatInputCommandInteraction, BannerName: string, Count: number): Promise<void> => {
     const UserID: string = Interaction.user.id;
@@ -56,15 +64,32 @@ export default async (Interaction: ChatInputCommandInteraction, BannerName: stri
         Database.Manager.RefreshStorageSTMT.run(UserID, BannerName, Data.Rarity, Data.ID, ToWrite);
     }
     Database.Manager.RefreshDataSTMT.run(UserID, BannerName, Banner.Count += Count);
+
+    const MaxPage: number = GetMaxPage(Object.keys(Operators), 20);
     
-    await SendMessage(
-        Interaction,
-        [BuildGachaEmbed(
-            Interaction, 
-            Object.fromEntries(
-                Object.entries(Operators).map(([Operator, Data]) => [Operator, { Count: Data.Count, Rarity: Data.Rarity }])
-            )
-        )],
-        []
-    );
+    if(MaxPage > 1) {
+        const PoolID: string = GachaResultLifetimeManager.AddPool(UserID, Operators);
+        const Page: Record<string, { Count: number; Rarity: 3 | 4 | 5 | 6; ID: string; }> = Object.fromEntries(
+            Paginate(Object.entries(Operators), 1, 20)
+        );
+        const Embed: {
+            Embed: EmbedBuilder;
+            ButtonRow: ActionRowBuilder<ButtonBuilder>;
+        } = BuildGachaEmbed(
+            Interaction,
+            Page,
+            Interaction.commandName,
+            1,
+            MaxPage,
+            PoolID
+        );
+
+        return await SendMessage(
+            Interaction,
+            [Embed.Embed],
+            [Embed.ButtonRow]
+        );
+    }
+
+    await SendMessage(Interaction, [BuildGachaEmbed(Interaction, Operators)], []);
 };
