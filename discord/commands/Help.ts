@@ -142,4 +142,4 @@ export default {
             allowedMentions: { repliedUser: false }
         });
     }
-} satisfies Command;
+} as const satisfies Command;

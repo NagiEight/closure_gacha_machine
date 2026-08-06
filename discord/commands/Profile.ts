@@ -208,4 +208,4 @@ export default {
             )
         );
     }
-} satisfies Command;
+} as const satisfies Command;

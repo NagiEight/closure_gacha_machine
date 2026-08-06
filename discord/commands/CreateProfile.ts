@@ -50,4 +50,4 @@ export default {
             flags: MessageFlags.Ephemeral
         });
     }
-} satisfies Command;
+} as const satisfies Command;

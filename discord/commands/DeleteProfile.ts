@@ -13,6 +13,7 @@ import Database from "../singletons/Database.js";
 import APIConnector from "../singletons/APIConnector.js";
 import LoadEnv from "../singletons/LoadEnv.js";
 import ActionRowIDBuilder from "../helpers/ActionRowIDBuilder.js";
+import ActionCustomIDParser from "../helpers/ActionCustomIDParser.js";
 
 export default {
     Command: new SlashCommandBuilder()
@@ -62,12 +63,13 @@ export default {
         });
     },
     Button: async (Interaction: ButtonInteraction): Promise<void> => {
-        const [, ActionName, Owner] = Interaction.customId.split(":");
+        const CustomID = ActionCustomIDParser(Interaction.customId, { ActionName: "" });
+        const Owner: string = CustomID.Owner;
 
         if(Interaction.user.id !== Owner)
             return;
 
-        switch(ActionName) {
+        switch(CustomID.Meta.ActionName) {
             case "Confirm":
                 const Token: string = Database.Manager.Users.get(Owner)!.Token;
                 await APIConnector.DeleteToken(Token);
@@ -94,4 +96,4 @@ export default {
                 break;
         }
     }
-} satisfies Command;
+} as const satisfies Command;
