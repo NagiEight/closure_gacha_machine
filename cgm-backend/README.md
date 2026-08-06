@@ -261,7 +261,7 @@ Returns the names of all banners in the database.
 
 ### Request
 ```http
-GET /api/banner/all
+GET /api/banners/all
 ```
 
 ### Success Response
