@@ -27,7 +27,7 @@ export default new class {
     }
 
     public AddPool(UserID: string, GachaResult: GachaResult): string {
-        this.UserPool[UserID] ?? {};
+        this.UserPool[UserID] ??= {};
 
         const PoolUUID: string = GenerateUniqueUUID(UUID => !!this.UserPool[UserID][UUID]);
         this.UserPool[UserID][PoolUUID] = GachaResult;

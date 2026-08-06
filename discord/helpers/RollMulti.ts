@@ -2,12 +2,12 @@ import {
     ActionRowBuilder,
     ButtonBuilder,
     EmbedBuilder,
-    ChatInputCommandInteraction
+    ChatInputCommandInteraction,
+    MessageFlags
 } from "discord.js";
 import type { Operator, User } from "../singletons/Database.js";
 import APIConnector from "../singletons/APIConnector.js";
 import Database from "../singletons/Database.js";
-import SendMessage from "./SendMessage.js";
 import BuildGachaEmbed from "./BuildGachaEmbed.js";
 import AsyncMap from "./AsyncMap.js";
 import GachaResultLifetimeManager from "../singletons/GachaResultLifetimeManager.js";
@@ -19,8 +19,16 @@ export default async (Interaction: ChatInputCommandInteraction, BannerName: stri
 
     const UserProfile: User = Database.Manager.Users.get(UserID)!;
     const Response: Response = await APIConnector.RollMulti(BannerName, Count, UserProfile.Token);
-    if(!Response.ok) 
-        return await SendMessage(Interaction, (await Response.json() as { message: string }).message);
+    if(!Response.ok) {
+        await Interaction.reply({
+            content: (await Response.json() as { message: string }).message,
+            allowedMentions: { repliedUser: false },
+            flags: MessageFlags.Ephemeral
+        });
+        return;
+    }
+
+    Interaction.deferReply();
 
     const Result: { Result: Record<string, number> } = await Response.json() as { Result: Record<string, number> };
     const Operators: Record<string, { Count: number; Rarity: 3 | 4 | 5 | 6; ID: string; }> = Object.fromEntries(
@@ -84,12 +92,16 @@ export default async (Interaction: ChatInputCommandInteraction, BannerName: stri
             PoolID
         );
 
-        return await SendMessage(
-            Interaction,
-            [Embed.Embed],
-            [Embed.ButtonRow]
-        );
+        await Interaction.editReply({
+            embeds: [Embed.Embed],
+            components: [Embed.ButtonRow],
+            allowedMentions: { repliedUser: false }
+        });
+        return;
     }
 
-    await SendMessage(Interaction, [BuildGachaEmbed(Interaction, Operators)], []);
+    await Interaction.editReply({
+        embeds: [BuildGachaEmbed(Interaction, Operators)],
+        allowedMentions: { repliedUser: false }
+    });
 };

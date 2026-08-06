@@ -8,11 +8,11 @@ import {
     SlashCommandBuilder
 } from "discord.js";
 import type { Command } from "../types/Command.js";
-import ConstructButtonRow from "../helpers/ConstructButtonRow.js";
+import ConstructButtonRow from "../helpers/ConstructNavigationButtonRow.js";
 import CommandManager from "../singletons/CommandManager.js";
 import Paginate from "../helpers/Paginate.js";
 import GetMaxPage from "../helpers/GetMaxPage.js";
-import SendMessage from "../helpers/SendMessage.js";
+import ActionCustomIDParser from "../helpers/ActionCustomIDParser.js";
 
 export default {
     Command: new SlashCommandBuilder()
@@ -31,6 +31,7 @@ export default {
         const Embed: EmbedBuilder = new EmbedBuilder()
             .setColor(0x00ffff)
             .setTitle("Help command.")
+            .setDescription(MaxPage > 1 ? `Page ${1} / ${MaxPage}` : null)
             .addFields(
                 ...CommandPages.map(Command => ({
                     name: `/${Command.Command.name} ${
@@ -55,20 +56,30 @@ export default {
             Interaction.user.id
         );
 
-        await SendMessage(Interaction, [Embed], MaxPage > 1 ? [ButtonRow] : []);
+        await Interaction.editReply({
+            embeds: [Embed],
+            components: MaxPage > 1 ? [ButtonRow] : [],
+            allowedMentions: { repliedUser: false }
+        });
     },
     Button: async (Interaction: ButtonInteraction): Promise<void> => {
-        const [, ActionMeta, Owner]: string[] = Interaction.customId.split(":");
+        const CustomID = ActionCustomIDParser(
+            Interaction.customId,
+            {
+                Type: "",
+                Page: ""
+            }
+        );
         
-        if(Interaction.user.id !== Owner)
+        if(Interaction.user.id !== CustomID.Owner)
             return;
         
-        const [Type, Page]: string[] = ActionMeta.split("/");
+        const Page: string = CustomID.Meta.Page;
         const Commands: Command[] = [...CommandManager.Values()];
         const MaxPage: number = GetMaxPage(Commands, 25);
         let NextPage: number;
 
-        switch(Type) {
+        switch(CustomID.Meta.Type) {
             case "0":
                 if(Number(Page) === 1)
                     return;
@@ -100,6 +111,7 @@ export default {
         const Embed: EmbedBuilder = new EmbedBuilder()
             .setColor(0x00ffff)
             .setTitle(`Help command.`)
+            .setDescription(`Page ${NextPage} / ${MaxPage}`)
             .addFields(
                 ...CommandPages.map(Command => ({
                     name: `/${Command.Command.name} ${
@@ -124,6 +136,10 @@ export default {
             Interaction.user.id
         );
 
-        await SendMessage(Interaction, [Embed], MaxPage > 1 ? [ButtonRow] : []);
+        await Interaction.update({
+            embeds: [Embed],
+            components: [ButtonRow],
+            allowedMentions: { repliedUser: false }
+        });
     }
 } satisfies Command;

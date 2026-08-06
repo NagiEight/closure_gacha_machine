@@ -1,15 +1,22 @@
-import type { ChatInputCommandInteraction, EmbedBuilder } from "discord.js";
+import { MessageFlags, type ChatInputCommandInteraction, type EmbedBuilder } from "discord.js";
 import Database, { type User, type Operator } from "../singletons/Database.js";
 import APIConnector from "../singletons/APIConnector.js";
-import SendMessage from "./SendMessage.js";
 import BuildGachaEmbed from "./BuildGachaEmbed.js";
 
 export default async (Interaction: ChatInputCommandInteraction, BannerName: string): Promise<void> => {
     const UserID: string = Interaction.user.id;
     const UserProfile: User = Database.Manager.Users.get(UserID)!;
     const Response: Response = await APIConnector.Roll(BannerName, UserProfile.Token);
-    if(!Response.ok) 
-        return await SendMessage(Interaction, (await Response.json() as { message: string }).message);
+    if(!Response.ok) {
+        await Interaction.reply({
+            content: (await Response.json() as { message: string }).message,
+            allowedMentions: { repliedUser: false },
+            flags: MessageFlags.Ephemeral
+        });
+        return;
+    }
+
+    await Interaction.deferReply();
     
     const Result: { Result: string; } = await Response.json() as { Result: string; };
     const Operator: Operator = await Database.Manager.GetOperatorInfo(Result.Result);
@@ -52,6 +59,9 @@ export default async (Interaction: ChatInputCommandInteraction, BannerName: stri
         Interaction, 
         { [Operator.Name]: { Count: 1, Rarity: Operator.Rarity } }
     );
-
-    await SendMessage(Interaction, [Embed], []);
+    
+    await Interaction.editReply({
+        embeds: [Embed],
+        allowedMentions: { repliedUser: false }
+    });
 };

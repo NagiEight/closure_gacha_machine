@@ -5,6 +5,7 @@ import {
     ButtonInteraction,
     ChatInputCommandInteraction,
     EmbedBuilder,
+    MessageFlags,
     SlashCommandBuilder
 } from "discord.js";
 import type { Command } from "../types/Command.js";
@@ -12,10 +13,10 @@ import GachaResultLifetimeManager, { type GachaResult } from "../singletons/Gach
 import Database from "../singletons/Database.js";
 import Roll from "../helpers/Roll.js";
 import RollMulti from "../helpers/RollMulti.js";
-import SendMessage from "../helpers/SendMessage.js";
 import GetMaxPage from "../helpers/GetMaxPage.js";
 import Paginate from "../helpers/Paginate.js";
 import BuildGachaEmbed from "../helpers/BuildGachaEmbed.js";
+import ActionCustomIDParser from "../helpers/ActionCustomIDParser.js";
 
 export default {
     Command: new SlashCommandBuilder()
@@ -39,18 +40,37 @@ export default {
         const UserID: string = Interaction.user.id;
         const Count: number = Interaction.options.getInteger("count", false) ?? 1;
         const Banner: string = Interaction.options.getString("banner", true);
-        if(!Database.Manager.GetToken(UserID)) 
-            return await SendMessage(Interaction, "You don't have a gacha profile.");
+        
+        if(!Database.Manager.GetToken(UserID)) {
+            await Interaction.reply({
+                content: "You don't have a gacha profile.",
+                allowedMentions: { repliedUser: false },
+                flags: MessageFlags.Ephemeral
+            });
+            return;
+        }
 
-        if(Count < 1) 
-            return await SendMessage(Interaction, "Roll count has to be 1 or higher.");
+        if(Count < 1) {
+            await Interaction.reply({
+                content: "Roll count has to be 1 or higher.",
+                allowedMentions: { repliedUser: false },
+                flags: MessageFlags.Ephemeral
+            });
+            return;
+        }
 
         try {
             await Database.Manager.GetBannerInfo(Banner);
         }
         catch(Err) {
-            if(Err instanceof Error && Err.name === "UnknownBannerError") 
-                return await SendMessage(Interaction, Err.message);
+            if(Err instanceof Error && Err.name === "UnknownBannerError") {
+                await Interaction.reply({
+                    content: Err.message,
+                    allowedMentions: { repliedUser: false },
+                    flags: MessageFlags.Ephemeral
+                });
+                return;
+            }
             throw Err;
         }
 
@@ -69,13 +89,19 @@ export default {
         );
     },
     Button: async (Interaction: ButtonInteraction): Promise<void> => {
-        const [, ActionMeta, Owner] = Interaction.customId.split(":");
+        const CustomID = ActionCustomIDParser(
+            Interaction.customId,
+            {
+                ActionName: "",
+                Page: "",
+                PoolID: ""
+            }
+        );
 
-        if(Owner !== Interaction.user.id)
+        if(CustomID.Owner !== Interaction.user.id)
             return;
         
-        const [ActionName, Page, PoolID] = ActionMeta.split("/");
-        const GachaResult: GachaResult | undefined = GachaResultLifetimeManager.GetPool(Owner, PoolID);
+        const GachaResult: GachaResult | undefined = GachaResultLifetimeManager.GetPool(CustomID.Owner, CustomID.Meta.PoolID);
         
         if(!GachaResult)
             return;
@@ -83,27 +109,27 @@ export default {
         const MaxPage: number = GetMaxPage(Object.keys(GachaResult), 20);
         let NextPageIndex: number;
 
-        switch(ActionName) {
+        switch(CustomID.Meta.ActionName) {
             case "0":
-                if(Number(Page) === 1)
+                if(Number(CustomID.Meta.Page) === 1)
                     return;
                 NextPageIndex = 1;
                 break;
                 
             case "1":
-                if(Number(Page) === 1)
+                if(Number(CustomID.Meta.Page) === 1)
                     return;
-                NextPageIndex = Number(Page) - 1;
+                NextPageIndex = Number(CustomID.Meta.Page) - 1;
                 break;
 
             case "2":
-                if(Number(Page) === MaxPage)
+                if(Number(CustomID.Meta.Page) === MaxPage)
                     return;
-                NextPageIndex = Number(Page) + 1;
+                NextPageIndex = Number(CustomID.Meta.Page) + 1;
                 break;
 
             case "3":
-                if(Number(Page) === MaxPage)
+                if(Number(CustomID.Meta.Page) === MaxPage)
                     return;
                 NextPageIndex = MaxPage;
                 break;
@@ -123,7 +149,13 @@ export default {
             "roll",
             NextPageIndex,
             MaxPage,
-            PoolID
+            CustomID.Meta.PoolID
         );
+        
+        await Interaction.update({
+            embeds: [Embed.Embed],
+            components: [Embed.ButtonRow],
+            allowedMentions: { repliedUser: false }
+        });
     }
 } satisfies Command;

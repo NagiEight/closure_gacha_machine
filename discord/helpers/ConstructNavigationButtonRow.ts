@@ -8,11 +8,11 @@ enum ButtonType {
     ForwardToEnd
 };
 
-const ButtonEmoji: Record<ButtonType, string> = {
-    [ButtonType.BackwardToStart]: "⏪",
-    [ButtonType.Backward]: "◀️",
-    [ButtonType.Forward]: "▶️",
-    [ButtonType.ForwardToEnd]: "⏩"
+const ButtonLable: Record<ButtonType, string> = {
+    [ButtonType.BackwardToStart]: "⇇",
+    [ButtonType.Backward]: "←",
+    [ButtonType.Forward]: "→",
+    [ButtonType.ForwardToEnd]: "⇉"
 };
 
 const ConstructButton = (
@@ -24,7 +24,7 @@ const ConstructButton = (
 ): ButtonBuilder => 
     new ButtonBuilder()
         .setCustomId(ActionRowIDBuilder(CommandName, [Type.toString(), PageIndex.toString(), ...ExtraMeta], Owner))
-        .setEmoji({ name: ButtonEmoji[Type] })
+        .setLabel(ButtonLable[Type])
         .setStyle(ButtonStyle.Primary)
 ;
 
@@ -66,7 +66,7 @@ export default (
     return new ActionRowBuilder<ButtonBuilder>()
         .addComponents(
             ...[BackwardToStartButton, BackwardButton, ForwardButton, ForwardToEndButton].slice(
-                ...(PageIndex === 1 ? [0, 2] : PageIndex === MaxPage ? [2, 4] : [0, 4])
+                ...(PageIndex === MaxPage ? [0, 2] : PageIndex === 1 ? [2, 4] : [0, 4])
             )
         )
     ;

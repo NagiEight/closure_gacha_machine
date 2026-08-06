@@ -1,12 +1,24 @@
-export default function ActionCustomIDParser(CustomID: string): { CommandName: string; Meta: string[]; Owner: string; };
+export interface ArrActionCustomIDParser {
+    CommandName: string; 
+    Meta: string[]; 
+    Owner: string;
+}
+
+export interface ObjActionCustomIDParser<T> {
+    CommandName: string;
+    Meta: T;
+    Owner: string;
+}
+
+export default function ActionCustomIDParser(CustomID: string): ArrActionCustomIDParser;
 export default function ActionCustomIDParser<T extends Record<string, unknown>>(
     CustomID: string,
     Container: T
-): { CommandName: string; Meta: T; Owner: string; };
+): ObjActionCustomIDParser<T>;
 export default function ActionCustomIDParser<T extends Record<string, string>>(
     CustomID: string,
     Container?: T
-): { CommandName: string; Meta: T; Owner: string; } | { CommandName: string; Meta: string[]; Owner: string; } {
+): ObjActionCustomIDParser<T> | ArrActionCustomIDParser {
     const [CommandName, MetaString, Owner] = CustomID.split(":");
     const MetaArr: string[] = MetaString.split("/");
     

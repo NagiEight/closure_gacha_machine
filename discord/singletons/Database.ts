@@ -307,7 +307,7 @@ class DataManager {
     
     public constructor() {
         const StorageQuery: StorageRow[] = DB.prepare<[], StorageRow>(`
-            SELECT GS.UserID, GS.Banner, GS.Rarity, GS.ID
+            SELECT GS.UserID, GS.Banner, GS.Rarity, GS.ID, GS.Count
             FROM GachaStorage GS JOIN User U ON GS.UserID = U.UserID
         `).all();
         const DataQuery: DataRow[] = DB.prepare<[], DataRow>(`

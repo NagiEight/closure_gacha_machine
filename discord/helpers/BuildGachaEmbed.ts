@@ -1,6 +1,6 @@
 import { ActionRowBuilder, ButtonBuilder, ButtonInteraction, ChatInputCommandInteraction, EmbedBuilder } from "discord.js";
 import Database from "../singletons/Database.js";
-import ConstructButtonRow from "./ConstructButtonRow.js";
+import ConstructButtonRow from "./ConstructNavigationButtonRow.js";
 
 export default function BuildGachaEmbed(
     Interaction: ChatInputCommandInteraction,
@@ -45,7 +45,7 @@ export default function BuildGachaEmbed(
     ;
     return PoolID && MaxPage && PageIndex && CommandName
         ? {
-            Embed,
+            Embed: Embed.setDescription(`Page ${PageIndex} / ${MaxPage}`),
             ButtonRow: ConstructButtonRow(
                 CommandName,
                 PageIndex,

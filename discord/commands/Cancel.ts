@@ -1,7 +1,6 @@
-import { AutocompleteInteraction, ChatInputCommandInteraction, SlashCommandBuilder } from "discord.js";
+import { AutocompleteInteraction, ChatInputCommandInteraction, MessageFlags, SlashCommandBuilder } from "discord.js";
 import type { Command } from "../types/Command.js";
 import CommandManager from "../singletons/CommandManager.js";
-import SendMessage from "../helpers/SendMessage.js";
 
 export default {
     Command: new SlashCommandBuilder()
@@ -19,19 +18,41 @@ export default {
         const Target: string = Interaction.options.getString("command", true);
         const Command: Command | undefined = CommandManager.Get(Target);
 
-        if(!Command) 
-            return await SendMessage(Interaction, `Command "${Interaction.commandName}" doesn't exist.`);
+        if(!Command) {
+            await Interaction.reply({
+                content: `Command "${Interaction.commandName}" doesn't exist.`,
+                allowedMentions: { repliedUser: false },
+                flags: MessageFlags.Ephemeral
+            });
+            return;
+        }
 
-        if(!Command.Cancelable) 
-            return await SendMessage(Interaction, `Command "${Interaction.commandName}" is not cancelable.`);
+        if(!Command.Cancelable) {
+            await Interaction.reply({
+                content: `Command "${Interaction.commandName}" is not cancelable.`,
+                allowedMentions: { repliedUser: false },
+                flags: MessageFlags.Ephemeral
+            });
+            return;
+        }
 
         const Controller: AbortController | undefined = Command.Cancelable.Pool.get(Interaction.user.id);
 
-        if(!Controller) 
-            return await SendMessage(Interaction, `Command "${Interaction.commandName}" is currently not running.`);
+        if(!Controller) {
+            await Interaction.reply({
+                content: `Command "${Interaction.commandName}" is currently not running.`,
+                allowedMentions: { repliedUser: false },
+                flags: MessageFlags.Ephemeral
+            });
+            return;
+        }
         
         Controller.abort();
-        await SendMessage(Interaction, `Cancelled "${Target}".`);
+        await Interaction.reply({
+            content: `Cancelled "${Target}".`,
+            allowedMentions: { repliedUser: false },
+            flags: MessageFlags.Ephemeral
+        });
     },
     Autocomplete: async (Interaction: AutocompleteInteraction): Promise<void> => {
         await Interaction.respond(

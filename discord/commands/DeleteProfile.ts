@@ -5,11 +5,11 @@ import {
     ButtonStyle,
     ChatInputCommandInteraction,
     EmbedBuilder,
+    MessageFlags,
     SlashCommandBuilder
 } from "discord.js";
 import type { Command } from "../types/Command.js";
 import Database from "../singletons/Database.js";
-import SendMessage from "../helpers/SendMessage.js";
 import APIConnector from "../singletons/APIConnector.js";
 import LoadEnv from "../singletons/LoadEnv.js";
 import ActionRowIDBuilder from "../helpers/ActionRowIDBuilder.js";
@@ -21,8 +21,14 @@ export default {
     ,
     Action: async (Interaction: ChatInputCommandInteraction): Promise<void> => {
         const UserID: string = Interaction.user.id;
-        if(!Database.Manager.Users.has(UserID)) 
-            return await SendMessage(Interaction, "You don't have a profile to delete.");
+        if(!Database.Manager.Users.has(UserID)) {
+            await Interaction.reply({
+                content: "You don't have a profile to delete.",
+                allowedMentions: { repliedUser: false },
+                flags: MessageFlags.Ephemeral
+            });
+            return;
+        }
 
         await Interaction.deferReply();
 
@@ -49,7 +55,11 @@ export default {
             .addComponents(ConfirmButton, CancelButton)
         ;
         
-        await SendMessage(Interaction, [Embed], [ButtonRow]);
+        await Interaction.editReply({
+            embeds: [Embed],
+            components: [ButtonRow],
+            allowedMentions: { repliedUser: false }
+        });
     },
     Button: async (Interaction: ButtonInteraction): Promise<void> => {
         const [, ActionName, Owner] = Interaction.customId.split(":");
@@ -66,10 +76,22 @@ export default {
                 Database.Manager.RemoveTokenSTMT(Owner);
                 Database.Manager.TimeoutSTMT.run(Owner, Date.now() + LoadEnv.TIMEOUT_DURATION * 1000);
 
-                return await SendMessage(Interaction, "Profile deleted successfully.");
+                await Interaction.update({
+                    content: "Profile deleted successfully.",
+                    embeds: [],
+                    components: [],
+                    allowedMentions: { repliedUser: false }
+                });
+                break;
 
             case "Cancel":
-                return await SendMessage(Interaction, "Profile deletion cancelled.");
+                await Interaction.update({
+                    content: "Profile deletion cancelled.",
+                    embeds: [],
+                    components: [],
+                    allowedMentions: { repliedUser: false }
+                });
+                break;
         }
     }
 } satisfies Command;

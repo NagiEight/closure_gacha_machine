@@ -1,8 +1,8 @@
-import { Client as C, GatewayIntentBits, Events } from "discord.js";
+import { Client as C, GatewayIntentBits, Events, MessageFlags } from "discord.js";
 import type { Command } from "./types/Command.js";
 import CommandManager from "./singletons/CommandManager.js";
 import LoadEnv from "./singletons/LoadEnv.js";
-import SendMessage from "./helpers/SendMessage.js";
+import ActionCustomIDParser from "./helpers/ActionCustomIDParser.js";
 
 await CommandManager.LoadCommands();
 
@@ -27,8 +27,8 @@ Client.on(Events.InteractionCreate, async Interaction => {
     }
 
     if(Interaction.isButton()) {
-        const [CommandName] = Interaction.customId.split(":");
-        const Command: Command | undefined = CommandManager.Get(CommandName);
+        const CustomID = ActionCustomIDParser(Interaction.customId);
+        const Command: Command | undefined = CommandManager.Get(CustomID.CommandName);
         if(!Command?.Button) 
             return;
 
@@ -36,8 +36,8 @@ Client.on(Events.InteractionCreate, async Interaction => {
     }
 
     if(Interaction.isAnySelectMenu()) {
-        const [CommandName] = Interaction.customId.split(":");
-        const Command: Command | undefined = CommandManager.Get(CommandName);
+        const CustomID = ActionCustomIDParser(Interaction.customId);
+        const Command: Command | undefined = CommandManager.Get(CustomID.CommandName);
 
         if(!Command)
             return;
@@ -86,22 +86,45 @@ Client.on(Events.InteractionCreate, async Interaction => {
     
     if(Command.Cancelable) {
         const Existing: AbortController | undefined = Command.Cancelable.Pool.get(Interaction.user.id);
-        if(Existing) 
-            return await SendMessage(Interaction, Command.Cancelable.Message ?? "This command is still running.");
+        if(Existing) {
+            await Interaction.reply({
+                content: Command.Cancelable.Message ?? "This command is still running.",
+                allowedMentions: { repliedUser: false },
+                flags: MessageFlags.Ephemeral
+            });
+            return;
+        }
         
         Command.Cancelable.Pool.set(Interaction.user.id, new AbortController());
     }
 
     try {
         console.log(`${Interaction.user.id}(${Interaction.user.username}) used ${Interaction.commandName}.`);
-        if(Command.Administrator && !LoadEnv.ADMINISTRATOR_IDS.includes(Interaction.user.id)) 
-            return await SendMessage(Interaction, "You are not permitted to use this command.");
+        if(Command.Administrator && !LoadEnv.ADMINISTRATOR_IDS.includes(Interaction.user.id)) {
+            await Interaction.reply({
+                content: "You are not permitted to use this command.",
+                allowedMentions: { repliedUser: false },
+                flags: MessageFlags.Ephemeral
+            });
+            return;
+        }
 
         await Command.Action(Interaction, Command.Cancelable?.Pool.get(Interaction.user.id)?.signal, Client);
     }
     catch(Err) {
         console.error(Err);
-        await SendMessage(Interaction, "Something went wrong.");
+        if(Interaction.deferred || Interaction.replied) {
+            await Interaction.editReply({
+                content: "Something went wrong.",
+                allowedMentions: { repliedUser: false }
+            });
+            return;
+        }
+        await Interaction.reply({
+            content: "Something went wrong.",
+            allowedMentions: { repliedUser: false },
+            flags: MessageFlags.Ephemeral
+        });
     }
     finally {
         if(Command.Cancelable) {
