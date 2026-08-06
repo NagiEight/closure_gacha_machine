@@ -247,12 +247,11 @@ export default {
                 `Page ${NextPage} / ${MaxPage}`
             )
             .addFields(
-                ...Paginate(ProcessedUserBannerProfile, NextPage, 10)
-                    .map(Operator => ({
-                        name: Operator.Name,
-                        value: `${"★".repeat(Operator.Rarity)} - x${Operator.Count}`,
-                        inline: true
-                    }))
+                ...Paginate(ProcessedUserBannerProfile, NextPage, 10).map(Operator => ({
+                    name: Operator.Name,
+                    value: `${"★".repeat(Operator.Rarity)} - x${Operator.Count}`,
+                    inline: true
+                }))
             )
         ;
 
@@ -344,12 +343,11 @@ export default {
                 `Page ${1} / ${MaxPage}`
             )
             .addFields(
-                ...Paginate(ProcessedUserBannerProfile, 1, 10)
-                    .map(Operator => ({
-                        name: Operator.Name,
-                        value: `${"★".repeat(Operator.Rarity)} - x${Operator.Count}`,
-                        inline: true
-                    }))
+                ...Paginate(ProcessedUserBannerProfile, 1, 10).map(Operator => ({
+                    name: Operator.Name,
+                    value: `${"★".repeat(Operator.Rarity)} - x${Operator.Count}`,
+                    inline: true
+                }))
             )
         ;
 
