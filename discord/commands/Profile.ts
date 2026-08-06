@@ -8,6 +8,8 @@ import {
     EmbedBuilder,
     MessageFlags,
     SlashCommandBuilder,
+    StringSelectMenuBuilder,
+    StringSelectMenuInteraction,
     User
 } from "discord.js";
 import type { Command } from "../types/Command.js";
@@ -17,6 +19,23 @@ import ProcessUserProfile from "../helpers/ProcessUserProfile.js";
 import Paginate from "../helpers/Paginate.js";
 import GetMaxPage from "../helpers/GetMaxPage.js";
 import ActionCustomIDParser from "../helpers/ActionCustomIDParser.js";
+import ActionRowIDBuilder from "../helpers/ActionRowIDBuilder.js";
+
+export enum FilterType {
+    All,
+    ThreeStars,
+    FourStars,
+    FiveStars,
+    SixStars
+}
+
+export const PlaceholderText: Record<FilterType, string> = {
+    [FilterType.All]: "All",
+    [FilterType.ThreeStars]: "★★★",
+    [FilterType.FourStars]: "★★★★",
+    [FilterType.FiveStars]: "★★★★★",
+    [FilterType.SixStars]: "★★★★★★"
+};
 
 export default {
     Command: new SlashCommandBuilder()
@@ -57,7 +76,27 @@ export default {
             Rarity: 3 | 4 | 5 | 6;
             Count: number;
         }[] = await ProcessUserProfile(User.id, BannerName);
+        
         const MaxPage: number = GetMaxPage(ProcessedUserBannerProfile, 10);
+        const IncludedRarity: Set<number> = new Set(Object.values(ProcessedUserBannerProfile).map(V => V.Rarity));
+
+        const Filter: StringSelectMenuBuilder = new StringSelectMenuBuilder()
+            .setCustomId(ActionRowIDBuilder("profile", [BannerName, User.id], Interaction.user.id))
+            .setPlaceholder(`Filter: ${PlaceholderText[FilterType.All]}`)
+            .addOptions(
+                ...Object.entries(PlaceholderText)
+                    .filter(([Type,]) => IncludedRarity.has(Number(Type) + 2))
+                    .map(([Type, Text]) => ({
+                        label: Text,
+                        value: Type
+                    }))
+            )
+            .setMinValues(1)
+            .setMaxValues(1)
+        ;
+        const FilterRow: ActionRowBuilder<StringSelectMenuBuilder> = new ActionRowBuilder<StringSelectMenuBuilder>()
+            .addComponents(Filter)
+        ;
 
         const Embed: EmbedBuilder = new EmbedBuilder()
             .setAuthor({
@@ -84,13 +123,14 @@ export default {
             "profile",
             1,
             MaxPage,
-            [BannerName, User.id],
+            // filter type
+            ["0", BannerName ,User.id],
             Interaction.user.id
         );
         
         await Interaction.editReply({
             embeds: [Embed],
-            components: MaxPage > 1 ? [ButtonRow] : [],
+            components: MaxPage > 1 ? [ButtonRow, FilterRow] : [FilterRow],
             allowedMentions: { repliedUser: false }
         });
     },
@@ -100,10 +140,12 @@ export default {
             {
                 ActionName: "",
                 Page: "",
+                FilterType: "",
                 BannerName: "",
                 UserID: ""
             }
         );
+        const Filter: string = CustomID.Meta.FilterType;
         
         if(Interaction.user.id !== CustomID.Owner)
             return;
@@ -115,7 +157,23 @@ export default {
             Name: string;
             Rarity: 3 | 4 | 5 | 6;
             Count: number;
-        }[] = await ProcessUserProfile(Profile, CustomID.Meta.BannerName);
+        }[] = (await ProcessUserProfile(Profile, CustomID.Meta.BannerName)).filter(V => {
+            switch(Filter) {
+                case "1":
+                    return V.Rarity === 3;
+
+                case "2":
+                    return V.Rarity === 4;
+
+                case "3":
+                    return V.Rarity === 5;
+
+                case "4":
+                    return V.Rarity === 6;
+
+                default: return true;
+            }
+        });
         const MaxPage: number = GetMaxPage(ProcessedUserBannerProfile, 10);
         const User: User = await Client.users.fetch(CustomID.Meta.UserID);
 
@@ -149,11 +207,30 @@ export default {
             default: return;
         }
 
+        const IncludedRarity: Set<number> = new Set(Object.values(ProcessedUserBannerProfile).map(V => V.Rarity));
+        const FilterMenu: StringSelectMenuBuilder = new StringSelectMenuBuilder()
+            .setCustomId(ActionRowIDBuilder("profile", [BannerName, User.id], Interaction.user.id))
+            .setPlaceholder(`Filter: ${PlaceholderText[Number(Filter) as FilterType]}`)
+            .addOptions(
+                ...Object.entries(PlaceholderText)
+                    .filter(([Type,]) => (IncludedRarity.has(Number(Type) + 2) || Type === "0") && Type !== Filter)
+                    .map(([Type, Text]) => ({
+                        label: Text,
+                        value: Type
+                    }))
+            )
+            .setMinValues(1)
+            .setMaxValues(1)
+        ;
+        const FilterRow: ActionRowBuilder<StringSelectMenuBuilder> = new ActionRowBuilder<StringSelectMenuBuilder>()
+            .addComponents(FilterMenu)
+        ;
+
         const ButtonRow: ActionRowBuilder<ButtonBuilder> = ConstructButtonRow(
             "profile",
             NextPage,
             MaxPage,
-            [BannerName, User.id],
+            [Filter, BannerName, User.id],
             Interaction.user.id
         );
         
@@ -170,17 +247,115 @@ export default {
                 `Page ${NextPage} / ${MaxPage}`
             )
             .addFields(
-                ...Paginate(ProcessedUserBannerProfile, NextPage, 10).map(Operator => ({
-                    name: Operator.Name,
-                    value: `${"★".repeat(Operator.Rarity)} - x${Operator.Count}`,
-                    inline: true
-                }))
+                ...Paginate(ProcessedUserBannerProfile, NextPage, 10)
+                    .map(Operator => ({
+                        name: Operator.Name,
+                        value: `${"★".repeat(Operator.Rarity)} - x${Operator.Count}`,
+                        inline: true
+                    }))
             )
         ;
 
         await Interaction.update({
             embeds: [Embed],
-            components: [ButtonRow],
+            components: MaxPage > 1 ? [ButtonRow, FilterRow] : [FilterRow],
+            allowedMentions: { repliedUser: false }
+        });
+    },
+    StringMenu: async (Interaction: StringSelectMenuInteraction, Client: Client): Promise<void> => {
+        // ActionRowIDBuilder("profile", [BannerName, User.id], Interaction.user.id)
+        const CustomID = ActionCustomIDParser(
+            Interaction.customId,
+            {
+                BannerName: "",
+                UserID: ""
+            }
+        );
+        const BannerName: string = CustomID.Meta.BannerName;
+        const UserID: string = CustomID.Meta.UserID;
+        const User: User = await Client.users.fetch(UserID);
+
+        if(Interaction.user.id != CustomID.Owner) 
+            return;
+        
+        const FilterType: string = Interaction.values[0];
+        const Profile: Profile = Database.Manager.Users.get(UserID)!;
+        const ProcessedUserBannerProfile: {
+            Name: string;
+            Rarity: 3 | 4 | 5 | 6;
+            Count: number;
+        }[] = (await ProcessUserProfile(Profile, BannerName)).filter(V => {
+            switch(FilterType) {
+                case "1":
+                    return V.Rarity === 3;
+
+                case "2":
+                    return V.Rarity === 4;
+
+                case "3":
+                    return V.Rarity === 5;
+
+                case "4":
+                    return V.Rarity === 6;
+
+                default: return true;
+            }
+        });
+        const MaxPage: number = GetMaxPage(ProcessedUserBannerProfile, 10);
+
+        const IncludedRarity: Set<number> = new Set(Object.values(ProcessedUserBannerProfile).map(V => V.Rarity));
+        const FilterMenu: StringSelectMenuBuilder = new StringSelectMenuBuilder()
+            .setCustomId(ActionRowIDBuilder("profile", [BannerName, UserID], Interaction.user.id))
+            .setPlaceholder(`Filter: ${PlaceholderText[Number(FilterType) as FilterType]}`)
+            .addOptions(
+                ...Object.entries(PlaceholderText)
+                    .filter(([Type,]) => (IncludedRarity.has(Number(Type) + 2) || Type === "0") && Type !== FilterType)
+                    .map(([Type, Text]) => ({
+                        label: Text,
+                        value: Type
+                    }))
+            )
+            .setMinValues(1)
+            .setMaxValues(1)
+        ;
+        const FilterRow: ActionRowBuilder<StringSelectMenuBuilder> = new ActionRowBuilder<StringSelectMenuBuilder>()
+            .addComponents(FilterMenu)
+        ;
+
+        const ButtonRow: ActionRowBuilder<ButtonBuilder> = ConstructButtonRow(
+            "profile",
+            1,
+            MaxPage,
+            // filter type
+            [FilterType, BannerName, UserID],
+            Interaction.user.id
+        );
+
+        const Embed: EmbedBuilder = new EmbedBuilder()
+            .setAuthor({
+                name: User.username,
+                url: `https://discord.com/users/${User.id}`,
+                iconURL: User.displayAvatarURL({ size: 256 })
+            })
+            .setThumbnail(User.displayAvatarURL({ size: 512 }))
+            .setTitle(`Banner: ${BannerName}`)
+            .setDescription(
+                `Total rolls: ${Profile.Profile[BannerName].Count}\n` +
+                `Page ${1} / ${MaxPage}`
+            )
+            .addFields(
+                ...Paginate(ProcessedUserBannerProfile, 1, 10)
+                    .map(Operator => ({
+                        name: Operator.Name,
+                        value: `${"★".repeat(Operator.Rarity)} - x${Operator.Count}`,
+                        inline: true
+                    }))
+            )
+        ;
+
+        await Interaction.update({
+            embeds: [Embed],
+            components: MaxPage > 1 ? [ButtonRow, FilterRow] : [FilterRow],
             allowedMentions: { repliedUser: false }
         });
     },

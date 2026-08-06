@@ -78,7 +78,7 @@ export default async (Interaction: ChatInputCommandInteraction, BannerName: stri
     if(MaxPage > 1) {
         const PoolID: string = GachaResultLifetimeManager.AddPool(UserID, Operators);
         const Page: Record<string, { Count: number; Rarity: 3 | 4 | 5 | 6; ID: string; }> = Object.fromEntries(
-            Paginate(Object.entries(Operators), 1, 20)
+            Paginate(Object.entries(Operators), 1, 20).sort((A, B) => A[1].Rarity - B[1].Rarity)
         );
         const Embed: {
             Embed: EmbedBuilder;
