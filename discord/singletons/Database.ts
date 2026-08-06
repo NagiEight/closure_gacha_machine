@@ -1,7 +1,12 @@
 import Database, { type Database as DatabaseType, type Statement } from "better-sqlite3";
 import APIConnector from "./APIConnector.js";
+import fs from "fs/promises"
+import path from "path";
 
-const DB: DatabaseType = new Database("Mapping.db");
+const DBDir: string = path.join(import.meta.dirname, "..", "database");
+await fs.mkdir(DBDir, { recursive: true });
+
+const DB: DatabaseType = new Database(path.join(DBDir, "User.db"));
 DB.pragma("journal_mode = WAL");
 DB.pragma("foreign_key = ON");
 // the bot backend maintains its own database both to reduce load on the main backend and to increase speed
@@ -45,10 +50,7 @@ DB.exec(`
         Count INTEGER NOT NULL,
 
         PRIMARY KEY (UserID, Banner),
-        FOREIGN KEY (UserID) REFERENCES Mapping(UserID),
-
-        CHECK(Focused IN (0, 1)),
-        CHECK(TenRolls IN (0, 1))
+        FOREIGN KEY (UserID) REFERENCES User(UserID)
     );
 
     CREATE TABLE IF NOT EXISTS GachaStorage(
@@ -60,7 +62,7 @@ DB.exec(`
         Count INTEGER NOT NULL,
 
         PRIMARY KEY (UserID, Banner, Rarity, ID),
-        FOREIGN KEY (UserID) REFERENCES Mapping(UserID),
+        FOREIGN KEY (UserID) REFERENCES User(UserID),
 
         CHECK(Rarity IN (3, 4, 5, 6)),
         CHECK(Count >= 0)
@@ -233,7 +235,7 @@ class DataManager {
             .map(Row => [Row.UserID, Row.Timeout])
     );
     public readonly AddTokenSTMT: Statement<[string, string], void> = DB.prepare<[string, string], void>(`
-        INSERT INTO Mapping
+        INSERT INTO User
         (UserID, Token)
         VALUES(?, ?)
     `);
@@ -241,14 +243,14 @@ class DataManager {
         INSERT INTO GachaStorage
         (UserID, Banner, Rarity, ID, Count)
         VALUES(?, ?, ?, ?, ?)
-        ON CONFLICT(UserToken, Banner, Rarity, ID) DO UPDATE SET
+        ON CONFLICT(UserID, Banner, Rarity, ID) DO UPDATE SET
             Count = excluded.Count
     `);
     public readonly RefreshDataSTMT = DB.prepare<[string, string, number], void>(`
         INSERT INTO GachaData
         (UserID, Banner, Count)
         VALUES(?, ?, ?)
-        ON CONFLICT(UserToken, Banner) DO UPDATE SET
+        ON CONFLICT(UserID, Banner) DO UPDATE SET
             Count = excluded.Count
     `);
     public readonly TimeoutSTMT = DB.prepare<[string, number], void>(`
@@ -460,8 +462,11 @@ class DataManager {
     public async GetAllBanners(): Promise<string[]> {
         if(this.BannerNames)
             return this.BannerNames;
+
         const Response: Response = await APIConnector.GetAllBannerNames();
-        this.BannerNames = await Response.json() as string[];
+        const Body: string[] = await Response.json() as string[];
+
+        this.BannerNames = Body;
         return this.BannerNames;
     }
 

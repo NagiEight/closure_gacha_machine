@@ -25,7 +25,7 @@ export default {
         }
 
         const Response: Response = await APIConnector.CreateToken();
-        const Token: string = Response.headers.get("Seession-Token")!;
+        const Token: string = Response.headers.get("Session-Token")!;
 
         Database.Manager.AddTokenSTMT.run(UserID, Token);
         Database.Manager.Users.set(UserID, {

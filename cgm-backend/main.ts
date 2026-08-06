@@ -19,8 +19,12 @@ Server.use(Limiter);
 
 // API endpoint
 Server.get("/api/banners/:Page", (Req, Res) => {
-    const Page: number = Number(Req.params.Page);
+    if(Req.params.Page === "all") {
+        Res.json(Database.DB.prepare<[], { Name: string; }>("SELECT Name FROM Banners").all().map(Row => Row.Name));
+        return;
+    }
 
+    const Page: number = Number(Req.params.Page);    
     if(!Page || Page <= 0) {
         Res.status(404).json({ message: "Invalid pagination index." });
         return;
@@ -55,9 +59,6 @@ Server.get("/api/banners/:Page", (Req, Res) => {
         ID: OperatorID,
         ...Operator
     });
-})
-.get("/api/banners/all", (_, Res) => {
-    Res.json(Database.DB.prepare<[], { Name: string; }>("SELECT Name FROM Banners").all().map(Row => Row.Name));
 });
 
 // Assets endpoint

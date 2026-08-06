@@ -13,6 +13,6 @@ export default {
             return [];
         }
     })(),
-    BASE_API_URL: process.env.ADMINISTRATOR_IDS ?? "",
+    BASE_API_URL: process.env.BASE_API_URL ?? "",
     TIMEOUT_DURATION: /^\+?\d+$/.test(process.env.TIMEOUT_DURATION ?? "") ? Number(process.env.TIMEOUT_DURATION) : 604800
 };

@@ -72,7 +72,7 @@ export interface Banner {
 interface BannersRow {
     Name: string;
     ReleaseDate: number;
-    Type: number;
+    Type: BannerTypes;
     Rarity: 3 | 4 | 5 | 6;
     Prima: string | null;
     Secondary: string | null;
@@ -116,9 +116,9 @@ class DataManager {
         const Banners: Map<string, Banner> = new Map();
         for(const Row of Query) {
             const Name: string = Row.Name;
-            const Banner: Banner = {
-                ReleaseDate: 0,
-                Type: BannerTypes.Standard,
+            const Banner: Banner = Banners.get(Name) ?? {
+                ReleaseDate: Row.ReleaseDate,
+                Type: Row.Type,
                 SixStarsPool: {
                     Primary: [],
                     Secondary: [],
@@ -134,9 +134,6 @@ class DataManager {
                 },
                 ThreeStarsPool: []
             };
-
-            Banner.ReleaseDate = Row.ReleaseDate;
-            Banner.Type = Row.Type;
 
             switch(Row.Rarity) {
                 case 3:

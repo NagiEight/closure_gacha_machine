@@ -14,12 +14,12 @@ export default async (Interaction: ChatInputCommandInteraction, BannerName: stri
     if(!Response.ok) 
         return await SendMessage(Interaction, (await Response.json() as { message: string }).message);
 
-    const Result: Record<string, number> = await Response.json() as Record<string, number>;
+    const Result: { Result: Record<string, number> } = await Response.json() as { Result: Record<string, number> };
     const Operators: Record<string, { Count: number; Rarity: 3 | 4 | 5 | 6; ID: string; }> = Object.fromEntries(
         (await AsyncMap(
-            Object.keys(Result),
+            Object.keys(Result.Result),
             async (ID): Promise<[string, Operator]> => [ID, await Database.Manager.GetOperatorInfo(ID)]
-        )).map(([ID, Operator]) => [Operator.Name, { Count: Result[ID], Rarity: Operator.Rarity, ID }])
+        )).map(([ID, Operator]) => [Operator.Name, { Count: Result.Result[ID], Rarity: Operator.Rarity, ID }])
     );
 
     UserProfile.Profile[BannerName] ??= {
@@ -62,9 +62,8 @@ export default async (Interaction: ChatInputCommandInteraction, BannerName: stri
         [BuildGachaEmbed(
             Interaction, 
             Object.fromEntries(
-                Object.entries(Operators).map(([Operator, Data]) => [Operator, Data.Count])
-            ), 
-            Math.max(...Object.values(Operators).map(Operator => Operator.Rarity)) as 3 | 4 | 5 | 6
+                Object.entries(Operators).map(([Operator, Data]) => [Operator, { Count: Data.Count, Rarity: Data.Rarity }])
+            )
         )],
         []
     );

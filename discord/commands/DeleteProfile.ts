@@ -66,12 +66,10 @@ export default {
                 Database.Manager.RemoveTokenSTMT(Owner);
                 Database.Manager.TimeoutSTMT.run(Owner, Date.now() + LoadEnv.TIMEOUT_DURATION * 1000);
 
-                await SendMessage(Interaction, "Profile deleted successfully.");
-                break;
+                return await SendMessage(Interaction, "Profile deleted successfully.");
 
             case "Cancel":
-                await SendMessage(Interaction, "Profile deletion cancelled.");
-                break;
+                return await SendMessage(Interaction, "Profile deletion cancelled.");
         }
     }
 } satisfies Command;

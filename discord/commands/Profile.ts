@@ -42,18 +42,18 @@ export default {
     Command: new SlashCommandBuilder()
         .setName("profile")
         .setDescription("Get the gacha profile of a user.")
-        .addUserOption(Option =>
-            Option
-                .setName("user")
-                .setDescription("User to retrive profile.")
-                .setRequired(false)
-        )
         .addStringOption(Option =>
             Option
                 .setName("banner")
                 .setDescription("Banner to check.")
                 .setRequired(true)
                 .setAutocomplete(true)
+        )
+        .addUserOption(Option =>
+            Option
+                .setName("user")
+                .setDescription("User to retrive profile.")
+                .setRequired(false)
         )
     ,
     Action: async (Interaction: ChatInputCommandInteraction): Promise<void> => { 
