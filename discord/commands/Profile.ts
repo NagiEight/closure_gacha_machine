@@ -149,6 +149,8 @@ export default {
         
         if(Interaction.user.id !== CustomID.Owner)
             return;
+
+        await Interaction.deferUpdate();
         
         const Page: string = CustomID.Meta.Page;
         const BannerName: string = CustomID.Meta.BannerName;
@@ -255,7 +257,7 @@ export default {
             )
         ;
 
-        await Interaction.update({
+        await Interaction.editReply({
             embeds: [Embed],
             components: MaxPage > 1 ? [ButtonRow, FilterRow] : [FilterRow],
             allowedMentions: { repliedUser: false }
@@ -276,6 +278,8 @@ export default {
 
         if(Interaction.user.id != CustomID.Owner) 
             return;
+
+        await Interaction.deferUpdate();
         
         const FilterType: string = Interaction.values[0];
         const Profile: Profile = Database.Manager.Users.get(UserID)!;
@@ -283,7 +287,13 @@ export default {
             Name: string;
             Rarity: 3 | 4 | 5 | 6;
             Count: number;
-        }[] = (await ProcessUserProfile(Profile, BannerName)).filter(V => {
+        }[] = await ProcessUserProfile(Profile, BannerName);
+        const IncludedRarity: Set<number> = new Set(Object.values(ProcessedUserBannerProfile).map(V => V.Rarity));
+        const FilteredProcessedUserBannerProfile: {
+            Name: string;
+            Rarity: 3 | 4 | 5 | 6;
+            Count: number;
+        }[] = ProcessedUserBannerProfile.filter(V => {
             switch(FilterType) {
                 case "1":
                     return V.Rarity === 3;
@@ -300,15 +310,14 @@ export default {
                 default: return true;
             }
         });
-        const MaxPage: number = GetMaxPage(ProcessedUserBannerProfile, 10);
+        const MaxPage: number = GetMaxPage(FilteredProcessedUserBannerProfile, 10);
 
-        const IncludedRarity: Set<number> = new Set(Object.values(ProcessedUserBannerProfile).map(V => V.Rarity));
         const FilterMenu: StringSelectMenuBuilder = new StringSelectMenuBuilder()
             .setCustomId(ActionRowIDBuilder("profile", [BannerName, UserID], Interaction.user.id))
             .setPlaceholder(`Filter: ${PlaceholderText[Number(FilterType) as FilterType]}`)
             .addOptions(
                 ...Object.entries(PlaceholderText)
-                    .filter(([Type,]) => (IncludedRarity.has(Number(Type) + 2) || Type === "0") && Type !== FilterType)
+                    .filter(([Type,]) => (IncludedRarity.has(Number(Type) + 2)  || Type === "0") && Type !== FilterType)
                     .map(([Type, Text]) => ({
                         label: Text,
                         value: Type
@@ -343,7 +352,7 @@ export default {
                 `Page ${1} / ${MaxPage}`
             )
             .addFields(
-                ...Paginate(ProcessedUserBannerProfile, 1, 10).map(Operator => ({
+                ...Paginate(FilteredProcessedUserBannerProfile, 1, 10).map(Operator => ({
                     name: Operator.Name,
                     value: `${"★".repeat(Operator.Rarity)} - x${Operator.Count}`,
                     inline: true
@@ -351,7 +360,7 @@ export default {
             )
         ;
 
-        await Interaction.update({
+        await Interaction.editReply({
             embeds: [Embed],
             components: MaxPage > 1 ? [ButtonRow, FilterRow] : [FilterRow],
             allowedMentions: { repliedUser: false }

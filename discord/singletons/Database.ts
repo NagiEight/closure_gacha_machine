@@ -302,7 +302,7 @@ class DataManager {
     public readonly RemoveTokenSTMT = DB.transaction((UserID: string): void => {
         DB.prepare<[string], void>("DELETE FROM GachaStorage WHERE UserID = ?").run(UserID);
         DB.prepare<[string], void>("DELETE FROM GachaData WHERE UserID = ?").run(UserID);
-        DB.prepare<[string], void>("DELETE FROM GachaProfiles WHERE UserID = ?").run(UserID);
+        DB.prepare<[string], void>("DELETE FROM User WHERE UserID = ?").run(UserID);
     });
     
     public constructor() {
@@ -358,7 +358,7 @@ class DataManager {
         `).all();
         for(const Row of Query) {
             const Name: string = Row.Name;
-            const Banner: Banner = {
+            const Banner: Banner = this.CachedBanners.get(Name) ?? {
                 ReleaseDate: 0,
                 Type: BannerTypes.Standard,
                 SixStarsPool: {

@@ -1,4 +1,4 @@
-import { MessageFlags, type ChatInputCommandInteraction, type EmbedBuilder } from "discord.js";
+import { type ChatInputCommandInteraction, type EmbedBuilder } from "discord.js";
 import Database, { type User, type Operator } from "../singletons/Database.js";
 import APIConnector from "../singletons/APIConnector.js";
 import BuildGachaEmbed from "./BuildGachaEmbed.js";
@@ -8,15 +8,12 @@ export default async (Interaction: ChatInputCommandInteraction, BannerName: stri
     const UserProfile: User = Database.Manager.Users.get(UserID)!;
     const Response: Response = await APIConnector.Roll(BannerName, UserProfile.Token);
     if(!Response.ok) {
-        await Interaction.reply({
+        await Interaction.editReply({
             content: (await Response.json() as { message: string }).message,
-            allowedMentions: { repliedUser: false },
-            flags: MessageFlags.Ephemeral
+            allowedMentions: { repliedUser: false }
         });
         return;
     }
-
-    await Interaction.deferReply();
     
     const Result: { Result: string; } = await Response.json() as { Result: string; };
     const Operator: Operator = await Database.Manager.GetOperatorInfo(Result.Result);
@@ -39,14 +36,17 @@ export default async (Interaction: ChatInputCommandInteraction, BannerName: stri
             Banner.Storage.ThreeStars[OperatorID] ??= 0;
             ToWrite = ++Banner.Storage.ThreeStars[OperatorID];
             break;
+
         case 4:
             Banner.Storage.FourStars[OperatorID] ??= 0;
             ToWrite = ++Banner.Storage.FourStars[OperatorID];
             break;
+
         case 5:
             Banner.Storage.FiveStars[OperatorID] ??= 0;
             ToWrite = ++Banner.Storage.FiveStars[OperatorID];
             break;
+
         case 6:
             Banner.Storage.SixStars[OperatorID] ??= 0;
             ToWrite = ++Banner.Storage.SixStars[OperatorID];

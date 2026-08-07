@@ -12,8 +12,7 @@ import type { Command } from "../types/Command.js";
 import Database from "../singletons/Database.js";
 import APIConnector from "../singletons/APIConnector.js";
 import LoadEnv from "../singletons/LoadEnv.js";
-import ActionRowIDBuilder from "../helpers/ActionRowIDBuilder.js";
-import ActionCustomIDParser from "../helpers/ActionCustomIDParser.js";
+import EmbedActionInteractionManager from "../singletons/EmbedActionInteractionManager.js";
 
 export default {
     Command: new SlashCommandBuilder()
@@ -43,12 +42,16 @@ export default {
         ;
 
         const ConfirmButton: ButtonBuilder = new ButtonBuilder()
-            .setCustomId(ActionRowIDBuilder("delete", ["Confirm"], Interaction.user.id))
+            .setCustomId(EmbedActionInteractionManager.AddInteraction(
+                UserID, "delete", "Confirm", undefined
+            ))
             .setLabel("Delete Profile")
             .setStyle(ButtonStyle.Danger)
         ;
         const CancelButton: ButtonBuilder = new ButtonBuilder()
-            .setCustomId(ActionRowIDBuilder("delete", ["Cancel"], Interaction.user.id))
+            .setCustomId(EmbedActionInteractionManager.AddInteraction(
+                UserID, "delete", "Cancel", undefined
+            ))
             .setLabel("Cancel")
             .setStyle(ButtonStyle.Secondary)
         ;
@@ -62,38 +65,23 @@ export default {
             allowedMentions: { repliedUser: false }
         });
     },
-    Button: async (Interaction: ButtonInteraction): Promise<void> => {
-        const CustomID = ActionCustomIDParser(Interaction.customId, { ActionName: "" });
-        const Owner: string = CustomID.Owner;
-
-        if(Interaction.user.id !== Owner)
-            return;
-
-        switch(CustomID.Meta.ActionName) {
-            case "Confirm":
-                const Token: string = Database.Manager.Users.get(Owner)!.Token;
-                await APIConnector.DeleteToken(Token);
-            
-                Database.Manager.Users.delete(Owner);
-                Database.Manager.RemoveTokenSTMT(Owner);
-                Database.Manager.TimeoutSTMT.run(Owner, Date.now() + LoadEnv.TIMEOUT_DURATION * 1000);
-
-                await Interaction.update({
-                    content: "Profile deleted successfully.",
-                    embeds: [],
-                    components: [],
-                    allowedMentions: { repliedUser: false }
-                });
-                break;
-
-            case "Cancel":
-                await Interaction.update({
-                    content: "Profile deletion cancelled.",
-                    embeds: [],
-                    components: [],
-                    allowedMentions: { repliedUser: false }
-                });
-                break;
+    Button: {
+        Confirm: async (Interaction: ButtonInteraction): Promise<void> => {
+            const Owner: string = Interaction.user.id;
+            const Token: string = Database.Manager.Users.get(Owner)!.Token;
+            await APIConnector.DeleteToken(Token);
+        
+            Database.Manager.Users.delete(Owner);
+            Database.Manager.RemoveTokenSTMT(Owner);
+            Database.Manager.TimeoutSTMT.run(Owner, Date.now() + LoadEnv.TIMEOUT_DURATION * 1000);
+        },
+        Cancel: async (Interaction: ButtonInteraction): Promise<void> => {
+            await Interaction.update({
+                content: "Profile deletion cancelled.",
+                embeds: [],
+                components: [],
+                allowedMentions: { repliedUser: false }
+            });
         }
     }
 } as const satisfies Command;

@@ -14,5 +14,6 @@ export default {
         }
     })(),
     BASE_API_URL: process.env.BASE_API_URL ?? "",
-    TIMEOUT_DURATION: /^\+?\d+$/.test(process.env.TIMEOUT_DURATION ?? "") ? Number(process.env.TIMEOUT_DURATION) : 604800
+    TIMEOUT_DURATION: /^\+?\d+$/.test(process.env.TIMEOUT_DURATION ?? "") ? Number(process.env.TIMEOUT_DURATION) : 604800,
+    EMBED_EXPIRY_DURATION: /^\+?\d+$/.test(process.env.EMBED_EXPIRY_DURATION ?? "") ? Number(process.env.EMBED_EXPIRY_DURATION) : 900
 };

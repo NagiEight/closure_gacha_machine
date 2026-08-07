@@ -3,16 +3,15 @@ import {
     ButtonBuilder,
     EmbedBuilder,
     ChatInputCommandInteraction,
-    MessageFlags
 } from "discord.js";
 import type { Operator, User } from "../singletons/Database.js";
+import { ButtonType } from "./ConstructNavigationButtonRow.js";
 import APIConnector from "../singletons/APIConnector.js";
 import Database from "../singletons/Database.js";
 import BuildGachaEmbed from "./BuildGachaEmbed.js";
 import AsyncMap from "./AsyncMap.js";
-import GachaResultLifetimeManager from "../singletons/GachaResultLifetimeManager.js";
 import GetMaxPage from "./GetMaxPage.js";
-import Paginate from "./Paginate.js";
+import EmbedActionInteractionManager from "../singletons/EmbedActionInteractionManager.js";
 
 export default async (Interaction: ChatInputCommandInteraction, BannerName: string, Count: number): Promise<void> => {
     const UserID: string = Interaction.user.id;
@@ -20,22 +19,23 @@ export default async (Interaction: ChatInputCommandInteraction, BannerName: stri
     const UserProfile: User = Database.Manager.Users.get(UserID)!;
     const Response: Response = await APIConnector.RollMulti(BannerName, Count, UserProfile.Token);
     if(!Response.ok) {
-        await Interaction.reply({
+        await Interaction.editReply({
             content: (await Response.json() as { message: string }).message,
-            allowedMentions: { repliedUser: false },
-            flags: MessageFlags.Ephemeral
+            allowedMentions: { repliedUser: false }
         });
         return;
     }
-
-    Interaction.deferReply();
 
     const Result: { Result: Record<string, number> } = await Response.json() as { Result: Record<string, number> };
     const Operators: Record<string, { Count: number; Rarity: 3 | 4 | 5 | 6; ID: string; }> = Object.fromEntries(
         (await AsyncMap(
             Object.keys(Result.Result),
             async (ID): Promise<[string, Operator]> => [ID, await Database.Manager.GetOperatorInfo(ID)]
-        )).map(([ID, Operator]) => [Operator.Name, { Count: Result.Result[ID], Rarity: Operator.Rarity, ID }])
+        ))
+        .map(([ID, Operator]): [string, { Count: number; Rarity: 3 | 4 | 5 | 6; ID: string; }] => 
+            [Operator.Name, { Count: Result.Result[ID], Rarity: Operator.Rarity, ID }]
+        )
+        .sort((A, B) => B[1].Rarity - A[1].Rarity)
     );
 
     UserProfile.Profile[BannerName] ??= {
@@ -76,20 +76,58 @@ export default async (Interaction: ChatInputCommandInteraction, BannerName: stri
     const MaxPage: number = GetMaxPage(Object.keys(Operators), 20);
     
     if(MaxPage > 1) {
-        const PoolID: string = GachaResultLifetimeManager.AddPool(UserID, Operators);
-        const Page: Record<string, { Count: number; Rarity: 3 | 4 | 5 | 6; ID: string; }> = Object.fromEntries(
-            Paginate(Object.entries(Operators), 1, 20).sort((A, B) => A[1].Rarity - B[1].Rarity)
-        );
+        const CommandName: string = Interaction.commandName;
+        const InteractionMeta: {
+            CurrentPage: number;
+            GachaResult: Record<string, { Count: number; Rarity: 3 | 4 | 5 | 6; ID: string; }>;
+            InteractionIDs: Record<ButtonType, string>;
+        } = { 
+            CurrentPage: 1,
+            GachaResult: Operators,
+            InteractionIDs: {
+                [ButtonType.BackwardToStart]: "",
+                [ButtonType.Backward]: "",
+                [ButtonType.Forward]: "",
+                [ButtonType.ForwardToEnd]: ""
+            }
+        };
+        const InteractionIDs: Record<ButtonType, string> = {
+            [ButtonType.BackwardToStart]: EmbedActionInteractionManager.AddInteraction(
+                UserID,
+                CommandName,
+                ButtonType.BackwardToStart,
+                InteractionMeta
+            ),
+            [ButtonType.Backward]: EmbedActionInteractionManager.AddInteraction(
+                UserID,
+                CommandName,
+                ButtonType.Backward,
+                InteractionMeta
+            ),
+            [ButtonType.Forward]: EmbedActionInteractionManager.AddInteraction(
+                UserID,
+                CommandName,
+                ButtonType.Forward,
+                InteractionMeta
+            ),
+            [ButtonType.ForwardToEnd]: EmbedActionInteractionManager.AddInteraction(
+                UserID,
+                CommandName,
+                ButtonType.ForwardToEnd,
+                InteractionMeta
+            )
+        };
+
+        InteractionMeta.InteractionIDs = InteractionIDs;
+
         const Embed: {
             Embed: EmbedBuilder;
             ButtonRow: ActionRowBuilder<ButtonBuilder>;
         } = BuildGachaEmbed(
             Interaction,
-            Page,
-            Interaction.commandName,
+            Operators,
             1,
-            MaxPage,
-            PoolID
+            InteractionIDs
         );
 
         await Interaction.editReply({

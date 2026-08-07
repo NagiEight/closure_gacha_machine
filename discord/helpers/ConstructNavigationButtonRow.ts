@@ -1,11 +1,10 @@
 import { ButtonBuilder, ButtonStyle, ActionRowBuilder } from "discord.js";
-import ActionRowIDBuilder from "./ActionRowIDBuilder.js";
 
-enum ButtonType {
-    BackwardToStart,
-    Backward,
-    Forward,
-    ForwardToEnd
+export enum ButtonType {
+    BackwardToStart = "BackwardToStart",
+    Backward = "Backward",
+    Forward = "Forward",
+    ForwardToEnd = "ForwardToEnd"
 };
 
 const ButtonLable: Record<ButtonType, string> = {
@@ -16,52 +15,36 @@ const ButtonLable: Record<ButtonType, string> = {
 };
 
 const ConstructButton = (
-    CommandName: string,
     Type: ButtonType,
-    PageIndex: number,
-    ExtraMeta: string[],
-    Owner: string
-): ButtonBuilder => 
-    new ButtonBuilder()
-        .setCustomId(ActionRowIDBuilder(CommandName, [Type.toString(), PageIndex.toString(), ...ExtraMeta], Owner))
+    InteractionID: string
+): ButtonBuilder => {
+    return new ButtonBuilder()
+        .setCustomId(InteractionID)
         .setLabel(ButtonLable[Type])
         .setStyle(ButtonStyle.Primary)
-;
+    ;
+};
 
 export default (
-    CommandName: string,
     PageIndex: number,
     MaxPage: number,
-    ExtraMeta: string[],
-    Owner: string
+    InteractionIDs: Record<ButtonType, string>
 ): ActionRowBuilder<ButtonBuilder> => {
     const BackwardToStartButton: ButtonBuilder = ConstructButton(
-        CommandName,
         ButtonType.BackwardToStart,
-        PageIndex,
-        ExtraMeta,
-        Owner
+        InteractionIDs[ButtonType.BackwardToStart]
     );
     const BackwardButton: ButtonBuilder = ConstructButton(
-        CommandName,
         ButtonType.Backward,
-        PageIndex,
-        ExtraMeta,
-        Owner
+        InteractionIDs[ButtonType.Backward]
     );
     const ForwardButton: ButtonBuilder = ConstructButton(
-        CommandName,
         ButtonType.Forward,
-        PageIndex,
-        ExtraMeta,
-        Owner
+        InteractionIDs[ButtonType.Forward]
     );
     const ForwardToEndButton: ButtonBuilder = ConstructButton(
-        CommandName,
         ButtonType.ForwardToEnd,
-        PageIndex,
-        ExtraMeta,
-        Owner
+        InteractionIDs[ButtonType.ForwardToEnd]
     );
     return new ActionRowBuilder<ButtonBuilder>()
         .addComponents(

@@ -54,19 +54,21 @@ export default {
             flags: MessageFlags.Ephemeral
         });
     },
-    Autocomplete: async (Interaction: AutocompleteInteraction): Promise<void> => {
-        await Interaction.respond(
-            [...CommandManager.Values()]
-                .filter(
-                    Command => 
-                        Command.Cancelable &&
-                        Command.Cancelable.Pool.has(Interaction.user.id) &&
-                        Command.Command.name.toLowerCase().includes(Interaction.options.getFocused().trim().toLowerCase())
-                )
-                .map(Command => ({
-                    name: Command.Command.name,
-                    value: Command.Command.name
-                }))
-        );
+    Autocomplete: {
+        command: async (Interaction: AutocompleteInteraction): Promise<void> => {
+            await Interaction.respond(
+                [...CommandManager.Values()]
+                    .filter(
+                        Command => 
+                            Command.Cancelable &&
+                            Command.Cancelable.Pool.has(Interaction.user.id) &&
+                            Command.Command.name.toLowerCase().includes(Interaction.options.getFocused().trim().toLowerCase())
+                    )
+                    .map(Command => ({
+                        name: Command.Command.name,
+                        value: Command.Command.name
+                    }))
+            );
+        }
     }
 } as const satisfies Command;

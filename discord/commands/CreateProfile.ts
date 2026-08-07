@@ -23,7 +23,7 @@ export default {
         if(Timeout) {
             if(Timeout > Date.now()) {
                 await Interaction.reply({
-                    content: `You are still in timeout, timeout will expire <t:${Math.ceil((Timeout - Date.now()) / 1000)}:R>.`,
+                    content: `You are still in timeout, timeout will expire <t:${Math.ceil((Timeout / 1000))}:R>.`,
                     allowedMentions: { repliedUser: false },
                     flags: MessageFlags.Ephemeral
                 });
