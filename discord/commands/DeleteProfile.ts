@@ -8,18 +8,18 @@ import {
     MessageFlags,
     SlashCommandBuilder
 } from "discord.js";
-import type { Command } from "../types/Command.js";
 import Database from "../singletons/Database.js";
 import APIConnector from "../singletons/APIConnector.js";
 import LoadEnv from "../singletons/LoadEnv.js";
 import EmbedActionInteractionManager from "../singletons/EmbedActionInteractionManager.js";
+import Command, { InteractionTypes } from "../types/Command.js";
 
-export default {
-    Command: new SlashCommandBuilder()
+export default new Command(
+    new SlashCommandBuilder()
         .setName("delete")
         .setDescription("Delete your gacha profile.")
     ,
-    Action: async (Interaction: ChatInputCommandInteraction): Promise<void> => {
+    async (Interaction: ChatInputCommandInteraction): Promise<void> => {
         const UserID: string = Interaction.user.id;
         if(!Database.Manager.Users.has(UserID)) {
             await Interaction.reply({
@@ -64,24 +64,32 @@ export default {
             components: [ButtonRow],
             allowedMentions: { repliedUser: false }
         });
-    },
-    Button: {
-        Confirm: async (Interaction: ButtonInteraction): Promise<void> => {
-            const Owner: string = Interaction.user.id;
-            const Token: string = Database.Manager.Users.get(Owner)!.Token;
-            await APIConnector.DeleteToken(Token);
-        
-            Database.Manager.Users.delete(Owner);
-            Database.Manager.RemoveTokenSTMT(Owner);
-            Database.Manager.TimeoutSTMT.run(Owner, Date.now() + LoadEnv.TIMEOUT_DURATION * 1000);
-        },
-        Cancel: async (Interaction: ButtonInteraction): Promise<void> => {
-            await Interaction.update({
-                content: "Profile deletion cancelled.",
-                embeds: [],
-                components: [],
-                allowedMentions: { repliedUser: false }
-            });
-        }
     }
-} as const satisfies Command;
+)
+.AddInteractionHandler(
+    InteractionTypes.Button,
+    "Confirm",
+    async (Interaction: ButtonInteraction): Promise<void> => {
+        const Owner: string = Interaction.user.id;
+        const Token: string = Database.Manager.Users.get(Owner)!.Token;
+        await APIConnector.DeleteToken(Token);
+    
+        Database.Manager.Users.delete(Owner);
+        Database.Manager.RemoveTokenSTMT(Owner);
+        Database.Manager.TimeoutSTMT.run(Owner, Date.now() + LoadEnv.TIMEOUT_DURATION * 1000);
+        EmbedActionInteractionManager.RemoveInteraction(Owner, Interaction.customId);
+    }
+)
+.AddInteractionHandler(
+    InteractionTypes.Button,
+    "Cancel",
+    async (Interaction: ButtonInteraction): Promise<void> => {
+        await Interaction.update({
+            content: "Profile deletion cancelled.",
+            embeds: [],
+            components: [],
+            allowedMentions: { repliedUser: false }
+        });
+        EmbedActionInteractionManager.RemoveInteraction(Interaction.user.id, Interaction.customId);
+    }
+);

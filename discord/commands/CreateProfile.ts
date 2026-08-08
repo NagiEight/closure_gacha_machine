@@ -1,14 +1,14 @@
 import { ChatInputCommandInteraction, MessageFlags, SlashCommandBuilder } from "discord.js";
-import type { Command } from "../types/Command.js";
 import Database from "../singletons/Database.js";
 import APIConnector from "../singletons/APIConnector.js";
+import Command from "../types/Command.js";
 
-export default {
-    Command: new SlashCommandBuilder()
+export default new Command(
+    new SlashCommandBuilder()
         .setName("create")
         .setDescription("Create a new gacha profile.")
     ,
-    Action: async (Interaction: ChatInputCommandInteraction): Promise<void> => {
+    async (Interaction: ChatInputCommandInteraction): Promise<void> => {
         const UserID: string = Interaction.user.id;
         if(Database.Manager.Users.has(UserID)) {
             await Interaction.reply({
@@ -50,4 +50,4 @@ export default {
             flags: MessageFlags.Ephemeral
         });
     }
-} as const satisfies Command;
+);

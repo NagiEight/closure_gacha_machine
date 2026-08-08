@@ -5,7 +5,7 @@ import LoadEnv from "./LoadEnv.js";
 export interface Action {
     CommandName: string;
     ActionName: string;
-    Data: any;
+    Meta: any;
     Timeout: NodeJS.Timeout;
 };
 
@@ -18,28 +18,60 @@ interface Registry {
 export default new class extends EventEmitter {
     public readonly Registry: Registry = {};
 
-    public GetInteraction<T>(UserID: string, InteractionID: string): T | undefined {
-        return this.Registry[UserID][InteractionID]?.Data;
+    public GetInteraction<T>(Owner: string, InteractionID: string): T | undefined {
+        return this.Registry[Owner][InteractionID]?.Meta;
     }
 
-    public AddInteraction(UserID: string, CommandName: string, ActionName: string, Data: any): string {
-        this.Registry[UserID] ??= {};
+    public AddInteraction(Owner: string, CommandName: string, ActionName: string, Meta: any): string {
+        this.Registry[Owner] ??= {};
 
-        const InteractionID: string = GenerateUniqueUUID(UUID => !!this.Registry[UserID][UUID]);
-        this.Registry[UserID][InteractionID] = {
+        const InteractionID: string = GenerateUniqueUUID(UUID => !!this.Registry[Owner][UUID]);
+        this.Registry[Owner][InteractionID] = {
             CommandName,
             ActionName,
-            Data,
+            Meta,
             Timeout: setTimeout((): void => {
                 this.emit("LifeTimeEnded", InteractionID);
-                delete this.Registry[UserID][InteractionID];
+                delete this.Registry[Owner][InteractionID];
 
-                if(Object.keys(this.Registry[UserID]).length === 0)
-                    delete this.Registry[UserID];
-                
+                if(Object.keys(this.Registry[Owner]).length === 0) {
+                    delete this.Registry[Owner];
+                }
             }, LoadEnv.EMBED_EXPIRY_DURATION * 1000)
         };
 
         return InteractionID;
+    }
+
+    public RemoveInteraction(Owner: string, InteractionID: string): void {
+        if(!this.Registry[Owner])
+            return;
+
+        if(!this.Registry[Owner][InteractionID])
+            return;
+
+        clearTimeout(this.Registry[Owner][InteractionID]?.Timeout);
+        delete this.Registry[Owner][InteractionID];
+        if(Object.keys(this.Registry[Owner]).length === 0) {
+            delete this.Registry[Owner];
+        }
+    }
+
+    public RefreshInteraction(Owner: string, InteractionID: string): void {
+        if(!this.Registry[Owner])
+            return;
+
+        if(!this.Registry[Owner][InteractionID])
+            return;
+
+        clearTimeout(this.Registry[Owner][InteractionID].Timeout);
+        this.Registry[Owner][InteractionID].Timeout = setTimeout((): void => {
+            this.emit("LifeTimeEnded", InteractionID);
+            delete this.Registry[Owner][InteractionID];
+
+            if(Object.keys(this.Registry[Owner]).length === 0) {
+                delete this.Registry[Owner];
+            }
+        }, LoadEnv.EMBED_EXPIRY_DURATION * 1000);
     }
 }();

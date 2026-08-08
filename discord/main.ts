@@ -5,7 +5,7 @@ import {
     MessageFlags,
     type AutocompleteFocusedOption
 } from "discord.js";
-import type { Command } from "./types/Command.js";
+import Command, { InteractionTypes } from "./types/Command.js";
 import CommandManager from "./singletons/CommandManager.js";
 import LoadEnv from "./singletons/LoadEnv.js";
 import EmbedActionInteractionManager, { type Action } from "./singletons/EmbedActionInteractionManager.js";
@@ -23,12 +23,15 @@ Client.once(Events.ClientReady, Client => console.log(`Logged in as ${Client.use
 Client.on(Events.InteractionCreate, async Interaction => {
     if(Interaction.isAutocomplete()) {
         const Command: Command | undefined = CommandManager.Get(Interaction.commandName);
-        if(Command && Command.Autocomplete) {
+        if(Command) {
             if(Command.Administrator && !LoadEnv.ADMINISTRATOR_IDS.includes(Interaction.user.id)) 
                 return;
             
             const FocusedOption: AutocompleteFocusedOption = Interaction.options.getFocused(true);
-            const Handler = Command.Autocomplete[FocusedOption.name];
+            const Handler = Command.GetInteractionHandler(
+                InteractionTypes.Autocomplete,
+                FocusedOption.name
+            );
 
             if(!Handler)
                 return;
@@ -39,15 +42,18 @@ Client.on(Events.InteractionCreate, async Interaction => {
     }
 
     if(Interaction.isButton()) {
-        const EmbedActionInteraction: Action = EmbedActionInteractionManager.Registry[Interaction.user.id][Interaction.customId];
         if(!EmbedActionInteractionManager.Registry[Interaction.user.id])
             return;
         
+        const EmbedActionInteraction: Action = EmbedActionInteractionManager.Registry[Interaction.user.id][Interaction.customId];
         const Command: Command | undefined = CommandManager.Get(EmbedActionInteraction.CommandName);
-        if(!Command?.Button) 
+        if(!Command) 
             return;
 
-        const Handler = Command.Button[EmbedActionInteraction.ActionName];
+        const Handler = Command.GetInteractionHandler(
+            InteractionTypes.Button,
+            EmbedActionInteraction.ActionName
+        );
         if(!Handler)
             return;
 
@@ -64,54 +70,63 @@ Client.on(Events.InteractionCreate, async Interaction => {
             return;
 
         const ActionName: string = EmbedActionInteraction.ActionName;
-        switch(true) {
-            case Interaction.isStringSelectMenu():
-                if(!Command.StringMenu)
-                    return;
 
-                if(!Command.StringMenu[ActionName])
-                    return;
+        if(Interaction.isStringSelectMenu()) {
+            const Handler = Command.GetInteractionHandler(
+                InteractionTypes.StringMenu,
+                ActionName
+            );
 
-                return await Command.StringMenu[ActionName](Interaction, Client);
-            
-            case Interaction.isUserSelectMenu():
-                if(!Command.UserMenu)
-                    return;
+            if(!Handler)
+                return;
 
-                if(!Command.UserMenu[ActionName])
-                    return;
-                
-                return await Command.UserMenu[ActionName](Interaction, Client);
-
-            case Interaction.isRoleSelectMenu():
-                if(!Command.RoleMenu)
-                    return;
-
-                if(!Command.RoleMenu[ActionName])
-                    return;
-                
-                return await Command.RoleMenu[ActionName](Interaction, Client);
-            
-            case Interaction.isChannelSelectMenu():
-                if(!Command.ChannelMenu)
-                    return;
-
-                if(!Command.ChannelMenu[ActionName])
-                    return;
-                
-                return await Command.ChannelMenu[ActionName](Interaction, Client);
-
-            case Interaction.isMentionableSelectMenu():
-                if(!Command.MentionableMenu)
-                    return;
-
-                if(!Command.MentionableMenu[ActionName])
-                    return;
-                
-                return await Command.MentionableMenu[ActionName](Interaction, Client);
-            
-            default: return;
+            await Handler(Interaction, Client);
         }
+        else if(Interaction.isUserSelectMenu()) {
+            const Handler = Command.GetInteractionHandler(
+                InteractionTypes.UserMenu,
+                ActionName
+            );
+
+            if(!Handler)
+                return;
+            
+            await Handler(Interaction, Client);
+        }
+        else if(Interaction.isRoleSelectMenu()) {
+            const Handler = Command.GetInteractionHandler(
+                InteractionTypes.RoleMenu,
+                ActionName
+            );
+
+            if(!Handler)
+                return;
+            
+            await Handler(Interaction, Client);
+        }
+        else if(Interaction.isChannelSelectMenu()) {
+            const Handler = Command.GetInteractionHandler(
+                InteractionTypes.ChannelMenu,
+                ActionName
+            );
+
+            if(!Handler)
+                return;
+            
+            await Handler(Interaction, Client);
+        }
+        else if(Interaction.isMentionableSelectMenu()) {
+            const Handler = Command.GetInteractionHandler(
+                InteractionTypes.MentionableMenu,
+                ActionName
+            );
+
+            if(!Handler)
+                return;
+            
+            await Handler(Interaction, Client);
+        }
+        return;
     }
 
     if(!Interaction.isChatInputCommand()) 

@@ -1,5 +1,5 @@
-import type { Command } from "../types/Command.js";
 import { pathToFileURL } from "url";
+import Command from "../types/Command.js";
 import fs from "fs/promises"; 
 import path from "path";
 

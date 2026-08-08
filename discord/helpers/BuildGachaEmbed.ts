@@ -45,6 +45,7 @@ export default function BuildGachaEmbed(
             })
             .setThumbnail(Interaction.user.displayAvatarURL({ size: 512 }))
             .setTitle(`${Interaction.user.username}'s gacha result`)
+            .setDescription(`Page ${PageIndex} / ${MaxPage}`)
             .addFields(
                 ...Object.entries(CurrentPage).map(([Name, Operator]) => ({
                     name: `${"★".repeat(Operator.Rarity)} - ${Name}`,

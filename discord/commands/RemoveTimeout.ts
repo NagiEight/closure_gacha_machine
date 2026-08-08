@@ -1,9 +1,9 @@
 import { ChatInputCommandInteraction, MessageFlags, SlashCommandBuilder, User } from "discord.js";
-import type { Command } from "../types/Command.js";
 import Database from "../singletons/Database.js";
+import Command from "../types/Command.js";
 
-export default {
-    Command: new SlashCommandBuilder()
+export default new Command(
+    new SlashCommandBuilder()
         .setName("removetimeout")
         .setDescription("Remove someone's profile creation timeout.")
         .addUserOption(Option => 
@@ -13,7 +13,7 @@ export default {
                 .setRequired(true)
         )
     ,
-    Action: async (Interaction: ChatInputCommandInteraction): Promise<void> => {
+    async (Interaction: ChatInputCommandInteraction): Promise<void> => {
         const User: User = Interaction.options.getUser("user", true);
         if(!Database.Manager.TimeoutZone.has(User.id)) {
             await Interaction.reply({
@@ -32,5 +32,7 @@ export default {
             flags: MessageFlags.Ephemeral
         });
     },
-    Administrator: true
-} as const satisfies Command;
+    {
+        Administrator: true
+    }
+);
