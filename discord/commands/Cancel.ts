@@ -1,4 +1,10 @@
-import { AutocompleteInteraction, ChatInputCommandInteraction, MessageFlags, SlashCommandBuilder, type SlashCommandOptionsOnlyBuilder } from "discord.js";
+import {
+    AutocompleteInteraction,
+    ChatInputCommandInteraction,
+    MessageFlags,
+    SlashCommandBuilder,
+    type SlashCommandOptionsOnlyBuilder
+} from "discord.js";
 import Command, { InteractionTypes } from "../types/Command.js";
 import CommandManager from "../singletons/CommandManager.js";
 
