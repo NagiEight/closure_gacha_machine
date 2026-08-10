@@ -85,7 +85,7 @@ export default Command.New(C)
         const Embed: EmbedBuilder = new EmbedBuilder()
             .setColor(0x00ffff)
             .setTitle("Help command.")
-            .setDescription(`Page ${1} / ${MaxPage}`)
+            .setDescription(`Page 1 / ${MaxPage}`)
             .addFields(
                 ...CommandPage.map(Command => ({
                     name: `/${Command.Command.name} ${

@@ -277,7 +277,7 @@ export default Command.New(C)
     ;
     
     const ButtonRow: ActionRowBuilder<ButtonBuilder> = ConstructButtonRow(
-        1, 10, InteractionMeta.NavigationButtonRowIDs
+        1, MaxPage, InteractionMeta.NavigationButtonRowIDs
     );
 
     const Embed: EmbedBuilder = new EmbedBuilder()
@@ -408,7 +408,7 @@ export default Command.New(C)
             .setTitle(`Banner: ${BannerName}`)
             .setDescription(
                 `Total rolls: ${Profile.Profile[BannerName].Count}\n` +
-                `Page ${1} / ${MaxPage}`
+                `Page 1 / ${MaxPage}`
             )
             .addFields(
                 ...Paginate(ProcessedUserBannerProfile, 1, 10).map(Operator => ({
