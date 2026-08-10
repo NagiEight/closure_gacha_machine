@@ -33,15 +33,18 @@ export default new class extends EventEmitter {
 
     public AddInteraction(Owner: string, CommandName: string, ActionName: string): string; 
     public AddInteraction(Owner: string, CommandName: string, ActionName: string, MetaID: string): string;
-    public AddInteraction(Owner: string, CommandName: string, ActionName: string, Meta?: any): [string, string];
+    public AddInteraction(Owner: string, CommandName: string, ActionName: string, Meta: any[] | Record<any, any>): [string, string];
     /**
      * [InteractionID, MetaID]
      */
-    public AddInteraction(Owner: string, CommandName: string, ActionName: string, Meta?: any): [string, string] | string {
+    public AddInteraction(Owner: string, CommandName: string, ActionName: string, Meta?: string | any[] | Record<any, any>): [string, string] | string {
         this.InteractionRegistry[Owner] ??= {};
         const InteractionID: string = GenerateUniqueUUID(UUID => !!this.InteractionRegistry[Owner][UUID]);
 
-        if(typeof Meta === "string" && this.MetaRegistry[Meta]) {
+        if(typeof Meta === "string") {
+            if(!this.MetaRegistry[Meta])
+                throw new Error(`Metadata ID "${Meta}" does not exists.`);
+
             this.InteractionRegistry[Owner][InteractionID] = {
                 CommandName,
                 ActionName,
