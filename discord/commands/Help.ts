@@ -50,33 +50,32 @@ export default Command.New(C)
                 [ButtonType.ForwardToEnd]: ""
             }
         };
+        const MetaID: string = EmbedActionInteractionManager.AddMeta(InteractionMeta);
         
-        const BackwardToStartID: [string, string] = EmbedActionInteractionManager.AddInteraction(
-            UserID,
-            CommandName,
-            ButtonType.BackwardToStart,
-            InteractionMeta
-        );
-
         const InteractionIDs: Record<ButtonType, string> = {
-            [ButtonType.BackwardToStart]: BackwardToStartID[0],
+            [ButtonType.BackwardToStart]: EmbedActionInteractionManager.AddInteraction(
+                UserID,
+                CommandName,
+                ButtonType.BackwardToStart,
+                MetaID
+            ),
             [ButtonType.Backward]: EmbedActionInteractionManager.AddInteraction(
                 UserID,
                 CommandName,
                 ButtonType.Backward,
-                BackwardToStartID[1]
+                MetaID
             ),
             [ButtonType.Forward]: EmbedActionInteractionManager.AddInteraction(
                 UserID,
                 CommandName,
                 ButtonType.Forward,
-                BackwardToStartID[1]
+                MetaID
             ),
             [ButtonType.ForwardToEnd]: EmbedActionInteractionManager.AddInteraction(
                 UserID,
                 CommandName,
                 ButtonType.ForwardToEnd,
-                BackwardToStartID[1]
+                MetaID
             )
         };
 

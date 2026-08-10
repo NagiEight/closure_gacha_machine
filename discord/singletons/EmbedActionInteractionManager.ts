@@ -17,7 +17,10 @@ interface Registry {
 }
 
 interface MetaRegistry {
-    [MetaID: string]: any;
+    [MetaID: string]: {
+        Meta: any;
+        Timeout: NodeJS.Timeout;
+    };
 }
 
 export default new class extends EventEmitter {
@@ -28,59 +31,17 @@ export default new class extends EventEmitter {
         const MetaID: string | undefined = this.InteractionRegistry[Owner]?.[InteractionID]?.MetaID;
         if(!MetaID)
             return;
-        return this.MetaRegistry[MetaID];
+        return this.MetaRegistry[MetaID].Meta;
     }
 
     public AddInteraction(Owner: string, CommandName: string, ActionName: string): string; 
     public AddInteraction(Owner: string, CommandName: string, ActionName: string, MetaID: string): string;
-    public AddInteraction(Owner: string, CommandName: string, ActionName: string, Meta: any[] | Record<any, any>): [string, string];
     /**
      * [InteractionID, MetaID]
      */
-    public AddInteraction(Owner: string, CommandName: string, ActionName: string, Meta?: string | any[] | Record<any, any>): [string, string] | string {
+    public AddInteraction(Owner: string, CommandName: string, ActionName: string, MetaID?: string): string {
         this.InteractionRegistry[Owner] ??= {};
         const InteractionID: string = GenerateUniqueUUID(UUID => !!this.InteractionRegistry[Owner][UUID]);
-
-        if(typeof Meta === "string") {
-            if(!this.MetaRegistry[Meta])
-                throw new Error(`Metadata ID "${Meta}" does not exists.`);
-
-            this.InteractionRegistry[Owner][InteractionID] = {
-                CommandName,
-                ActionName,
-                MetaID: Meta,
-                Timeout: setTimeout((): void => {
-                    this.emit("LifeTimeEnded", InteractionID);
-                    delete this.InteractionRegistry[Owner][InteractionID];
-                    delete this.MetaRegistry[Meta];
-    
-                    if(Object.keys(this.InteractionRegistry[Owner]).length === 0) {
-                        delete this.InteractionRegistry[Owner];
-                    }
-                }, LoadEnv.EMBED_EXPIRY_DURATION * 1000)
-            };
-            return InteractionID;
-        }
-
-        if(Meta) {
-            const MetaID: string = GenerateUniqueUUID(UUID => !!this.MetaRegistry[UUID]);
-                this.InteractionRegistry[Owner][InteractionID] = {
-                CommandName,
-                ActionName,
-                MetaID,
-                Timeout: setTimeout((): void => {
-                    this.emit("LifeTimeEnded", InteractionID);
-                    delete this.InteractionRegistry[Owner][InteractionID];
-                    delete this.MetaRegistry[MetaID];
-
-                    if(Object.keys(this.InteractionRegistry[Owner]).length === 0) {
-                        delete this.InteractionRegistry[Owner];
-                    }
-                }, LoadEnv.EMBED_EXPIRY_DURATION * 1000)
-            };
-            this.MetaRegistry[MetaID] = Meta;
-            return [InteractionID, MetaID];
-        }
 
         this.InteractionRegistry[Owner][InteractionID] = {
             CommandName,
@@ -95,14 +56,17 @@ export default new class extends EventEmitter {
             }, LoadEnv.EMBED_EXPIRY_DURATION * 1000)
         };
 
+        if(MetaID) {
+            if(!this.MetaRegistry[MetaID])
+                throw new Error(`Metadata ID "${MetaID}" does not exists.`);
+            this.InteractionRegistry[Owner][InteractionID].MetaID = MetaID;
+        }
+
         return InteractionID;
     }
 
     public RemoveInteraction(Owner: string, InteractionID: string): void {
-        if(!this.InteractionRegistry[Owner])
-            return;
-
-        if(!this.InteractionRegistry[Owner][InteractionID])
+        if(!this.InteractionRegistry[Owner]?.[InteractionID])
             return;
 
         clearTimeout(this.InteractionRegistry[Owner][InteractionID].Timeout);
@@ -113,10 +77,7 @@ export default new class extends EventEmitter {
     }
 
     public RefreshInteraction(Owner: string, InteractionID: string): void {
-        if(!this.InteractionRegistry[Owner])
-            return;
-
-        if(!this.InteractionRegistry[Owner][InteractionID])
+        if(!this.InteractionRegistry[Owner]?.[InteractionID])
             return;
 
         clearTimeout(this.InteractionRegistry[Owner][InteractionID].Timeout);
@@ -128,5 +89,30 @@ export default new class extends EventEmitter {
                 delete this.InteractionRegistry[Owner];
             }
         }, LoadEnv.EMBED_EXPIRY_DURATION * 1000);
+    }
+
+    public AddMeta<T>(Meta: T): string {
+        const MetaID: string = GenerateUniqueUUID(UUID => !!this.MetaRegistry[UUID]);
+        this.MetaRegistry[MetaID] = {
+            Meta,
+            Timeout: setTimeout(() => delete this.MetaRegistry[MetaID], (LoadEnv.TIMEOUT_DURATION + 300) * 1000)
+        };
+        return MetaID;
+    }
+
+    public RemoveMeta(MetaID: string): void {
+        if(!this.MetaRegistry[MetaID])
+            return;
+
+        clearTimeout(this.MetaRegistry[MetaID].Timeout);
+        delete this.MetaRegistry[MetaID];
+    }
+
+    public RefreshMeta(MetaID: string): void {
+        if(!this.MetaRegistry[MetaID])
+            return;
+
+        clearTimeout(this.MetaRegistry[MetaID].Timeout);
+        this.MetaRegistry[MetaID].Timeout = setTimeout(() => delete this.MetaRegistry[MetaID], (LoadEnv.TIMEOUT_DURATION + 300) * 1000);
     }
 }();
