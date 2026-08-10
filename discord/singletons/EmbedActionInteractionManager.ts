@@ -95,7 +95,7 @@ export default new class extends EventEmitter {
         const MetaID: string = GenerateUniqueUUID(UUID => !!this.MetaRegistry[UUID]);
         this.MetaRegistry[MetaID] = {
             Meta,
-            Timeout: setTimeout(() => delete this.MetaRegistry[MetaID], (LoadEnv.TIMEOUT_DURATION + 300) * 1000)
+            Timeout: setTimeout(() => delete this.MetaRegistry[MetaID], (LoadEnv.EMBED_EXPIRY_DURATION + 300) * 1000)
         };
         return MetaID;
     }
@@ -113,6 +113,6 @@ export default new class extends EventEmitter {
             return;
 
         clearTimeout(this.MetaRegistry[MetaID].Timeout);
-        this.MetaRegistry[MetaID].Timeout = setTimeout(() => delete this.MetaRegistry[MetaID], (LoadEnv.TIMEOUT_DURATION + 300) * 1000);
+        this.MetaRegistry[MetaID].Timeout = setTimeout(() => delete this.MetaRegistry[MetaID], (LoadEnv.EMBED_EXPIRY_DURATION + 300) * 1000);
     }
 }();
