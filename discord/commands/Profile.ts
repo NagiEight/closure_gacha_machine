@@ -1,6 +1,5 @@
 import { 
     ActionRowBuilder,
-    AutocompleteInteraction,
     ButtonBuilder,
     ButtonInteraction,
     ChatInputCommandInteraction,
@@ -15,24 +14,27 @@ import {
 } from "discord.js";
 import Database, { type User as Profile } from "../singletons/Database.js";
 import ConstructButtonRow, { ButtonType } from "../helpers/ConstructNavigationButtonRow.js";
+import Command, { InteractionTypes } from "../types/Command.js";
 import ProcessUserProfile from "../helpers/ProcessUserProfile.js";
 import Paginate from "../helpers/Paginate.js";
 import GetMaxPage from "../helpers/GetMaxPage.js";
 import EmbedActionInteractionManager from "../singletons/EmbedActionInteractionManager.js";
 import CreateNavigationButtonHandler from "../helpers/CreateNavigationButtonHandler.js";
-import Command, { InteractionTypes } from "../types/Command.js";
+
+interface BannerBrowserInteractionMeta {
+    UserID: string;
+    BannerPickerID: string;
+    CurrentPage: number;
+    NavigationButtonRowIDs: Record<ButtonType, string>;
+}
 
 interface FilterInteractionMeta {
     BannerName: string;
     UserID: string;
     CurrentFilter: FilterType;
-    InteractionIDs?: Record<ButtonType, string>;
-}
-
-interface InteractionMeta extends FilterInteractionMeta {
-    CurrentPage: number;
     FilterID: string;
-    InteractionIDs: Record<ButtonType, string>;
+    CurrentPage?: number;
+    InteractionIDs?: Record<ButtonType, string>;
 }
 
 export enum FilterType {
@@ -61,13 +63,6 @@ const FilterRarity: Record<FilterType, number> = {
 const C: SlashCommandOptionsOnlyBuilder = new SlashCommandBuilder()
     .setName("profile")
     .setDescription("Get the gacha profile of a user.")
-    .addStringOption(Option =>
-        Option
-            .setName("banner")
-            .setDescription("Banner to check.")
-            .setRequired(true)
-            .setAutocomplete(true)
-    )
     .addUserOption(Option =>
         Option
             .setName("user")
@@ -79,19 +74,252 @@ const C: SlashCommandOptionsOnlyBuilder = new SlashCommandBuilder()
 export default Command.New(C)
 (async (Interaction: ChatInputCommandInteraction): Promise<void> => { 
     const User: User = Interaction.options.getUser("user", false) ?? Interaction.user;
-    const BannerName: string = Interaction.options.getString("banner", true);
     const UserID: string = User.id;
     const Profile: Profile | undefined = Database.Manager.Users.get(UserID);
 
     if(!Profile) {
         await Interaction.reply({
-            content: "You don't have a gacha profile.",
+            content: "This user doesn't have a gacha profile.",
             allowedMentions: { repliedUser: false },
             flags: MessageFlags.Ephemeral
         });
         return;
     }
+
+    await Interaction.deferReply();
+
+    const Banners = Profile.Profile;
+    const MaxPage: number = GetMaxPage(Object.keys(Banners), 10);
+    const Owner: string = Interaction.user.id;
+    const CommandName: string = Interaction.commandName;
     
+    if(MaxPage > 1) {
+        const BannerPage = Object.fromEntries(
+            Paginate(Object.entries(Banners), 1, 10)
+        );
+
+        const InteractionMeta: BannerBrowserInteractionMeta = {
+            CurrentPage: 1,
+            UserID,
+            BannerPickerID: "",
+            NavigationButtonRowIDs: {
+                [ButtonType.BackwardToStart]: "",
+                [ButtonType.Backward]: "",
+                [ButtonType.Forward]: "",
+                [ButtonType.ForwardToEnd]: ""
+            }
+        };
+        const BackwardToStartID: [string, string] = EmbedActionInteractionManager.AddInteraction(
+            Owner,
+            CommandName,
+            `BannerBrowser${ButtonType.BackwardToStart}`,
+            InteractionMeta
+        );
+        const InteractionIDs: Record<ButtonType, string> = {
+            [ButtonType.BackwardToStart]: BackwardToStartID[0],
+            [ButtonType.Backward]: EmbedActionInteractionManager.AddInteraction(
+                Owner,
+                CommandName,
+                `BannerBrowser${ButtonType.Backward}`,
+                BackwardToStartID[1]
+            ),
+            [ButtonType.Forward]: EmbedActionInteractionManager.AddInteraction(
+                Owner,
+                CommandName,
+                `BannerBrowser${ButtonType.Forward}`,
+                BackwardToStartID[1]
+            ),
+            [ButtonType.ForwardToEnd]: EmbedActionInteractionManager.AddInteraction(
+                Owner,
+                CommandName,
+                `BannerBrowser${ButtonType.ForwardToEnd}`,
+                BackwardToStartID[1]
+            )
+        };
+
+        InteractionMeta.NavigationButtonRowIDs = InteractionIDs;
+
+        const BannerPickerID: string = EmbedActionInteractionManager.AddInteraction(
+            Owner, CommandName, "BannerPickerSelect", BackwardToStartID[1]
+        );
+        const BannerPicker: StringSelectMenuBuilder = new StringSelectMenuBuilder()
+            .setCustomId(BannerPickerID)
+            .addOptions(
+                Object.keys(BannerPage).map(BannerName => ({
+                    label: BannerName,
+                    value: BannerName
+                }))
+            )
+            .setMinValues(1)
+            .setMaxValues(1)
+        ;
+        const BannerPickerRow: ActionRowBuilder<StringSelectMenuBuilder> = new ActionRowBuilder<StringSelectMenuBuilder>()
+            .addComponents(BannerPicker)
+        ;
+        
+        InteractionMeta.BannerPickerID = BannerPickerID;
+
+        const ButtonRow: ActionRowBuilder<ButtonBuilder> = ConstructButtonRow(
+            1, 10, InteractionIDs
+        );
+
+        const Embed: EmbedBuilder = new EmbedBuilder()
+            .setAuthor({
+                name: User.username,
+                url: `https://discord.com/users/${User.id}`,
+                iconURL: User.displayAvatarURL({ size: 256 })
+            })
+            .setDescription(
+                `${User.username} 's banners.\n` +
+                `Page 1 / 8`
+            )
+            .addFields(
+                Object.entries(BannerPage).map(([BannerName, Data]) => ({
+                    name: BannerName,
+                    value: `${Data.Count} rolls`
+                }))
+            )
+        ;
+
+        await Interaction.editReply({
+            embeds: [Embed],
+            components: [ButtonRow, BannerPickerRow],
+            allowedMentions: { repliedUser: false }
+        });
+        return;
+    }
+
+    const BannerPickerID: string = EmbedActionInteractionManager.AddInteraction(
+        Owner, CommandName, "BannerPickerSelect"
+    );
+
+    const BannerPicker: StringSelectMenuBuilder = new StringSelectMenuBuilder()
+        .setCustomId(BannerPickerID)
+        .addOptions(
+            Object.keys(Banners).map(BannerName => ({
+                label: BannerName,
+                value: BannerName
+            }))
+        )
+    ;
+    const BannerPickerRow: ActionRowBuilder<StringSelectMenuBuilder> = new ActionRowBuilder<StringSelectMenuBuilder>()
+        .addComponents(BannerPicker)
+    ;
+
+    const Embed: EmbedBuilder = new EmbedBuilder()
+        .setAuthor({
+            name: User.username,
+            url: `https://discord.com/users/${User.id}`,
+            iconURL: User.displayAvatarURL({ size: 256 })
+        })
+        .setDescription(
+            `${User.username} 's banners.\n` +
+            `Page 1 / ${MaxPage}`
+        )
+        .addFields(
+            Object.entries(Banners).map(([BannerName, Data]) => ({
+                name: BannerName,
+                value: `${Data.Count} rolls`
+            }))
+        )
+    ;
+
+    await Interaction.editReply({
+        embeds: [Embed],
+        components: [BannerPickerRow],
+        allowedMentions: { repliedUser: false }
+    });
+})
+.AddMultipleInteractionHandlers(InteractionTypes.Button)
+(CreateNavigationButtonHandler("BannerBrowser")
+(async (Interaction: ButtonInteraction, Type: ButtonType, Client: Client): Promise<void> => {
+    const InteractionMeta: BannerBrowserInteractionMeta | undefined = EmbedActionInteractionManager.GetInteractionMeta(
+        Interaction.user.id,
+        Interaction.customId
+    );
+
+    if(!InteractionMeta)
+        return;
+
+    const User: User = await Client.users.fetch(InteractionMeta.UserID);
+    const UserID: string = User.id;
+    const Profile: Profile | undefined = Database.Manager.Users.get(UserID)!;
+
+    InteractionMeta.CurrentPage = InteractionMeta.CurrentPage = {
+        [ButtonType.BackwardToStart]: 1,
+        [ButtonType.Backward]: InteractionMeta.CurrentPage! - 1,
+        [ButtonType.Forward]: InteractionMeta.CurrentPage! + 1,
+        [ButtonType.ForwardToEnd]: 0
+    }[Type];
+
+    await Interaction.deferReply();
+
+    const Banners = Profile.Profile;
+    const MaxPage: number = GetMaxPage(Object.keys(Banners), 10);
+
+    const BannerPage = Object.fromEntries(
+        Paginate(Object.entries(Banners), 1, 10)
+    );
+
+    const BannerPicker: StringSelectMenuBuilder = new StringSelectMenuBuilder()
+        .setCustomId(InteractionMeta.BannerPickerID)
+        .addOptions(
+            Object.keys(BannerPage).map(BannerName => ({
+                label: BannerName,
+                value: BannerName
+            }))
+        )
+        .setMinValues(1)
+        .setMaxValues(1)
+    ;
+    const BannerPickerRow: ActionRowBuilder<StringSelectMenuBuilder> = new ActionRowBuilder<StringSelectMenuBuilder>()
+        .addComponents(BannerPicker)
+    ;
+    
+    const ButtonRow: ActionRowBuilder<ButtonBuilder> = ConstructButtonRow(
+        1, 10, InteractionMeta.NavigationButtonRowIDs
+    );
+
+    const Embed: EmbedBuilder = new EmbedBuilder()
+        .setAuthor({
+            name: User.username,
+            url: `https://discord.com/users/${User.id}`,
+            iconURL: User.displayAvatarURL({ size: 256 })
+        })
+        .setDescription(
+            `${User.username} 's banners.\n` +
+            `Page ${InteractionMeta.CurrentPage} / ${MaxPage}`
+        )
+        .addFields(
+            Object.entries(BannerPage).map(([BannerName, Data]) => ({
+                name: BannerName,
+                value: `${Data.Count} rolls`
+            }))
+        )
+    ;
+
+    await Interaction.editReply({
+        embeds: [Embed],
+        components: [ButtonRow, BannerPickerRow],
+        allowedMentions: { repliedUser: false }
+    });
+    return;
+}))
+.AddSingleInteractionHandler(InteractionTypes.StringMenu, "BannerPickerSelect")
+(async (Interaction: StringSelectMenuInteraction, Client: Client): Promise<void> => {
+    const InteractionMeta: BannerBrowserInteractionMeta | undefined = EmbedActionInteractionManager.GetInteractionMeta(
+        Interaction.user.id,
+        Interaction.customId
+    );
+
+    if(!InteractionMeta)
+        return;
+
+    const User: User = await Client.users.fetch(InteractionMeta.UserID);
+    const BannerName: string = Interaction.values[0];
+    const UserID: string = User.id;
+    const Profile: Profile | undefined = Database.Manager.Users.get(UserID)!;
+
     await Interaction.deferReply();
     
     const ProcessedUserBannerProfile: {
@@ -106,16 +334,18 @@ export default Command.New(C)
     const FilterInteractionMeta: FilterInteractionMeta = {
         BannerName,
         UserID,
-        CurrentFilter: FilterType.All
+        CurrentFilter: FilterType.All,
+        CurrentPage: 0,
+        FilterID: ""
     };
-    const FilterID: string = EmbedActionInteractionManager.AddInteraction(
+    const FilterID: [string, string] = EmbedActionInteractionManager.AddInteraction(
         Interaction.user.id,
-        Interaction.commandName,
+        "profile",
         "ProfileFilter",
         FilterInteractionMeta
     );
     const Filter: StringSelectMenuBuilder = new StringSelectMenuBuilder()
-        .setCustomId(FilterID)
+        .setCustomId(FilterID[0])
         .setPlaceholder(`Filter: ${PlaceholderText[FilterType.All]}`)
         .addOptions(
             ...Object.entries(PlaceholderText)
@@ -132,46 +362,36 @@ export default Command.New(C)
         .addComponents(Filter)
     ;
 
+    FilterInteractionMeta.FilterID = FilterID[0];
+
     if(MaxPage > 1) {
         const Owner: string = Interaction.user.id;
-        const CommandName: string = Interaction.commandName;
-        const InteractionMeta: InteractionMeta = {
-            CurrentPage: 1,
-            BannerName,
-            CurrentFilter: FilterType.All,
-            UserID,
-            FilterID,
-            InteractionIDs: {
-                [ButtonType.BackwardToStart]: "",
-                [ButtonType.Backward]: "",
-                [ButtonType.Forward]: "",
-                [ButtonType.ForwardToEnd]: ""
-            }
-        };
+        const CommandName: string = "profile";
+        const BackwardToStartID: [string, string] = EmbedActionInteractionManager.AddInteraction(
+            Owner,
+            CommandName,
+            ButtonType.BackwardToStart,
+            InteractionMeta
+        );
         const InteractionIDs: Record<ButtonType, string> = {
-            [ButtonType.BackwardToStart]: EmbedActionInteractionManager.AddInteraction(
-                Owner,
-                CommandName,
-                ButtonType.BackwardToStart,
-                InteractionMeta
-            ),
+            [ButtonType.BackwardToStart]: BackwardToStartID[0],
             [ButtonType.Backward]: EmbedActionInteractionManager.AddInteraction(
                 Owner,
                 CommandName,
                 ButtonType.Backward,
-                InteractionMeta
+                BackwardToStartID[1]
             ),
             [ButtonType.Forward]: EmbedActionInteractionManager.AddInteraction(
                 Owner,
                 CommandName,
                 ButtonType.Forward,
-                InteractionMeta
+                BackwardToStartID[1]
             ),
             [ButtonType.ForwardToEnd]: EmbedActionInteractionManager.AddInteraction(
                 Owner,
                 CommandName,
                 ButtonType.ForwardToEnd,
-                InteractionMeta
+                BackwardToStartID[1]
             )
         };
         const ButtonRow: ActionRowBuilder<ButtonBuilder> = ConstructButtonRow(
@@ -198,6 +418,9 @@ export default Command.New(C)
                 }))
             )
         ;
+
+        FilterInteractionMeta.CurrentPage = 1;
+        FilterInteractionMeta.InteractionIDs = InteractionIDs;
 
         await Interaction.editReply({
             embeds: [Embed],
@@ -233,36 +456,11 @@ export default Command.New(C)
         allowedMentions: { repliedUser: false }
     });
 })
-.AddSingleInteractionHandler(InteractionTypes.Autocomplete, "banner")
-(async (Interaction: AutocompleteInteraction): Promise<void> => {
-    const UserID: string = Interaction.options.data.find(
-        Option => Option.name === "user"
-    )?.value as string ?? Interaction.user.id;
-
-    const Profile: Profile = Database.Manager.Users.get(UserID)!;
-    if(!Profile)
-        return;
-
-    await Interaction.respond(
-        Object.keys(Profile.Profile)
-            .filter(
-                BannerName => BannerName
-                    .toLocaleLowerCase()
-                    .includes(Interaction.options.getFocused().trim().toLowerCase())
-            )
-            .slice(0, 25)
-            .map(BannerName => ({
-                name: BannerName,
-                value: BannerName
-            })
-        )
-    );
-})
 .AddMultipleInteractionHandlers(InteractionTypes.Button)
 (CreateNavigationButtonHandler()
 (async (Interaction: ButtonInteraction, Type: ButtonType, Client: Client): Promise<void> => {
     const UserID: string = Interaction.user.id;
-    const InteractionMeta: InteractionMeta | undefined = EmbedActionInteractionManager.GetInteraction<InteractionMeta>(
+    const InteractionMeta: FilterInteractionMeta | undefined = EmbedActionInteractionManager.GetInteractionMeta(
         UserID, Interaction.customId
     );
 
@@ -273,8 +471,8 @@ export default Command.New(C)
 
     InteractionMeta.CurrentPage = {
         [ButtonType.BackwardToStart]: 1,
-        [ButtonType.Backward]: InteractionMeta.CurrentPage - 1,
-        [ButtonType.Forward]: InteractionMeta.CurrentPage + 1,
+        [ButtonType.Backward]: InteractionMeta.CurrentPage! - 1,
+        [ButtonType.Forward]: InteractionMeta.CurrentPage! + 1,
         [ButtonType.ForwardToEnd]: 0
     }[Type];
 
@@ -336,7 +534,7 @@ export default Command.New(C)
     ;
 
     const ButtonRow = ConstructButtonRow(
-        InteractionMeta.CurrentPage, MaxPage, InteractionMeta.InteractionIDs
+        InteractionMeta.CurrentPage, MaxPage, InteractionMeta.InteractionIDs!
     );
 
     const Embed: EmbedBuilder = new EmbedBuilder()
@@ -368,7 +566,7 @@ export default Command.New(C)
 }))
 .AddSingleInteractionHandler(InteractionTypes.StringMenu, "FilterMenu")
 (async (Interaction: StringSelectMenuInteraction, Client: Client): Promise<void> => {
-    const InteractionMeta: FilterInteractionMeta | undefined = EmbedActionInteractionManager.GetInteraction(
+    const InteractionMeta: FilterInteractionMeta | undefined = EmbedActionInteractionManager.GetInteractionMeta(
         Interaction.user.id, Interaction.customId
     );
 

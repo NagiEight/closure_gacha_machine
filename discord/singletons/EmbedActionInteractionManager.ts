@@ -5,7 +5,7 @@ import LoadEnv from "./LoadEnv.js";
 export interface Action {
     CommandName: string;
     ActionName: string;
-    Meta: any;
+    MetaID?: string;
     Timeout: NodeJS.Timeout;
 };
 
@@ -15,27 +15,79 @@ interface Registry {
         [InteractionUUID: string]: Action;
     };
 }
-export default new class extends EventEmitter {
-    public readonly Registry: Registry = {};
 
-    public GetInteraction<T>(Owner: string, InteractionID: string): T | undefined {
-        return this.Registry[Owner][InteractionID]?.Meta;
+interface MetaRegistry {
+    [MetaID: string]: any;
+}
+
+export default new class extends EventEmitter {
+    public readonly InteractionRegistry: Registry = {};
+    public readonly MetaRegistry: MetaRegistry = {};
+
+    public GetInteractionMeta<T>(Owner: string, InteractionID: string): T | undefined {
+        const MetaID: string | undefined = this.InteractionRegistry[Owner][InteractionID].MetaID;
+        if(!MetaID)
+            return;
+        return this.MetaRegistry[MetaID];
     }
 
-    public AddInteraction(Owner: string, CommandName: string, ActionName: string, Meta: any): string {
-        this.Registry[Owner] ??= {};
+    public AddInteraction(Owner: string, CommandName: string, ActionName: string): string; 
+    public AddInteraction(Owner: string, CommandName: string, ActionName: string, MetaID: string): string;
+    public AddInteraction(Owner: string, CommandName: string, ActionName: string, Meta?: any): [string, string];
+    /**
+     * [InteractionID, MetaID]
+     */
+    public AddInteraction(Owner: string, CommandName: string, ActionName: string, Meta?: any): [string, string] | string {
+        this.InteractionRegistry[Owner] ??= {};
+        const InteractionID: string = GenerateUniqueUUID(UUID => !!this.InteractionRegistry[Owner][UUID]);
 
-        const InteractionID: string = GenerateUniqueUUID(UUID => !!this.Registry[Owner][UUID]);
-        this.Registry[Owner][InteractionID] = {
+        if(typeof Meta === "string" && this.MetaRegistry[Meta]) {
+            this.InteractionRegistry[Owner][InteractionID] = {
+                CommandName,
+                ActionName,
+                MetaID: Meta,
+                Timeout: setTimeout((): void => {
+                    this.emit("LifeTimeEnded", InteractionID);
+                    delete this.InteractionRegistry[Owner][InteractionID];
+                    delete this.MetaRegistry[Meta];
+    
+                    if(Object.keys(this.InteractionRegistry[Owner]).length === 0) {
+                        delete this.InteractionRegistry[Owner];
+                    }
+                }, LoadEnv.EMBED_EXPIRY_DURATION * 1000)
+            };
+            return InteractionID;
+        }
+
+        if(Meta) {
+            const MetaID: string = GenerateUniqueUUID(UUID => !!this.MetaRegistry[UUID]);
+                this.InteractionRegistry[Owner][InteractionID] = {
+                CommandName,
+                ActionName,
+                MetaID,
+                Timeout: setTimeout((): void => {
+                    this.emit("LifeTimeEnded", InteractionID);
+                    delete this.InteractionRegistry[Owner][InteractionID];
+                    delete this.MetaRegistry[MetaID];
+
+                    if(Object.keys(this.InteractionRegistry[Owner]).length === 0) {
+                        delete this.InteractionRegistry[Owner];
+                    }
+                }, LoadEnv.EMBED_EXPIRY_DURATION * 1000)
+            };
+            this.MetaRegistry[MetaID] = Meta;
+            return [InteractionID, MetaID];
+        }
+
+        this.InteractionRegistry[Owner][InteractionID] = {
             CommandName,
             ActionName,
-            Meta,
             Timeout: setTimeout((): void => {
                 this.emit("LifeTimeEnded", InteractionID);
-                delete this.Registry[Owner][InteractionID];
+                delete this.InteractionRegistry[Owner][InteractionID];
 
-                if(Object.keys(this.Registry[Owner]).length === 0) {
-                    delete this.Registry[Owner];
+                if(Object.keys(this.InteractionRegistry[Owner]).length === 0) {
+                    delete this.InteractionRegistry[Owner];
                 }
             }, LoadEnv.EMBED_EXPIRY_DURATION * 1000)
         };
@@ -44,33 +96,33 @@ export default new class extends EventEmitter {
     }
 
     public RemoveInteraction(Owner: string, InteractionID: string): void {
-        if(!this.Registry[Owner])
+        if(!this.InteractionRegistry[Owner])
             return;
 
-        if(!this.Registry[Owner][InteractionID])
+        if(!this.InteractionRegistry[Owner][InteractionID])
             return;
 
-        clearTimeout(this.Registry[Owner][InteractionID]?.Timeout);
-        delete this.Registry[Owner][InteractionID];
-        if(Object.keys(this.Registry[Owner]).length === 0) {
-            delete this.Registry[Owner];
+        clearTimeout(this.InteractionRegistry[Owner][InteractionID]?.Timeout);
+        delete this.InteractionRegistry[Owner][InteractionID];
+        if(Object.keys(this.InteractionRegistry[Owner]).length === 0) {
+            delete this.InteractionRegistry[Owner];
         }
     }
 
     public RefreshInteraction(Owner: string, InteractionID: string): void {
-        if(!this.Registry[Owner])
+        if(!this.InteractionRegistry[Owner])
             return;
 
-        if(!this.Registry[Owner][InteractionID])
+        if(!this.InteractionRegistry[Owner][InteractionID])
             return;
 
-        clearTimeout(this.Registry[Owner][InteractionID].Timeout);
-        this.Registry[Owner][InteractionID].Timeout = setTimeout((): void => {
+        clearTimeout(this.InteractionRegistry[Owner][InteractionID].Timeout);
+        this.InteractionRegistry[Owner][InteractionID].Timeout = setTimeout((): void => {
             this.emit("LifeTimeEnded", InteractionID);
-            delete this.Registry[Owner][InteractionID];
+            delete this.InteractionRegistry[Owner][InteractionID];
 
-            if(Object.keys(this.Registry[Owner]).length === 0) {
-                delete this.Registry[Owner];
+            if(Object.keys(this.InteractionRegistry[Owner]).length === 0) {
+                delete this.InteractionRegistry[Owner];
             }
         }, LoadEnv.EMBED_EXPIRY_DURATION * 1000);
     }

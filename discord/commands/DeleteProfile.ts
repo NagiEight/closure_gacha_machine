@@ -45,14 +45,14 @@ export default Command.New(C)
 
     const ConfirmButton: ButtonBuilder = new ButtonBuilder()
         .setCustomId(EmbedActionInteractionManager.AddInteraction(
-            UserID, "delete", "Confirm", undefined
+            UserID, "delete", "Confirm"
         ))
         .setLabel("Delete Profile")
         .setStyle(ButtonStyle.Danger)
     ;
     const CancelButton: ButtonBuilder = new ButtonBuilder()
         .setCustomId(EmbedActionInteractionManager.AddInteraction(
-            UserID, "delete", "Cancel", undefined
+            UserID, "delete", "Cancel"
         ))
         .setLabel("Cancel")
         .setStyle(ButtonStyle.Secondary)

@@ -42,10 +42,10 @@ Client.on(Events.InteractionCreate, async Interaction => {
     }
 
     if(Interaction.isButton()) {
-        if(!EmbedActionInteractionManager.Registry[Interaction.user.id])
+        const EmbedActionInteraction: Action = EmbedActionInteractionManager.InteractionRegistry[Interaction.user.id][Interaction.customId];
+        if(!EmbedActionInteraction)
             return;
         
-        const EmbedActionInteraction: Action = EmbedActionInteractionManager.Registry[Interaction.user.id][Interaction.customId];
         const Command: Command | undefined = CommandManager.Get(EmbedActionInteraction.CommandName);
         if(!Command) 
             return;
@@ -61,7 +61,7 @@ Client.on(Events.InteractionCreate, async Interaction => {
     }
 
     if(Interaction.isAnySelectMenu()) {
-        const EmbedActionInteraction: Action = EmbedActionInteractionManager.Registry[Interaction.user.id][Interaction.customId];
+        const EmbedActionInteraction: Action = EmbedActionInteractionManager.InteractionRegistry[Interaction.user.id][Interaction.customId];
         if(!EmbedActionInteraction)
             return;
 

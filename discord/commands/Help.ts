@@ -50,30 +50,33 @@ export default Command.New(C)
                 [ButtonType.ForwardToEnd]: ""
             }
         };
+        
+        const BackwardToStartID: [string, string] = EmbedActionInteractionManager.AddInteraction(
+            UserID,
+            CommandName,
+            ButtonType.BackwardToStart,
+            InteractionMeta
+        );
+
         const InteractionIDs: Record<ButtonType, string> = {
-            [ButtonType.BackwardToStart]: EmbedActionInteractionManager.AddInteraction(
-                UserID,
-                CommandName,
-                ButtonType.BackwardToStart,
-                InteractionMeta
-            ),
+            [ButtonType.BackwardToStart]: BackwardToStartID[0],
             [ButtonType.Backward]: EmbedActionInteractionManager.AddInteraction(
                 UserID,
                 CommandName,
                 ButtonType.Backward,
-                InteractionMeta
+                BackwardToStartID[1]
             ),
             [ButtonType.Forward]: EmbedActionInteractionManager.AddInteraction(
                 UserID,
                 CommandName,
                 ButtonType.Forward,
-                InteractionMeta
+                BackwardToStartID[1]
             ),
             [ButtonType.ForwardToEnd]: EmbedActionInteractionManager.AddInteraction(
                 UserID,
                 CommandName,
                 ButtonType.ForwardToEnd,
-                InteractionMeta
+                BackwardToStartID[1]
             )
         };
 
@@ -137,7 +140,7 @@ export default Command.New(C)
 .AddMultipleInteractionHandlers(InteractionTypes.Button)
 (CreateNavigationButtonHandler()
 (async (Interaction: ButtonInteraction, Type: ButtonType): Promise<void> => {
-    const InteractionMeta: InteractionMeta | undefined = EmbedActionInteractionManager.GetInteraction<InteractionMeta>(
+    const InteractionMeta: InteractionMeta | undefined = EmbedActionInteractionManager.GetInteractionMeta<InteractionMeta>(
         Interaction.user.id, 
         Interaction.customId
     );

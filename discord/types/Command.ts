@@ -128,7 +128,7 @@ export default class Command {
         return (Handlers: InteractionHandlers<InteractionMap[T]>): this => {
             Object.assign(this.InteractionHandlers[Type], Handlers);
             return this;
-        }
+        };
     }
 
     public GetInteractionHandler<T extends InteractionTypes>(
