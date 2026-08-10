@@ -23,17 +23,15 @@ Client.once(Events.ClientReady, Client => console.log(`Logged in as ${Client.use
 Client.on(Events.InteractionCreate, async Interaction => {
     if(Interaction.isAutocomplete()) {
         const Command: Command | undefined = CommandManager.Get(Interaction.commandName);
-        if(Command) {
-            if(Command.Administrator && !LoadEnv.ADMINISTRATOR_IDS.includes(Interaction.user.id)) 
-                return;
-            
-            const FocusedOption: AutocompleteFocusedOption = Interaction.options.getFocused(true);
-            return await Command.GetInteractionHandler(
-                InteractionTypes.Autocomplete,
-                FocusedOption.name
-            )?.(Interaction, Client);
-        }
-        return;
+
+        if(!Command || Command.Administrator && !LoadEnv.ADMINISTRATOR_IDS.includes(Interaction.user.id))
+            return;
+
+        const FocusedOption: AutocompleteFocusedOption = Interaction.options.getFocused(true);
+        return await Command.GetInteractionHandler(
+            InteractionTypes.Autocomplete,
+            FocusedOption.name
+        )?.(Interaction, Client);
     }
 
     if(Interaction.isButton()) {
@@ -79,6 +77,15 @@ Client.on(Events.InteractionCreate, async Interaction => {
     if(!Command)
         return;
     
+    if(Command.Administrator && !LoadEnv.ADMINISTRATOR_IDS.includes(Interaction.user.id)) {
+        await Interaction.reply({
+            content: "You are not permitted to use this command.",
+            allowedMentions: { repliedUser: false },
+            flags: MessageFlags.Ephemeral
+        });
+        return;
+    }
+    
     if(Command.Cancelable) {
         const Existing: AbortController | undefined = Command.Cancelable.Pool.get(Interaction.user.id);
         if(Existing) {
@@ -95,15 +102,6 @@ Client.on(Events.InteractionCreate, async Interaction => {
 
     try {
         console.log(`${Interaction.user.id}(${Interaction.user.username}) used ${Interaction.commandName}.`);
-        if(Command.Administrator && !LoadEnv.ADMINISTRATOR_IDS.includes(Interaction.user.id)) {
-            await Interaction.reply({
-                content: "You are not permitted to use this command.",
-                allowedMentions: { repliedUser: false },
-                flags: MessageFlags.Ephemeral
-            });
-            return;
-        }
-
         await Command.Action(Interaction, Command.Cancelable?.Pool.get(Interaction.user.id)?.signal, Client);
     }
     catch(Err) {
