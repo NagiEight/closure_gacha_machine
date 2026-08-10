@@ -25,7 +25,7 @@ export default new class extends EventEmitter {
     public readonly MetaRegistry: MetaRegistry = {};
 
     public GetInteractionMeta<T>(Owner: string, InteractionID: string): T | undefined {
-        const MetaID: string | undefined = this.InteractionRegistry[Owner][InteractionID].MetaID;
+        const MetaID: string | undefined = this.InteractionRegistry[Owner]?.[InteractionID]?.MetaID;
         if(!MetaID)
             return;
         return this.MetaRegistry[MetaID];
@@ -105,7 +105,7 @@ export default new class extends EventEmitter {
         if(!this.InteractionRegistry[Owner][InteractionID])
             return;
 
-        clearTimeout(this.InteractionRegistry[Owner][InteractionID]?.Timeout);
+        clearTimeout(this.InteractionRegistry[Owner][InteractionID].Timeout);
         delete this.InteractionRegistry[Owner][InteractionID];
         if(Object.keys(this.InteractionRegistry[Owner]).length === 0) {
             delete this.InteractionRegistry[Owner];
