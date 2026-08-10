@@ -341,7 +341,7 @@ export default Command.New(C)
     const FilterID: [string, string] = EmbedActionInteractionManager.AddInteraction(
         Interaction.user.id,
         "profile",
-        "ProfileFilter",
+        "FilterMenuSelect",
         FilterInteractionMeta
     );
     const Filter: StringSelectMenuBuilder = new StringSelectMenuBuilder()
@@ -564,7 +564,7 @@ export default Command.New(C)
         allowedMentions: { repliedUser: false }
     });
 }))
-.AddSingleInteractionHandler(InteractionTypes.StringMenu, "FilterMenu")
+.AddSingleInteractionHandler(InteractionTypes.StringMenu, "FilterMenuSelect")
 (async (Interaction: StringSelectMenuInteraction, Client: Client): Promise<void> => {
     const InteractionMeta: FilterInteractionMeta | undefined = EmbedActionInteractionManager.GetInteractionMeta(
         Interaction.user.id, Interaction.customId
