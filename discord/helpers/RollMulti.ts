@@ -91,30 +91,31 @@ export default async (Interaction: ChatInputCommandInteraction, BannerName: stri
                 [ButtonType.ForwardToEnd]: ""
             }
         };
+        const BackwardToStartID: [string, string] = EmbedActionInteractionManager.AddInteraction(
+            UserID,
+            CommandName,
+            ButtonType.BackwardToStart,
+            InteractionMeta
+        );
         const InteractionIDs: Record<ButtonType, string> = {
-            [ButtonType.BackwardToStart]: EmbedActionInteractionManager.AddInteraction(
-                UserID,
-                CommandName,
-                ButtonType.BackwardToStart,
-                InteractionMeta
-            ),
+            [ButtonType.BackwardToStart]: BackwardToStartID[0],
             [ButtonType.Backward]: EmbedActionInteractionManager.AddInteraction(
                 UserID,
                 CommandName,
                 ButtonType.Backward,
-                InteractionMeta
+                BackwardToStartID[1]
             ),
             [ButtonType.Forward]: EmbedActionInteractionManager.AddInteraction(
                 UserID,
                 CommandName,
                 ButtonType.Forward,
-                InteractionMeta
+                BackwardToStartID[1]
             ),
             [ButtonType.ForwardToEnd]: EmbedActionInteractionManager.AddInteraction(
                 UserID,
                 CommandName,
                 ButtonType.ForwardToEnd,
-                InteractionMeta
+                BackwardToStartID[1]
             )
         };
 

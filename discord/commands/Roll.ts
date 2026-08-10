@@ -102,7 +102,7 @@ export default Command.New(C)
 .AddMultipleInteractionHandlers(InteractionTypes.Button)
 (CreateNavigationButtonHandler()
 (async (Interaction: ButtonInteraction, Type: ButtonType): Promise<void> => {
-    const InteractionMeta: InteractionMeta | undefined = EmbedActionInteractionManager.GetInteraction<InteractionMeta>(
+    const InteractionMeta: InteractionMeta | undefined = EmbedActionInteractionManager.GetInteractionMeta<InteractionMeta>(
         Interaction.user.id, 
         Interaction.customId
     );
