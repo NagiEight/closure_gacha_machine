@@ -646,6 +646,57 @@ interface GachaMultiRollResponse {
 
 ---
 
+## Reset progress on a banner
+Reset your progress on a banner.
+
+### Request
+```http
+PATCH /gacha/reset/:BannerName
+```
+
+### Path Parameters
+| Parameter | Type | Description |
+|------------|--------|-------------|
+| BannerName | string | Banner identifier or name |
+
+### Headers
+```json
+{
+    "Session-Token": "<your session token>"
+}
+```
+
+### Example
+```http
+PATCH /gacha/reset/EN A Shared Oath of Guardianship
+```
+
+### Success Response
+**Status:** `200 OK`
+```txt
+Progress on EN A Shared Oath of Guardianship has been reset successfully.
+```
+
+### Error Response
+**Status:** `404 Not Found`
+```json
+{
+    "message": "Missing session token."
+}
+```
+```json
+{
+    "message": "There are no profile associated with this token."
+}
+```
+```json
+{
+    "message": "Banner '${BannerName}' doesn't exist."
+}
+```
+
+---
+
 ## Delete a session token
 Delete a session token, will invalidate this token. This is irrecoverable.
 

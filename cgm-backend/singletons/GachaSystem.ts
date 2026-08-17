@@ -113,6 +113,16 @@ export default new class {
             Focused = excluded.Focused,
             TenRolls = excluded.TenRolls
     `);
+    private readonly ResetBannerSTMT = Database.DB.transaction((Token: string, BannerName: string): void => {
+        Database.DB.prepare<[string, string], void>(`
+            DELETE FROM GachaData
+            WHERE UserToken = ? AND Banner = ?
+        `).run(Token, BannerName);
+        Database.DB.prepare<[string, string], void>(`
+            DELETE FROM GachaStorage
+            WHERE UserToken = ? AND Banner = ?
+        `).run(Token, BannerName);
+    });
     private readonly DeleteProfileSTMT = Database.DB.transaction((Token: string): void => {
         Database.DB.prepare<[string], void>("DELETE FROM GachaStorage WHERE UserToken = ?").run(Token);
         Database.DB.prepare<[string], void>("DELETE FROM GachaData WHERE UserToken = ?").run(Token);
@@ -180,6 +190,10 @@ export default new class {
     public DeleteProfile(Token: string): void {
         delete this.GachaProfiles[Token];
         this.DeleteProfileSTMT(Token);
+    }
+    public ResetBanner(Token: string, BannerName: string): void {
+        delete this.GachaProfiles[Token][BannerName];
+        this.ResetBannerSTMT(Token, BannerName);
     }
     public GetProfile(Token: string): GachaProfile | undefined {
         return this.GachaProfiles[Token];
