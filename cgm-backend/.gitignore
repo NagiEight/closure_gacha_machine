@@ -2,5 +2,4 @@
 .env
 dev/
 node_modules/
-database/
 public/
