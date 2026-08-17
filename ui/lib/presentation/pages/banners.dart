@@ -160,10 +160,11 @@ class _BannersPageState extends State<BannersPage> {
                   border: InputBorder.none,
                 ),
               )
-            : RegionSelectorPill(
-                selectedRegion: _selectedRegion,
-                onRegionChanged: _onRegionChanged,
-              ),
+            : null,
+        // : RegionSelectorPill(
+        //     selectedRegion: _selectedRegion,
+        //     onRegionChanged: _onRegionChanged,
+        //   ),
         leading: _isSearching
             ? IconButton(
                 icon: const Icon(Icons.arrow_back, color: Colors.white),
