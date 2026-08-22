@@ -97,18 +97,18 @@ class _BannersPageState extends State<BannersPage> {
     }
   }
 
-  Future<void> _onRegionChanged(ServerRegion region) async {
-    if (_selectedRegion == region) return;
+  // Future<void> _onRegionChanged(ServerRegion region) async {
+  //   if (_selectedRegion == region) return;
 
-    setState(() {
-      _selectedRegion = region;
-      _banners.clear();
-      _currentPage = 1;
-      _hasMorePages = true;
-    });
+  //   setState(() {
+  //     _selectedRegion = region;
+  //     _banners.clear();
+  //     _currentPage = 1;
+  //     _hasMorePages = true;
+  //   });
 
-    await _fetchNextBannerPage();
-  }
+  //   await _fetchNextBannerPage();
+  // }
 
   List<BannerEntity> get _filteredAndSortedBanners {
     var list = _banners.where((banner) {
