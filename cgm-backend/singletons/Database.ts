@@ -118,13 +118,6 @@ class DataManager {
     private readonly Banners: Map<string, Banner>;
 
     public constructor() {
-        const Signals: string[] = ["SIGTERM", "SIGINT", "uncaughtException", "unhandledRejection"];
-        for(const Signal in Signals) {
-            process.on(Signal, (): void => {
-                DB.close();
-                process.exit(0);
-            });
-        }
         const Query: BannersRow[] = DB.prepare<[], BannersRow>(`
             SELECT B.Name, B.ReleaseDate, B.Type, BP.Rarity, BP.Prima, BP.Secondary, BP.Standard
             FROM BannerPools BP JOIN Banners B ON BP.BannerName = B.Name
