@@ -1,4 +1,4 @@
-export default <T extends PropertyKey, R>(Value: T, Resolver: Partial<Record<T, () => R>>, Default?: () => R): R => {
+export default <T extends PropertyKey, R>(Value: T, Resolver: Record<T, () => R>, Default?: () => R): R => {
     if(Resolver[Value])
         return Resolver[Value]();
 

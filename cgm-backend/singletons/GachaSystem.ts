@@ -96,11 +96,7 @@ interface GachaProfileDataRow {
 }
 
 export default new class {
-    private readonly GachaProfiles: Record<string, GachaProfile> = Object.fromEntries(
-        Database.DB.prepare<[], { Token: string }>("SELECT * FROM GachaProfiles")
-            .all()
-            .map(Row => [Row.Token, {}])
-    );
+    private readonly GachaProfiles: Record<string, GachaProfile> = {};
     private readonly CreateGachaProfileSTMT = Database.DB.prepare<[string], void>(`
         INSERT INTO GachaProfiles
         (Token)
@@ -169,50 +165,31 @@ export default new class {
                 GD.Count
             FROM GachaData GD JOIN GachaProfiles GP ON GP.TOKEN = GD.UserToken
         `).all();
-        
-        // this is slow as shit but it's okay because it only runs once per session
-        for(const Token of Object.keys(this.GachaProfiles)) {
-            const DataRows: GachaProfileDataRow[] = DataQuery.filter(Row => Row.UserToken === Token);
-            const StorageRows: GachaProfileStorageRow[] = StorageQuery.filter(Row => Row.UserToken === Token);
 
-            for(const Row of DataRows) {
-                this.GachaProfiles[Token][Row.Banner] ??= {
-                    Count: Row.Count,
-                    RollsWithoutSixStar: Row.RollsWithoutSixStar,
-                    RollsSinceLast6StarsRateUp: Row.RollsSinceLast6StarsRateUp,
-                    RollsSinceLast5StarsRateUp: Row.RollsSinceLast5StarsRateUp,
-                    RollsSinceLast4StarsRateUp: Row.RollsSinceLast4StarsRateUp,
-                    Focused: !!Row.Focused,
-                    TenRolls: !!Row.TenRolls,
-                    Storage: {
-                        SixStars: {},
-                        FiveStars: {},
-                        FourStars: {},
-                        ThreeStars: {}
-                    }
-                };
-            }
-
-            for(const Row of StorageRows) {
-                switch(Row.Rarity) {
-                    case 3:
-                        this.GachaProfiles[Token][Row.Banner].Storage.ThreeStars[Row.ID] = Row.Count;
-                        break;
-
-                    case 4:
-                        this.GachaProfiles[Token][Row.Banner].Storage.FourStars[Row.ID] = Row.Count;
-                        break;
-
-                    case 5:
-                        this.GachaProfiles[Token][Row.Banner].Storage.FiveStars[Row.ID] = Row.Count;
-                        break;
-
-                    case 6:
-                        this.GachaProfiles[Token][Row.Banner].Storage.SixStars[Row.ID] = Row.Count;
-                        break;
+        DataQuery.forEach(Row => {
+            this.GachaProfiles[Row.UserToken] ??= {};
+            this.GachaProfiles[Row.UserToken][Row.Banner] ??= {
+                Count: Row.Count,
+                RollsWithoutSixStar: Row.RollsWithoutSixStar,
+                RollsSinceLast6StarsRateUp: Row.RollsSinceLast6StarsRateUp,
+                RollsSinceLast5StarsRateUp: Row.RollsSinceLast5StarsRateUp,
+                RollsSinceLast4StarsRateUp: Row.RollsSinceLast4StarsRateUp,
+                Focused: !!Row.Focused,
+                TenRolls: !!Row.TenRolls,
+                Storage: {
+                    SixStars: {},
+                    FiveStars: {},
+                    FourStars: {},
+                    ThreeStars: {}
                 }
-            }
-        }
+            };
+        });
+        StorageQuery.forEach(Row => Switch(Row.Rarity, {
+            6: (): number => this.GachaProfiles[Row.UserToken][Row.Banner].Storage.ThreeStars[Row.ID] = Row.Count,
+            5: (): number => this.GachaProfiles[Row.UserToken][Row.Banner].Storage.FourStars[Row.ID] = Row.Count,
+            4: (): number => this.GachaProfiles[Row.UserToken][Row.Banner].Storage.FiveStars[Row.ID] = Row.Count,
+            3: (): number => this.GachaProfiles[Row.UserToken][Row.Banner].Storage.SixStars[Row.ID] = Row.Count
+        }));
     }
     
     public CreateProfile(): string {
@@ -232,7 +209,9 @@ export default new class {
     public GetProfile(Token: string): GachaProfile | undefined {
         return this.GachaProfiles[Token];
     }
-    public Roll(Token: string, BannerName: string, WriteDB: boolean = true): [string, Items] | undefined {
+    public Roll(Token: string, BannerName: string, WriteDB?: boolean): [string, Items] | undefined;
+    public Roll(Token: string, BannerName: string, WriteDB?: boolean, Selection?: { SixStarsSelection: string[]; FiveStarsSelection: string[]; }): [string, Items] | undefined;
+    public Roll(Token: string, BannerName: string, WriteDB: boolean = true, Selection?: { SixStarsSelection: string[]; FiveStarsSelection: string[]; }): [string, Items] | undefined {
         const Banner: Banner | undefined = Database.Manager.GetBanner(BannerName);
         
         if(!Banner || !this.GachaProfiles[Token])
@@ -385,8 +364,22 @@ export default new class {
             }),
 
             [BannerTypes.Orienteering]: (): string => Switch(Result, {
-                [Items.SixStars]: (): string => Banner.SixStarsPool.Primary[crypto.randomInt(Banner.SixStarsPool.Primary.length)],
-                [Items.FiveStars]: (): string => FiveStarsHandler([{ Value: true, Chance: 60 }, { Value: false, Chance: 40 }]),
+                [Items.SixStars]: (): string => 
+                    Selection && Selection.SixStarsSelection[crypto.randomInt(Selection.SixStarsSelection.length)] ||
+                    Banner.SixStarsPool.Primary[crypto.randomInt(Banner.SixStarsPool.Primary.length)]
+                ,
+                [Items.FiveStars]: (): string => {
+                    const IsRateUp: boolean = Gacha([{ Value: true, Chance: 60 }, { Value: false, Chance: 40 }]);
+                    if(IsRateUp)
+                        BannerProfile.RollsSinceLast5StarsRateUp = 0;
+                    else BannerProfile.RollsSinceLast5StarsRateUp++;
+
+                    return IsRateUp
+                        ? Selection && Selection.FiveStarsSelection[crypto.randomInt(Selection.FiveStarsSelection.length)] ||
+                            Banner.FiveStarsPool.Primary[crypto.randomInt(Banner.FiveStarsPool.Primary.length)]
+                        : Banner.FiveStarsPool.Standard[crypto.randomInt(Banner.FiveStarsPool.Standard.length)]
+                    ;
+                },
                 [Items.FourStars]: FourStarsHandler,
                 [Items.ThreeStars]: (): string => Banner.ThreeStarsPool[crypto.randomInt(Banner.ThreeStarsPool.length)]
             }),
@@ -457,14 +450,14 @@ export default new class {
         return [Output, Result];
     }
 
-    public RollMultiReduced(Token: string, BannerName: string, Count: number): Record<string, number> | undefined {
-        return this.RollMulti(Token, BannerName, Count)?.reduce((Acc: Record<string, number>, Item: string): Record<string, number> => {
+    public RollMultiReduced(Token: string, BannerName: string, Count: number, Selection?: { SixStarsSelection: string[]; FiveStarsSelection: string[]; }): Record<string, number> | undefined {
+        return this.RollMulti(Token, BannerName, Count, Selection)?.reduce((Acc: Record<string, number>, Item: string): Record<string, number> => {
             Acc[Item] ??= 0;
             Acc[Item]++;
             return Acc;
         }, {});
     }
-    public RollMulti(Token: string, BannerName: string, Count: number): string[] | undefined {
+    public RollMulti(Token: string, BannerName: string, Count: number, Selection?: { SixStarsSelection: string[]; FiveStarsSelection: string[]; }): string[] | undefined {
         if(!this.GachaProfiles[Token])
             return;
 
@@ -487,7 +480,7 @@ export default new class {
         const BannerProfile: ProfileBanner = this.GachaProfiles[Token][BannerName];
 
         const Result: [string, Items][] = [];
-        while(Result.push(this.Roll(Token, BannerName, false)!) < Count);
+        while(Result.push(this.Roll(Token, BannerName, false, Selection)!) < Count);
         const OperatorMap: Record<string, Items> = Object.fromEntries(Result);
         
         for(const [OperatorID, Rarity] of Object.entries(OperatorMap)) {

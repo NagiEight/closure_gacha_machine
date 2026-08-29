@@ -651,6 +651,14 @@ POST /gacha/:BannerName/roll
 }
 ```
 
+### Body (For Banner.Type === BannerTypes.Orienteering)
+```typescript
+interface Selection{
+    SixStarsSelection: string[];
+    FiveStarsSelection: string[];
+}
+```
+
 ### Example
 ```http
 POST /gacha/EN A Shared Oath of Guardianship/roll
@@ -670,12 +678,29 @@ interface GachaRollResponse {
 ```
 
 ### Error Response
-**Status:** `404 Not Found`
+**Status:** `400 Bad Request`
 ```json
 {
     "message": "Missing session token."
 }
 ```
+**If Banner.Type === BannerTypes.Orienteering:**
+```json
+{
+    "message": "Banner type '${Banner.Type}' requires a request body."
+}
+```
+```json
+{
+    "message": "Missing or invalid ${Rarity} stars selection."
+}
+```
+```json
+{
+    "message": "Operator(s) ${Operators} do(es) not exist or not included in ${BannerName} ${Rarity} stars pool."
+}
+```
+**Status:** `404 Not Found`
 ```json
 {
     "message": "There are no profile associated with this token."
@@ -717,6 +742,14 @@ POST /gacha/:BannerName/roll/:Count
 }
 ```
 
+### Body (For Banner.Type === BannerTypes.Orienteering)
+```typescript
+interface Selection{
+    SixStarsSelection: string[];
+    FiveStarsSelection: string[];
+}
+```
+
 ### Example
 ```http
 POST /gacha/EN A Shared Oath of Guardianship/roll/10
@@ -753,15 +786,32 @@ interface GachaMultiRollResponse {
 ```
 
 ### Error Response
-**Status:** `404 Not Found`
+**Status:** `400 Bad Request`
 ```json
 {
-    "message": "Roll count must be a number greater than 0."
+    "message": "Missing session token."
+}
+```
+**If Banner.Type === BannerTypes.Orienteering:**
+```json
+{
+    "message": "Banner type '${Banner.Type}' requires a request body."
 }
 ```
 ```json
 {
-    "message": "Missing session token."
+    "message": "Missing or invalid ${Rarity} stars selection."
+}
+```
+```json
+{
+    "message": "Operator(s) ${Operators} do(es) not exist or not included in ${BannerName} ${Rarity} stars pool."
+}
+```
+**Status:** `404 Not Found`
+```json
+{
+    "message": "Roll count must be a number greater than 0."
 }
 ```
 ```json
