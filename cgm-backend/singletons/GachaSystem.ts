@@ -232,7 +232,7 @@ export default new class {
     public GetProfile(Token: string): GachaProfile | undefined {
         return this.GachaProfiles[Token];
     }
-    public Roll(Token: string, BannerName: string, WriteDB: boolean = true): [string, 3 | 4 | 5 | 6] | undefined {
+    public Roll(Token: string, BannerName: string, WriteDB: boolean = true): [string, Items] | undefined {
         const Banner: Banner | undefined = Database.Manager.GetBanner(BannerName);
         
         if(!Banner || !this.GachaProfiles[Token])
@@ -411,7 +411,10 @@ export default new class {
                 BannerProfile.RollsWithoutSixStar = 0;
             BannerProfile.TenRolls = false;
         }
-        
+
+        if(!WriteDB)
+            return [Output, Result];
+
         const ToWrite: number = Switch(Result, {
             [Items.SixStars]: (): number => {
                 this.GachaProfiles[Token][BannerName].Storage.SixStars[Output] ??= 0;
@@ -431,32 +434,31 @@ export default new class {
             }
         });
 
-        if(WriteDB) {
-            this.RefreshStorageSTMT.run(
-                Token,
-                BannerName,
-                Result,
-                Output,
-                ToWrite
-            );
+        this.RefreshStorageSTMT.run(
+            Token,
+            BannerName,
+            Result,
+            Output,
+            ToWrite
+        );
 
-            this.RefreshDataSTMT.run(
-                Token,
-                BannerName,
-                BannerProfile.Count,
-                BannerProfile.RollsWithoutSixStar,
-                BannerProfile.RollsSinceLast6StarsRateUp,
-                BannerProfile.RollsSinceLast5StarsRateUp,
-                BannerProfile.RollsSinceLast4StarsRateUp,
-                Number(BannerProfile.Focused),
-                Number(BannerProfile.TenRolls)
-            );
-        }
+        this.RefreshDataSTMT.run(
+            Token,
+            BannerName,
+            BannerProfile.Count,
+            BannerProfile.RollsWithoutSixStar,
+            BannerProfile.RollsSinceLast6StarsRateUp,
+            BannerProfile.RollsSinceLast5StarsRateUp,
+            BannerProfile.RollsSinceLast4StarsRateUp,
+            Number(BannerProfile.Focused),
+            Number(BannerProfile.TenRolls)
+        );
+        
         return [Output, Result];
     }
 
     public RollMultiReduced(Token: string, BannerName: string, Count: number): Record<string, number> | undefined {
-        return this.RollMulti(Token, BannerName, Count)?.reduce((Acc: Record<string, number>, Item: string) => {
+        return this.RollMulti(Token, BannerName, Count)?.reduce((Acc: Record<string, number>, Item: string): Record<string, number> => {
             Acc[Item] ??= 0;
             Acc[Item]++;
             return Acc;
@@ -484,14 +486,9 @@ export default new class {
 
         const BannerProfile: ProfileBanner = this.GachaProfiles[Token][BannerName];
 
-        const Result: [string, 3 | 4 | 5 | 6][] = [];
+        const Result: [string, Items][] = [];
         while(Result.push(this.Roll(Token, BannerName, false)!) < Count);
-        const OperatorMap: Record<string, 3 | 4 | 5 | 6> = Result.reduce(
-            (Acc: Record<string, 3 | 4 | 5 | 6>, Item: [string, 3 | 4 | 5 | 6]): Record<string, 3 | 4 | 5 | 6 > => {
-                Acc[Item[0]] ??= Item[1];
-                return Acc;
-            }, {}
-        );
+        const OperatorMap: Record<string, Items> = Object.fromEntries(Result);
         
         for(const [OperatorID, Rarity] of Object.entries(OperatorMap)) {
             this.RefreshStorageSTMT.run(
@@ -499,12 +496,12 @@ export default new class {
                 BannerName,
                 Rarity,
                 OperatorID,
-                {
-                    6: BannerProfile.Storage.SixStars,
-                    5: BannerProfile.Storage.FiveStars,
-                    4: BannerProfile.Storage.FourStars,
-                    3: BannerProfile.Storage.ThreeStars
-                }[Rarity][OperatorID]
+                Switch(Rarity, {
+                    [Items.SixStars]: (): Record<string, number> => BannerProfile.Storage.SixStars,
+                    [Items.FiveStars]: (): Record<string, number> => BannerProfile.Storage.FiveStars,
+                    [Items.FourStars]: (): Record<string, number> => BannerProfile.Storage.FourStars,
+                    [Items.ThreeStars]: (): Record<string, number> => BannerProfile.Storage.ThreeStars
+                })[OperatorID]
             );
         }
 
