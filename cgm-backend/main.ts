@@ -1,7 +1,7 @@
 import express, { type Express } from "express";
 import rateLimit, { type RateLimitRequestHandler } from "express-rate-limit";
 import Database, { BannerTypes, type Banner, type Operator, type SearchQuery } from "./singletons/Database.js";
-import GachaSystem, { type GachaProfile } from "./singletons/GachaSystem.js";
+import GachaSystem, { type GachaProfile, type Selection } from "./singletons/GachaSystem.js";
 import LoadEnv from "./singletons/LoadEnv.js";
 
 const Server: Express = express();
@@ -179,7 +179,7 @@ Server.post("/gacha/create", (_, Res) => {
     }
 
     if(Banner.Type === BannerTypes.Orienteering) {
-        const Body: { SixStarsSelection: string[]; FiveStarsSelection: string[]; } = Req.body ?? {};
+        const Body: Selection = Req.body ?? {};
 
         if(!Object.keys(Body).length) {
             Res.status(400).json({ message: `Banner type '${Banner.Type}' requires a request body.` });

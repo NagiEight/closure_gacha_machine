@@ -1,10 +1,11 @@
 import type { GachaItems } from "../helpers/Gacha.js";
+import type { BannerStrategy } from "../types/BannerStrategy.js";
 import Database, { type Banner, BannerTypes } from "./Database.js";
+import LoadStrategies from "../helpers/LoadStrategies.js";
 import Gacha from "../helpers/Gacha.js";
 import GenerateToken from "../helpers/GenerateToken.js";
 import PityCalculator from "../helpers/PityCalculator.js";
 import Switch from "../helpers/Switch.js";
-import crypto from "crypto";
 
 Database.DB.exec(`
     CREATE TABLE IF NOT EXISTS GachaData(
@@ -46,6 +47,8 @@ Database.DB.exec(`
     );
 `);
 
+await LoadStrategies();
+
 export interface ProfileBanner {
     Count: number;
     RollsWithoutSixStar: number;
@@ -70,7 +73,12 @@ export enum Items {
     ThreeStars = 3
 }
 
-enum RateUp {
+export interface Selection {
+    SixStarsSelection: string[];
+    FiveStarsSelection: string[];
+}
+
+export enum RateUp {
     Primary,
     Secondary,
     None
@@ -147,6 +155,8 @@ export default new class {
         Database.DB.prepare<[string], void>("DELETE FROM GachaProfiles WHERE Token = ?").run(Token);
     });
 
+    public readonly StrategyRegistry: Map<BannerTypes, new () => BannerStrategy> = new Map();
+
     public constructor() {
         const StorageQuery: GachaProfileStorageRow[] = Database.DB.prepare<[], GachaProfileStorageRow>(`
             SELECT GP.Token, GS.Banner, GS.Rarity, GS.ID, GS.Count
@@ -210,8 +220,8 @@ export default new class {
         return this.GachaProfiles[Token];
     }
     public Roll(Token: string, BannerName: string, WriteDB?: boolean): [string, Items] | undefined;
-    public Roll(Token: string, BannerName: string, WriteDB?: boolean, Selection?: { SixStarsSelection: string[]; FiveStarsSelection: string[]; }): [string, Items] | undefined;
-    public Roll(Token: string, BannerName: string, WriteDB: boolean = true, Selection?: { SixStarsSelection: string[]; FiveStarsSelection: string[]; }): [string, Items] | undefined {
+    public Roll(Token: string, BannerName: string, WriteDB?: boolean, Selection?: Selection): [string, Items] | undefined;
+    public Roll(Token: string, BannerName: string, WriteDB: boolean = true, Selection?: Selection): [string, Items] | undefined {
         const Banner: Banner | undefined = Database.Manager.GetBanner(BannerName);
         
         if(!Banner || !this.GachaProfiles[Token])
@@ -255,149 +265,10 @@ export default new class {
             : Gacha(StandardRate)
         ;
 
-        const FourStarsHandler = (Rate?: GachaItems<boolean>[]) => {
-            const IsRateUp: boolean = Gacha(Rate ?? [
-                { Value: true, Chance: 20 },
-                { Value: false, Chance: 80 }
-            ]);
+        const StrategyClass: new () => BannerStrategy = this.StrategyRegistry.get(Banner.Type)!;
+        const Strategy: BannerStrategy = new StrategyClass();
 
-            if(Banner.FourStarsPool.Primary.length) {
-                if(IsRateUp)
-                    BannerProfile.RollsSinceLast4StarsRateUp = 0;
-                else BannerProfile.RollsSinceLast4StarsRateUp++;
-            }
-
-            return IsRateUp && Banner.FourStarsPool.Primary.length
-                ? Banner.FourStarsPool.Primary[crypto.randomInt(Banner.FourStarsPool.Primary.length)]
-                : Banner.FourStarsPool.Standard[crypto.randomInt(Banner.FourStarsPool.Standard.length)]
-            ;
-        };
-
-        const FiveStarsHandler = (Rate?: GachaItems<boolean>[]) => {            
-            const IsRateUp: boolean = Gacha(Rate ?? [
-                { Value: true, Chance: 50 },
-                { Value: false, Chance: 50 }
-            ]);
-
-            if(IsRateUp)
-                BannerProfile.RollsSinceLast5StarsRateUp = 0;
-            else BannerProfile.RollsSinceLast5StarsRateUp++;
-
-            return IsRateUp
-                ? Banner.FiveStarsPool.Primary[crypto.randomInt(Banner.FiveStarsPool.Primary.length)]
-                : Banner.FiveStarsPool.Standard[crypto.randomInt(Banner.FiveStarsPool.Standard.length)]
-            ;
-        };
-
-        const Output: string = Switch(Banner.Type, {
-            [BannerTypes.Standard]: (): string => Switch(Result, {
-                [Items.SixStars]: (): string => {
-                    if(BannerProfile.Count > 150 && !BannerProfile.Focused) {
-                        BannerProfile.Focused = true;
-                        BannerProfile.RollsSinceLast6StarsRateUp = 0;
-                        return Banner.SixStarsPool.Primary[crypto.randomInt(Banner.SixStarsPool.Primary.length)];
-                    }
-                    else if(crypto.randomInt(2)) {
-                        BannerProfile.RollsSinceLast6StarsRateUp = 0;
-                        return Banner.SixStarsPool.Primary[crypto.randomInt(Banner.SixStarsPool.Primary.length)];
-                    }
-
-                    BannerProfile.RollsSinceLast6StarsRateUp++;
-                    return Banner.SixStarsPool.Standard[crypto.randomInt(Banner.SixStarsPool.Standard.length)];
-                },
-                [Items.FiveStars]: FiveStarsHandler,
-                [Items.FourStars]: FourStarsHandler,
-                [Items.ThreeStars]: (): string => Banner.ThreeStarsPool[crypto.randomInt(Banner.ThreeStarsPool.length)]
-            }),
-
-            [BannerTypes.Limited]: (): string => Switch(Result, {
-                [Items.SixStars]: (): string => {
-                    const SixStarRateUpResult: RateUp = Gacha([
-                        { Value: RateUp.Primary, Chance: 70 },
-                        { Value: RateUp.Secondary, Chance: 25 },
-                        { Value: RateUp.None, Chance: 5 }
-                    ]);
-
-                    if(SixStarRateUpResult === RateUp.Primary || SixStarRateUpResult === RateUp.Secondary)
-                        BannerProfile.RollsSinceLast6StarsRateUp = 0;
-                    else BannerProfile.RollsSinceLast6StarsRateUp++;
-
-                    return Switch(SixStarRateUpResult, {
-                        [RateUp.Primary]: (): string => Banner.SixStarsPool.Primary[crypto.randomInt(Banner.SixStarsPool.Primary.length)],
-                        [RateUp.Secondary]:  (): string => Banner.SixStarsPool.Secondary[crypto.randomInt(Banner.SixStarsPool.Secondary.length)],
-                        [RateUp.None]:  (): string => Banner.SixStarsPool.Standard[crypto.randomInt(Banner.SixStarsPool.Standard.length)]
-                    });
-                },
-                [Items.FiveStars]: FiveStarsHandler,
-                [Items.FourStars]: FourStarsHandler,
-                [Items.ThreeStars]: (): string => Banner.ThreeStarsPool[crypto.randomInt(Banner.ThreeStarsPool.length)]
-            }),
-
-            [BannerTypes.Crossover]: (): string => Switch(Result, {
-                [Items.SixStars]: (): string => {
-                    const IsRateUp: boolean = Gacha([
-                        { Value: true, Chance: 70 },
-                        { Value: false, Chance: 30 }
-                    ]);
-
-                    if(BannerProfile.RollsSinceLast6StarsRateUp >= 119 || IsRateUp) {
-                        BannerProfile.RollsSinceLast6StarsRateUp = 0;
-                        return Banner.SixStarsPool.Primary[crypto.randomInt(Banner.SixStarsPool.Primary.length)];
-                    }
-
-                    BannerProfile.RollsSinceLast6StarsRateUp++;
-                    return Banner.SixStarsPool.Standard[crypto.randomInt(Banner.SixStarsPool.Primary.length)];
-                },
-                [Items.FiveStars]: (): string => {
-                    const IsRateUp: boolean = Gacha([{ Value: true, Chance: 50 }, { Value: false, Chance: 50 }]);
-
-                    if(BannerProfile.RollsSinceLast5StarsRateUp >= 49 || IsRateUp) {
-                        BannerProfile.RollsSinceLast5StarsRateUp = 0;
-                        return Banner.SixStarsPool.Primary[crypto.randomInt(Banner.SixStarsPool.Primary.length)];
-                    }
-
-                    BannerProfile.RollsSinceLast5StarsRateUp++;
-                    return Banner.FiveStarsPool.Standard[crypto.randomInt(Banner.FiveStarsPool.Standard.length)];
-                },
-                [Items.FourStars]: FourStarsHandler,
-                [Items.ThreeStars]: (): string => Banner.ThreeStarsPool[crypto.randomInt(Banner.ThreeStarsPool.length)]
-            }),
-
-            [BannerTypes.Orienteering]: (): string => Switch(Result, {
-                [Items.SixStars]: (): string => 
-                    Selection && Selection.SixStarsSelection[crypto.randomInt(Selection.SixStarsSelection.length)] ||
-                    Banner.SixStarsPool.Primary[crypto.randomInt(Banner.SixStarsPool.Primary.length)]
-                ,
-                [Items.FiveStars]: (): string => {
-                    const IsRateUp: boolean = Gacha([{ Value: true, Chance: 60 }, { Value: false, Chance: 40 }]);
-                    if(IsRateUp)
-                        BannerProfile.RollsSinceLast5StarsRateUp = 0;
-                    else BannerProfile.RollsSinceLast5StarsRateUp++;
-
-                    return IsRateUp
-                        ? Selection && Selection.FiveStarsSelection[crypto.randomInt(Selection.FiveStarsSelection.length)] ||
-                            Banner.FiveStarsPool.Primary[crypto.randomInt(Banner.FiveStarsPool.Primary.length)]
-                        : Banner.FiveStarsPool.Standard[crypto.randomInt(Banner.FiveStarsPool.Standard.length)]
-                    ;
-                },
-                [Items.FourStars]: FourStarsHandler,
-                [Items.ThreeStars]: (): string => Banner.ThreeStarsPool[crypto.randomInt(Banner.ThreeStarsPool.length)]
-            }),
-
-            [BannerTypes.JointOperation]: (): string => Switch(Result, {
-                [Items.SixStars]: (): string => Banner.SixStarsPool.Primary[crypto.randomInt(Banner.SixStarsPool.Primary.length)],
-                [Items.FiveStars]: (): string => Banner.FiveStarsPool.Primary[crypto.randomInt(Banner.FiveStarsPool.Primary.length)],
-                [Items.FourStars]: FourStarsHandler,
-                [Items.ThreeStars]: (): string => Banner.ThreeStarsPool[crypto.randomInt(Banner.ThreeStarsPool.length)]
-            }),
-
-            [BannerTypes.TFTW]: (): string => Switch(Result, {
-                [Items.SixStars]: (): string => Banner.SixStarsPool.Primary[crypto.randomInt(Banner.SixStarsPool.Primary.length)],
-                [Items.FiveStars]: (): string => FiveStarsHandler([{ Value: true, Chance: 60 }, { Value: false, Chance: 40 }]),
-                [Items.FourStars]: (): string => FourStarsHandler([{ Value: true, Chance: 45 }, { Value: false, Chance: 55 }]),
-                [Items.ThreeStars]: (): string => Banner.ThreeStarsPool[crypto.randomInt(Banner.ThreeStarsPool.length)]
-            })
-        });
+        const Output: string = Strategy.Roll(Banner, BannerProfile, Result, Selection);
 
         if(Result >= 5) {
             if(Result === Items.SixStars)
@@ -482,7 +353,7 @@ export default new class {
         const Result: [string, Items][] = [];
         while(Result.push(this.Roll(Token, BannerName, false, Selection)!) < Count);
         const OperatorMap: Record<string, Items> = Object.fromEntries(Result);
-        
+
         for(const [OperatorID, Rarity] of Object.entries(OperatorMap)) {
             this.RefreshStorageSTMT.run(
                 Token,
