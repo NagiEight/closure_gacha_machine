@@ -1,6 +1,6 @@
 import express, { type Express } from "express";
 import rateLimit, { type RateLimitRequestHandler } from "express-rate-limit";
-import Database, { type Banner, type Operator } from "./singletons/Database.js";
+import Database, { type Banner, type Operator, type SearchQuery } from "./singletons/Database.js";
 import GachaSystem, { type GachaProfile } from "./singletons/GachaSystem.js";
 import LoadEnv from "./singletons/LoadEnv.js";
 
@@ -15,10 +15,20 @@ const Limiter: RateLimitRequestHandler = rateLimit({
     legacyHeaders: false
 });
 
-Server.use(Limiter);
+Server.use(Limiter, express.json());
 
 // API endpoint
-Server.get("/api/banners/:Page", (Req, Res) => {
+Server.get("/api/banners/search", (Req, Res) => {
+    const Body: SearchQuery = Req.body ?? {};
+
+    if(!Object.keys(Body).length) {
+        Res.status(400).json({ message: "Missing request body." });
+        return;
+    }
+
+    Res.json(Database.Manager.SearchBanners(Body));
+})
+.get("/api/banners/:Page", (Req, Res) => {
     if(Req.params.Page === "all") {
         Res.json(Database.DB.prepare<[], { Name: string; }>("SELECT Name FROM Banners").all().map(Row => Row.Name));
         return;
@@ -26,7 +36,7 @@ Server.get("/api/banners/:Page", (Req, Res) => {
 
     const Page: number = Number(Req.params.Page);    
     if(!Page || Page <= 0) {
-        Res.status(404).json({ message: "Invalid pagination index." });
+        Res.status(400).json({ message: "Invalid pagination index." });
         return;
     }
 
@@ -121,7 +131,7 @@ Server.post("/gacha/create", (_, Res) => {
     const Token: string | undefined = Req.get("Session-Token");
 
     if(!Token) {
-        Res.status(404).json({ message: "Missing session token." });
+        Res.status(400).json({ message: "Missing session token." });
         return;
     }
     
@@ -140,7 +150,7 @@ Server.post("/gacha/create", (_, Res) => {
     const Token: string | undefined = Req.get("Session-Token");
     
     if(!Token) {
-        Res.status(404).json({ message: "Missing session token." });
+        Res.status(400).json({ message: "Missing session token." });
         return;
     }
     
@@ -165,7 +175,7 @@ Server.post("/gacha/create", (_, Res) => {
     const Count: number = Number(Req.params.Count);
     
     if(!Count && Count <= 0) {
-        Res.status(404).json({ message: "Roll count must be a number greater than 0." });
+        Res.status(400).json({ message: "Roll count must be a number greater than 0." });
         return;
     }
     
@@ -202,7 +212,7 @@ Server.post("/gacha/create", (_, Res) => {
     const Token: string | undefined = Req.get("Session-Token");
 
     if(!Token) {
-        Res.status(404).json({ message: "Missing session token." });
+        Res.status(400).json({ message: "Missing session token." });
         return;
     }
     
@@ -228,7 +238,7 @@ Server.post("/gacha/create", (_, Res) => {
     const Token: string | undefined = Req.get("Session-Token");
 
     if(!Token) {
-        Res.status(404).json({ message: "Missing session token." });
+        Res.status(400).json({ message: "Missing session token." });
         return;
     }
     

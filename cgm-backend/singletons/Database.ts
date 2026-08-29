@@ -15,10 +15,11 @@ DB.exec(`
         ID TEXT PRIMARY KEY,
         Name TEXT NOT NULL,
         Rarity INTEGER NOT NULL,
-        ReleaseDate INTEGER NOT NULL,
         Limited INTEGER NOT NULL,
+        ReleaseDate INTEGER,
 
-        CHECK(Rarity IN (3, 4, 5, 6))
+        CHECK(Rarity IN (3, 4, 5, 6)),
+        CHECK(Limited IN (0, 1))
     );
 
     CREATE TABLE IF NOT EXISTS BannerPools(
@@ -40,13 +41,14 @@ DB.exec(`
         ReleaseDate INTEGER NOT NULL,
         Type INTEGER NOT NULL,
 
-        CHECK(Type IN (0, 1, 2, 3, 4))
+        CHECK(Type IN (0, 1, 2, 3, 4, 5))
     );
 `);
 
 export enum BannerTypes {
     Standard,
     Limited,
+	Crossover,
     Orienteering,
     JointOperation,
     TFTW
@@ -82,15 +84,29 @@ interface BannersRow {
 export interface Operator {
     Name: string;
     Rarity: 3 | 4 | 5 | 6;
-    ReleaseDate: number;
+    ReleaseDate: number | null;
     Limited: boolean;
 }
 interface OperatorsRow {
     ID: string;
     Name: string;
     Rarity: 3 | 4 | 5 | 6;
-    ReleaseDate: number;
+    ReleaseDate: number | null;
     Limited: number;
+}
+
+export interface SearchQuery {
+    NameQuery?: string;
+    BannerType?: BannerTypes;
+    Includes?: string[];
+    From?: number;
+    To?: number;
+}
+
+export interface SearchReturn {
+    Name: string;
+    Type: BannerTypes;
+    ReleaseDate: number;
 }
 
 class DataManager {
@@ -188,17 +204,48 @@ class DataManager {
         }
     }
 
+    // We'll see how bad this is
+    public SearchBanners({ NameQuery, BannerType, Includes, From, To }: SearchQuery): SearchReturn[] {
+        const Output: SearchReturn[] = [];
+
+        if(Includes)
+            Includes = [...new Set(Includes)];
+
+        const IncludesIn = (OP: string, Banner: Banner): boolean => 
+            Banner.SixStarsPool.Primary.includes(OP) ||
+            Banner.SixStarsPool.Secondary.includes(OP) ||
+            Banner.SixStarsPool.Standard.includes(OP) ||
+            
+            Banner.FiveStarsPool.Primary.includes(OP) ||
+            Banner.FiveStarsPool.Standard.includes(OP) ||
+
+            Banner.FourStarsPool.Primary.includes(OP) ||
+            Banner.FourStarsPool.Standard.includes(OP) ||
+
+            Banner.ThreeStarsPool.includes(OP)
+        ;
+
+        for(const [Name, Banner] of this.Banners.entries()) {
+            if(
+                (NameQuery == undefined || Name.toLowerCase().includes(NameQuery.trim().toLowerCase())) &&
+                (BannerType == undefined || Banner.Type === BannerType) &&
+                (Includes == undefined || Includes.length && Includes.every(OP => IncludesIn(OP, Banner))) &&
+                (From == undefined || Banner.ReleaseDate >= From) &&
+                (To == undefined || Banner.ReleaseDate <= To)
+            ) Output.push({ Name, Type: Banner.Type, ReleaseDate: Banner.ReleaseDate });
+        }
+
+        return Output;
+    }
     public GetBanner(Name: string): Banner | undefined {
         return this.Banners.get(Name);
     }
-    public GetBanners(Page: number): { Name: string; Type: BannerTypes; ReleaseDate: number; }[] {
-        return [...DataManager.Pagination(Page, this.Banners.entries())].map(([Name, Banner]) => {
-            return {
-                Name: Name,
-                Type: Banner.Type,
-                ReleaseDate: Banner.ReleaseDate
-            };
-        });
+    public GetBanners(Page: number): SearchReturn[] {
+        return [...DataManager.Pagination(Page, this.Banners.entries())].map(([Name, Banner]) => ({
+            Name,
+            Type: Banner.Type,
+            ReleaseDate: Banner.ReleaseDate
+        }));
     }
     public GetBannerCover(Name: string): string | undefined {
         return this.Banners.has(Name) 

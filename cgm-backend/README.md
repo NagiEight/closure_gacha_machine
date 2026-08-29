@@ -10,6 +10,130 @@ http://localhost:3000
 # API Endpoints
 These endpoints return informations about Operators and Banners.
 
+## Search Banners (Paginated)
+Returns an array of banners for a specific query.
+
+### Request
+```http
+GET /api/banners/search
+```
+
+### Body 
+```typescript
+enum BannerTypes {
+    Standard,
+    Limited,
+    Crossover,
+    Orienteering,
+    JointOperation,
+    TFTW
+}
+
+interface SearchQuery {
+    NameQuery?: string;
+    BannerType?: BannerTypes;
+    Includes?: string[];
+    From?: number;
+    To?: number;
+}
+```
+
+### Example
+```http
+GET /api/banners/search
+```
+**Body:**
+```JSON
+{
+    // TBA
+}
+```
+
+### Success Response
+**Status:** `200 OK`
+```typescript
+enum BannerTypes {
+    Standard,
+    Limited,
+    Crossover,
+    Orienteering,
+    JointOperation,
+    TFTW
+}
+
+type GetBannerPageResponse = {
+    Name: string;
+    Type: BannerTypes,
+    ReleaseDate: number;
+}[];
+```
+
+**Example**
+```json
+[
+    {
+        "Name": "EN 600 Meters Over The Facts",
+        "Type": 0,
+        "ReleaseDate": 1764892800000
+    },
+    {
+        "Name": "EN A Shared Oath of Guardianship",
+        "Type": 1,
+        "ReleaseDate": 1761955200000
+    },
+    {
+        "Name": "EN A Wanderer in the Wind",
+        "Type": 0,
+        "ReleaseDate": 1649894400000
+    },
+    {
+        "Name": "EN Abyss Corrosion",
+        "Type": 1,
+        "ReleaseDate": 1651363200000
+    },
+    {
+        "Name": "EN An Eternity Aflame",
+        "Type": 1,
+        "ReleaseDate": 1737504000000
+    },
+    {
+        "Name": "EN Anchor In The Deep",
+        "Type": 0,
+        "ReleaseDate": 1717545600000
+    },
+    {
+        "Name": "EN Anchor In The Deep Rerun",
+        "Type": 0,
+        "ReleaseDate": 1750291200000
+    },
+    {
+        "Name": "EN And the Canoe'll Carry Us to You",
+        "Type": 0,
+        "ReleaseDate": 1739491200000
+    },
+    {
+        "Name": "EN Arbiter Aequissimus",
+        "Type": 0,
+        "ReleaseDate": 1703116800000
+    },
+    {
+        "Name": "EN Arbiter Aequissimus Rerun",
+        "Type": 0,
+        "ReleaseDate": 1719273600000
+    }
+]
+```
+
+### Error Response
+**Status:** `400 Bad Request`
+```json
+{
+    "message": "Missing request body."
+}
+```
+
+---
+
 ## Get Banners (Paginated)
 Returns an array of banners for a specific page.
 
@@ -34,6 +158,7 @@ GET /api/banners/1
 enum BannerTypes {
     Standard,
     Limited,
+    Crossover,
     Orienteering,
     JointOperation,
     TFTW
@@ -738,7 +863,8 @@ Delete profile successfully.
 | Status Code | Description |
 |-------------|-------------|
 | 200 | Request completed successfully |
-| 404 | Resource not found or invalid parameter |
+| 400 | Missing request body, Session-Token header, invalid path parameter |
+| 404 | Resource not found |
 | 429 | Exceeded API rate limit |
 
 ---

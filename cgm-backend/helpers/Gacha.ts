@@ -5,7 +5,7 @@ export interface GachaItems<T> {
     Chance: number;
 }
 
-export default <T>(Items: GachaItems<T>[]): T | undefined => {
+export default <T>(Items: GachaItems<T>[]): T => {
     const Random: number = crypto.randomInt(Items.reduce((Sum, Item) => Sum + Item.Chance, 0));
     let Cumulative: number = 0;
     for(const Item of Items) {
@@ -14,5 +14,5 @@ export default <T>(Items: GachaItems<T>[]): T | undefined => {
             return Item.Value;
         }
     }
-    return undefined;
+    throw new Error("How did this even happened.");
 };
