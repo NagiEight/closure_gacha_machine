@@ -1,6 +1,6 @@
 import express, { type Express } from "express";
 import rateLimit, { type RateLimitRequestHandler } from "express-rate-limit";
-import Database, { type Banner, type Operator, type SearchQuery } from "./singletons/Database.js";
+import Database, { BannerTypes, type Banner, type Operator, type SearchQuery } from "./singletons/Database.js";
 import GachaSystem, { type GachaProfile } from "./singletons/GachaSystem.js";
 import LoadEnv from "./singletons/LoadEnv.js";
 
@@ -23,6 +23,11 @@ Server.get("/api/banners/search", (Req, Res) => {
 
     if(!Object.keys(Body).length) {
         Res.status(400).json({ message: "Missing request body." });
+        return;
+    }
+
+    if(Body.BannerType && Object.values(BannerTypes).filter(V => typeof V === "number").includes(Body.BannerType)) {
+        Res.status(404).json({ message: `Unknown banner type '${Body.BannerType}'.` });
         return;
     }
 

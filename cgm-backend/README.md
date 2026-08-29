@@ -131,6 +131,12 @@ type GetBannerPageResponse = {
     "message": "Missing request body."
 }
 ```
+**Status:** `404 Not Found`
+```json
+{
+    "message": "Unknown banner type '${body.BannerType}'."
+}
+```
 
 ---
 
