@@ -20,6 +20,12 @@ Server.use(Limiter, express.json());
 // API endpoint
 Server.get("/api/banners/search", (Req, Res) => {
     const Body: SearchQuery = Req.body ?? {};
+    const Page: number = Number(Req.query.page?.toString()) || -1;
+
+    if(Page <= 0) {
+        Res.status(400).json({ message: "Invalid pagination index." });
+        return;
+    }
 
     if(!Object.keys(Body).length) {
         Res.status(400).json({ message: "Missing request body." });
@@ -31,7 +37,7 @@ Server.get("/api/banners/search", (Req, Res) => {
         return;
     }
 
-    Res.json(Database.Manager.SearchBanners(Body));
+    Res.json(Database.Manager.SearchBanners(Page, Body));
 })
 .get("/api/banners/:Page", (Req, Res) => {
     if(Req.params.Page === "all") {

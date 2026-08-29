@@ -18,6 +18,11 @@ Returns an array of banners for a specific query.
 GET /api/banners/search
 ```
 
+### Query Parameters
+| Parameter | Type | Description |
+|------------|--------|-------------|
+| page | number | Page to search |
+
 ### Body 
 ```typescript
 enum BannerTypes {
@@ -40,7 +45,7 @@ interface SearchQuery {
 
 ### Example
 ```http
-GET /api/banners/search
+GET /api/banners/search?page=1
 ```
 **Body:**
 ```JSON
@@ -126,6 +131,11 @@ type GetBannerPageResponse = {
 
 ### Error Response
 **Status:** `400 Bad Request`
+```json
+{
+    "message": "Invalid pagination index."
+}
+```
 ```json
 {
     "message": "Missing request body."
@@ -233,7 +243,7 @@ type GetBannerPageResponse = {
 ```
 
 ### Error Response
-**Status:** `404 Not Found`
+**Status:** `400 Bad Request`
 ```json
 {
     "message": "Invalid pagination index."

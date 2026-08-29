@@ -198,9 +198,9 @@ class DataManager {
     }
 
     // We'll see how bad this is
-    public SearchBanners({ NameQuery, BannerType, Includes, From, To }: SearchQuery): SearchReturn[] {
+    public SearchBanners(Page: number, { NameQuery, BannerType, Includes, From, To }: SearchQuery): SearchReturn[] {
         const Output: SearchReturn[] = [];
-
+        
         if(Includes)
             Includes = [...new Set(Includes)];
 
@@ -218,14 +218,29 @@ class DataManager {
             Banner.ThreeStarsPool.includes(OP)
         ;
 
-        for(const [Name, Banner] of this.Banners.entries()) {
-            if(
+        const PageStart: number = (Page - 1) * LoadEnv.PAGE_SIZE;
+        const PageEnd: number = PageStart + LoadEnv.PAGE_SIZE;
+        let Matched: number = 0;
+
+        for(const [Name, Banner] of this.Banners) {
+            const IsMatch: boolean =
                 (NameQuery == undefined || Name.toLowerCase().includes(NameQuery.trim().toLowerCase())) &&
                 (BannerType == undefined || Banner.Type === BannerType) &&
-                (Includes == undefined || Includes.length && Includes.every(OP => IncludesIn(OP, Banner))) &&
+                (Includes == undefined || !!Includes.length && Includes.every(OP => IncludesIn(OP, Banner))) &&
                 (From == undefined || Banner.ReleaseDate >= From) &&
                 (To == undefined || Banner.ReleaseDate <= To)
-            ) Output.push({ Name, Type: Banner.Type, ReleaseDate: Banner.ReleaseDate });
+            ;
+
+            if(!IsMatch)
+                continue;
+
+            if(Matched >= PageStart && Matched < PageEnd) 
+                Output.push({ Name, Type: Banner.Type, ReleaseDate: Banner.ReleaseDate });
+
+            Matched++
+            if(Matched >= PageEnd) {
+                break;
+            }
         }
 
         return Output;
