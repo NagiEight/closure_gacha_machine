@@ -18,19 +18,19 @@ export default new class {
         this.Loaded = true;
 
         const PathToDir: string = path.join(import.meta.dirname, "..", "commands");
-        const CommandFiles: string[] = (await fs.readdir(PathToDir))
-            .filter(file => file.endsWith(".ts") || file.endsWith(".js"))
-        ;
+        await Promise.all(
+            (await fs.readdir(PathToDir))
+                .filter(file => file.endsWith(".ts") || file.endsWith(".js"))
+                .map(async File => {
+                    const Command: Command = (await import(pathToFileURL(path.join(PathToDir, File)).href)).default;
+                    if(Command.Cancelable) 
+                        Command.Command.setDescription(`${Command.Command.description} (Cancelable)`);
 
-        for(const File of CommandFiles) {
-            const Command: Command = (await import(pathToFileURL(path.join(PathToDir, File)).href)).default;
-            if(Command.Cancelable) 
-                Command.Command.setDescription(`${Command.Command.description} (Cancelable)`);
-
-            if(Command.Administrator)
-                Command.Command.setDescription(`${Command.Command.description} (Administrator Command)`);
-            this.Register(Command);
-        }
+                    if(Command.Administrator)
+                        Command.Command.setDescription(`${Command.Command.description} (Administrator Command)`);
+                    this.Register(Command);
+                })
+        );
     }
     
     public Get(Name: string): Command | undefined {

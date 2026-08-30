@@ -87,7 +87,7 @@ export enum RateUp {
 interface GachaProfileStorageRow {
     UserToken: string;
     Banner: string;
-    Rarity: 3 | 4 | 5 | 6;
+    Rarity: Items;
     ID: string;
     Count: number;
 }
@@ -110,14 +110,24 @@ export default new class {
         (Token)
         VALUES(?)    
     `);
-    private readonly RefreshStorageSTMT = Database.DB.prepare<[string, string, 6 | 5 | 4 | 3, string, number], void>(`
+    private readonly RefreshStorageSTMT = Database.DB.prepare<[string, string, Items, string, number], void>(`
         INSERT INTO GachaStorage
         (UserToken, Banner, Rarity, ID, Count)
         VALUES(?, ?, ?, ?, ?)
         ON CONFLICT(UserToken, Banner, Rarity, ID) DO UPDATE SET
             Count = excluded.Count
     `);
-    private readonly RefreshDataSTMT = Database.DB.prepare<[string, string, number, number, number, number, number, number, number], void>(`
+    private readonly RefreshDataSTMT = Database.DB.prepare<[
+        string,
+        string,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number
+    ], void>(`
         INSERT INTO GachaData (
             UserToken,
             Banner,
@@ -244,7 +254,7 @@ export default new class {
         };
         
         const BannerProfile: ProfileBanner = this.GachaProfiles[Token][BannerName];
-        BannerProfile.Count += 1;
+        BannerProfile.Count++;
 
         let StandardRate: GachaItems<Items>[] = [
             { Value: Items.SixStars, Chance: 2 },

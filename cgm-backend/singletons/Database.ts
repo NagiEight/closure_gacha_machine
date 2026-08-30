@@ -1,8 +1,11 @@
 import type { Database as DBType } from "better-sqlite3";
+import { Items } from "./GachaSystem.js";
 import LoadEnv from "./LoadEnv.js";
 import Database from "better-sqlite3";
 import path from "path";
 import fs from "fs/promises";
+import Paginate from "../helpers/Paginate.js";
+import Switch from "../helpers/Switch.js";
 
 const DBDir: string = path.join(import.meta.dirname, "..", "database");
 await fs.mkdir(DBDir, { recursive: true });
@@ -75,7 +78,7 @@ interface BannersRow {
     Name: string;
     ReleaseDate: number;
     Type: BannerTypes;
-    Rarity: 3 | 4 | 5 | 6;
+    Rarity: Items;
     Prima: string | null;
     Secondary: string | null;
     Standard: string;
@@ -83,14 +86,14 @@ interface BannersRow {
 
 export interface Operator {
     Name: string;
-    Rarity: 3 | 4 | 5 | 6;
+    Rarity: Items;
     ReleaseDate: number | null;
     Limited: boolean;
 }
 interface OperatorsRow {
     ID: string;
     Name: string;
-    Rarity: 3 | 4 | 5 | 6;
+    Rarity: Items;
     ReleaseDate: number | null;
     Limited: number;
 }
@@ -143,59 +146,40 @@ class DataManager {
                 },
                 ThreeStarsPool: []
             };
-
-            switch(Row.Rarity) {
-                case 3:
+            Switch(Row.Rarity, {
+                [Items.SixStars]: (): void => {
                     Banner.ThreeStarsPool = JSON.parse(Row.Standard);
-                    break;
-
-                case 4:
+                },
+                [Items.FiveStars]: (): void => {
                     if(Row.Prima)
                         Banner.FourStarsPool.Primary = JSON.parse(Row.Prima);
                     Banner.FourStarsPool.Standard = JSON.parse(Row.Standard);
-                    break;
-
-                case 5:
+                },
+                [Items.FourStars]: (): void => {
                     if(Row.Prima)
                         Banner.FiveStarsPool.Primary = JSON.parse(Row.Prima);
                     Banner.FiveStarsPool.Standard = JSON.parse(Row.Standard);
-                    break;
-
-                case 6:
+                },
+                [Items.ThreeStars]: (): void => {
                     if(Row.Prima)
                         Banner.SixStarsPool.Primary = JSON.parse(Row.Prima);
                     if(Row.Secondary)
                         Banner.SixStarsPool.Secondary = JSON.parse(Row.Secondary);
                     Banner.SixStarsPool.Standard = JSON.parse(Row.Standard);
-                    break;
-            }
+                }
+            });
+
             Banners.set(Name, Banner);
         }
 
         this.Banners = new Map([...Banners.entries()].sort((A, B) => B[1].ReleaseDate - A[1].ReleaseDate));
     }
 
-    private static Pagination<T>(Page: number, Set: Iterable<T>): Iterable<T> {
-        const Start: number = (Page - 1) * LoadEnv.PAGE_SIZE;
-        const End: number = Start + LoadEnv.PAGE_SIZE;
-        return DataManager.Slice(Set, Start, End);
-    }
     private static FormMediaURL(Base: string, Name: string): string {
         const MediaURL: URL = new URL(`${LoadEnv.BASE_MEDIA_URL}/${Base}/${encodeURIComponent(Name).replace(/\ /g, "_")}.png`);
         MediaURL.pathname = MediaURL.pathname.replace(/\/+/g, '/');
         return MediaURL.toString();
     };
-    private static *Slice<T>(Iterable: Iterable<T>, Start: number = 0, End: number = Infinity): Generator<T, void> {
-        let i: number = 0;
-
-        for(const Value of Iterable) {
-            if(i >= End)
-                break;
-            if(i >= Start)
-                yield Value;
-            i++;
-        }
-    }
 
     // We'll see how bad this is
     public SearchBanners(Page: number, { NameQuery, BannerType, Includes, From, To }: SearchQuery): SearchReturn[] {
@@ -249,7 +233,7 @@ class DataManager {
         return this.Banners.get(Name);
     }
     public GetBanners(Page: number): SearchReturn[] {
-        return [...DataManager.Pagination(Page, this.Banners.entries())].map(([Name, Banner]) => ({
+        return [...Paginate(LoadEnv.PAGE_SIZE, Page, this.Banners.entries())].map(([Name, Banner]) => ({
             Name,
             Type: Banner.Type,
             ReleaseDate: Banner.ReleaseDate

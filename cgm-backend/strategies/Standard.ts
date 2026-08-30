@@ -17,7 +17,8 @@ export default class Standard implements BannerStrategy {
                     Profile.RollsSinceLast6StarsRateUp = 0;
                     return Banner.SixStarsPool.Primary[crypto.randomInt(Banner.SixStarsPool.Primary.length)];
                 }
-                else if(crypto.randomInt(2)) {
+                
+                if(crypto.randomInt(2)) {
                     Profile.RollsSinceLast6StarsRateUp = 0;
                     return Banner.SixStarsPool.Primary[crypto.randomInt(Banner.SixStarsPool.Primary.length)];
                 }
