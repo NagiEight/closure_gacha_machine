@@ -12,6 +12,6 @@ export default async (): Promise<void> => {
     await Promise.all(
         (await fs.readdir(PathToDir))
             .filter(File => File.endsWith(Extension))
-            .map(async File => await import(pathToFileURL(path.join(PathToDir, File)).href))
+            .map(File => import(pathToFileURL(path.join(PathToDir, File)).href))
     );
 };
