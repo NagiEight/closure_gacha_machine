@@ -10,7 +10,7 @@ import Gacha from "../helpers/Gacha.js";
 import GenerateToken from "../helpers/GenerateToken.js";
 import PityCalculator from "../helpers/PityCalculator.js";
 import Switch from "../helpers/Switch.js";
-import StrategyRegistry from "./StrategyRegistry.js";
+import StrategyManager from "./StrategyManager.js";
 
 Database.DB.exec(`
     CREATE TABLE IF NOT EXISTS GachaData(
@@ -243,7 +243,7 @@ export default new class {
                 : Gacha(StandardRate)
             ;
 
-        const StrategyClass: new () => BannerStrategy = StrategyRegistry.get(Banner.Type)!;
+        const StrategyClass: new () => BannerStrategy = StrategyManager.StrategyRegistry.get(Banner.Type)!;
         const Strategy: BannerStrategy = new StrategyClass();
 
         const Output: string = Strategy.Roll(Banner, BannerProfile, Result, Selection);

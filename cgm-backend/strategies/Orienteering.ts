@@ -5,12 +5,12 @@ import type { Selection } from "../types/BannerStrategy.js";
 import { Items } from "../types/Items.js";
 import { BannerTypes } from "../types/BannerTypes.js";
 import Switch from "../helpers/Switch.js";
-import crypto from "crypto";
 import Gacha from "../helpers/Gacha.js";
 import GenericFourStarsHandler from "../helpers/GenericFourStarsHandler.js";
-import RegisterStrategy from "../helpers/RegisterStrategy.js";
+import crypto from "crypto";
+import StrategyManager from "../singletons/StrategyManager.js";
 
-@RegisterStrategy(BannerTypes.Orienteering)
+@StrategyManager.Register(BannerTypes.Orienteering)
 export default class Orienteering implements BannerStrategy {
     public Roll(Banner: Banner, Profile: ProfileBanner, Result: Items, Selection: Selection): string {
         return Switch(Result, {

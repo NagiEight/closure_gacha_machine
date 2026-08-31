@@ -5,13 +5,13 @@ import { BannerTypes } from "../types/BannerTypes.js";
 import { Items } from "../types/Items.js";
 import { RateUp } from "../types/RateUp.js";
 import Switch from "../helpers/Switch.js";
-import crypto from "crypto";
 import Gacha from "../helpers/Gacha.js";
 import GenericFiveStarsHandler from "../helpers/GenericFiveStarsHandler.js";
 import GenericFourStarsHandler from "../helpers/GenericFourStarsHandler.js";
-import RegisterStrategy from "../helpers/RegisterStrategy.js";
+import StrategyManager from "../singletons/StrategyManager.js";
+import crypto from "crypto";
 
-@RegisterStrategy(BannerTypes.Limited)
+@StrategyManager.Register(BannerTypes.Limited)
 export default class Limited implements BannerStrategy {
     public Roll(Banner: Banner, Profile: ProfileBanner, Result: Items): string {
         return Switch(Result, {

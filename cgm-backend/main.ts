@@ -6,11 +6,11 @@ import type { SearchQuery } from "./types/SearchQuery.js";
 import type { Express } from "express";
 import type { RateLimitRequestHandler } from "express-rate-limit";
 import { BannerTypes } from "./types/BannerTypes.js";
-import express from "express";
-import rateLimit from "express-rate-limit";
 import Database from "./singletons/Database.js";
 import GachaSystem from "./singletons/GachaSystem.js";
 import LoadEnv from "./singletons/LoadEnv.js";
+import rateLimit from "express-rate-limit";
+import express from "express";
 
 const Server: Express = express();
 const Limiter: RateLimitRequestHandler = rateLimit({
@@ -53,8 +53,8 @@ Server.get("/api/banners/search", (Req, Res) => {
         return;
     }
 
-    const Page: number = Number(Req.params.Page);    
-    if(!Page || Page <= 0) {
+    const Page: number = Number(Req.params.Page) || -1;    
+    if(Page <= 0) {
         Res.status(400).json({ message: "Invalid pagination index." });
         return;
     }
@@ -241,9 +241,9 @@ Server.post("/gacha/create", (_, Res) => {
     Res.json({ Result });
 })
 .post("/gacha/:BannerName/roll/:Count", (Req, Res) => {
-    const Count: number = Number(Req.params.Count);
+    const Count: number = Number(Req.params.Count) || -1;
     
-    if(!Count && Count <= 0) {
+    if(Count <= 0) {
         Res.status(400).json({ message: "Roll count must be a number greater than 0." });
         return;
     }

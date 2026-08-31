@@ -4,12 +4,12 @@ import type { Banner } from "../types/Banner.js";
 import { Items } from "../types/Items.js";
 import { BannerTypes } from "../types/BannerTypes.js";
 import Switch from "../helpers/Switch.js";
-import crypto from "crypto";
 import GenericFiveStarsHandler from "../helpers/GenericFiveStarsHandler.js";
 import GenericFourStarsHandler from "../helpers/GenericFourStarsHandler.js";
-import RegisterStrategy from "../helpers/RegisterStrategy.js";
+import StrategyManager from "../singletons/StrategyManager.js";
+import crypto from "crypto";
 
-@RegisterStrategy(BannerTypes.Standard)
+@StrategyManager.Register(BannerTypes.Standard)
 export default class Standard implements BannerStrategy {
     public Roll(Banner: Banner, Profile: ProfileBanner, Result: Items): string {
         return Switch(Result, {

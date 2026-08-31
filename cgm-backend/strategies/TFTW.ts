@@ -4,12 +4,12 @@ import type { Banner } from "../types/Banner.js";
 import { Items } from "../types/Items.js";
 import { BannerTypes } from "../types/BannerTypes.js";
 import Switch from "../helpers/Switch.js";
-import crypto from "crypto";
 import GenericFourStarsHandler from "../helpers/GenericFourStarsHandler.js";
 import GenericFiveStarsHandler from "../helpers/GenericFiveStarsHandler.js";
-import RegisterStrategy from "../helpers/RegisterStrategy.js";
+import StrategyManager from "../singletons/StrategyManager.js";
+import crypto from "crypto";
 
-@RegisterStrategy(BannerTypes.TFTW)
+@StrategyManager.Register(BannerTypes.TFTW)
 export default class JointOperation implements BannerStrategy {
     public Roll(Banner: Banner, Profile: ProfileBanner, Result: Items): string {
         return Switch(Result, {
