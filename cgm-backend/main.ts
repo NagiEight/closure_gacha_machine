@@ -40,7 +40,7 @@ Server.get("/api/banners/search", (Req, Res) => {
         return;
     }
 
-    if(Body.BannerType && Object.values(BannerTypes).filter(V => typeof V === "number").includes(Body.BannerType)) {
+    if(Body.BannerType && Object.values(BannerTypes).includes(Body.BannerType)) {
         Res.status(404).json({ message: `Unknown banner type '${Body.BannerType}'.` });
         return;
     }
@@ -219,7 +219,7 @@ Server.post("/gacha/create", (_, Res) => {
             if(IsValid) {
                 Res.status(400).json(
                     `Operator${Excluded.length > 1 ? "s" : ""} ${Excluded.join(", ")}` +
-                    ` ${Excluded.length > 1 ? "do" : "does"} not exist or not included in ${BannerName} ${Rarity} stars pool.`
+                    ` do${Excluded.length > 1 ? "" : "es"} not exist or not included in ${BannerName} ${Rarity} stars pool.`
                 );
                 return false;
             }
@@ -303,7 +303,7 @@ Server.post("/gacha/create", (_, Res) => {
             if(IsValid) {
                 Res.status(400).json(
                     `Operator${Excluded.length > 1 ? "s" : ""} ${Excluded.join(", ")}` +
-                    ` ${Excluded.length > 1 ? "do" : "does"} not exist or not included in ${BannerName} ${Rarity} stars pool.`
+                    ` do${Excluded.length > 1 ? "" : "es"} not exist or not included in ${BannerName} ${Rarity} stars pool.`
                 );
                 return false;
             }

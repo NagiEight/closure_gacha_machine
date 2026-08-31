@@ -26,12 +26,12 @@ GET /api/banners/search
 ### Body 
 ```typescript
 enum BannerTypes {
-    Standard,
-    Limited,
-    Crossover,
-    Orienteering,
-    JointOperation,
-    TFTW
+    Standard = "Standard",
+    Limited = "Limited",
+    Crossover = "Crossover",
+    Orienteering = "Orienteering",
+    JointOperation = "JointOperation",
+    TFTW = "TFTW"
 }
 
 interface SearchQuery {
@@ -58,12 +58,12 @@ GET /api/banners/search?page=1
 **Status:** `200 OK`
 ```typescript
 enum BannerTypes {
-    Standard,
-    Limited,
-    Crossover,
-    Orienteering,
-    JointOperation,
-    TFTW
+    Standard = "Standard",
+    Limited = "Limited",
+    Crossover = "Crossover",
+    Orienteering = "Orienteering",
+    JointOperation = "JointOperation",
+    TFTW = "TFTW"
 }
 
 type GetBannerPageResponse = {
@@ -172,12 +172,12 @@ GET /api/banners/1
 **Status:** `200 OK`
 ```typescript
 enum BannerTypes {
-    Standard,
-    Limited,
-    Crossover,
-    Orienteering,
-    JointOperation,
-    TFTW
+    Standard = "Standard",
+    Limited = "Limited",
+    Crossover = "Crossover",
+    Orienteering = "Orienteering",
+    JointOperation = "JointOperation",
+    TFTW = "TFTW"
 }
 
 type GetBannerPageResponse = {
@@ -274,11 +274,12 @@ GET /api/banner/EN A Shared Oath of Guardianship
 **Status:** `200 OK`
 ```typescript
 enum BannerTypes {
-    Standard,
-    Limited,
-    Orienteering,
-    JointOperation,
-    TFTW
+    Standard = "Standard",
+    Limited = "Limited",
+    Crossover = "Crossover",
+    Orienteering = "Orienteering",
+    JointOperation = "JointOperation",
+    TFTW = "TFTW"
 } 
 
 interface GetBannerResponse {

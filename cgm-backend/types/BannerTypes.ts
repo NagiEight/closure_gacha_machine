@@ -1,8 +1,8 @@
 export enum BannerTypes {
-    Standard,
-    Limited,
-	Crossover,
-    Orienteering,
-    JointOperation,
-    TFTW
+    Standard = "Standard",
+    Limited = "Limited",
+    Crossover = "Crossover",
+    Orienteering = "Orienteering",
+    JointOperation = "JointOperation",
+    TFTW = "TFTW"
 }
