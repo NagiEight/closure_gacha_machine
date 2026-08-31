@@ -1,5 +1,5 @@
-import type { Banner } from "../singletons/Database.js";
-import type { ProfileBanner, Items, Selection } from "../singletons/GachaSystem.js";
+import type { Banner, Items } from "../singletons/Database.js";
+import type { ProfileBanner, Selection } from "../singletons/GachaSystem.js";
 
 export interface BannerStrategy {
     Roll(

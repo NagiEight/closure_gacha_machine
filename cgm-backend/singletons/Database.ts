@@ -1,5 +1,4 @@
 import type { Database as DBType } from "better-sqlite3";
-import { Items } from "./GachaSystem.js";
 import LoadEnv from "./LoadEnv.js";
 import Database from "better-sqlite3";
 import path from "path";
@@ -56,6 +55,13 @@ export enum BannerTypes {
     JointOperation,
     TFTW
 }
+export enum Items {
+    SixStars = 6,
+    FiveStars = 5,
+    FourStars = 4,
+    ThreeStars = 3
+}
+
 export interface Banner {
     ReleaseDate: number;
     Type: BannerTypes;

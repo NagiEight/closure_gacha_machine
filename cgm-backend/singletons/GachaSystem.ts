@@ -1,6 +1,6 @@
 import type { GachaItems } from "../helpers/Gacha.js";
 import type { BannerStrategy } from "../types/BannerStrategy.js";
-import Database, { type Banner, BannerTypes } from "./Database.js";
+import Database, { type Banner, BannerTypes, Items } from "./Database.js";
 import LoadStrategies from "../helpers/LoadStrategies.js";
 import Gacha from "../helpers/Gacha.js";
 import GenerateToken from "../helpers/GenerateToken.js";
@@ -65,13 +65,6 @@ export interface ProfileBanner {
     };
 }
 export type GachaProfile = Record<string, ProfileBanner>;
-
-export enum Items {
-    SixStars = 6,
-    FiveStars = 5,
-    FourStars = 4,
-    ThreeStars = 3
-}
 
 export interface Selection {
     SixStarsSelection: string[];
