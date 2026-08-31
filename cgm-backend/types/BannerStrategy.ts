@@ -1,5 +1,6 @@
-import type { Banner, Items } from "../singletons/Database.js";
-import type { ProfileBanner, Selection } from "../singletons/GachaSystem.js";
+import type { Banner } from "../types/Banner.js";
+import type { ProfileBanner } from "./GachaProfile.js";
+import type { Items } from "./Items.js";
 
 export interface BannerStrategy {
     Roll(
@@ -8,4 +9,9 @@ export interface BannerStrategy {
         Result: Items,
         Selection?: Selection
     ): string;
+}
+
+export interface Selection {
+    SixStarsSelection: string[];
+    FiveStarsSelection: string[];
 }

@@ -1,11 +1,16 @@
 import type { GachaItems } from "../helpers/Gacha.js";
-import type { BannerStrategy } from "../types/BannerStrategy.js";
-import Database, { type Banner, BannerTypes, Items } from "./Database.js";
+import type { GachaProfile, ProfileBanner } from "../types/GachaProfile.js";
+import type { BannerStrategy, Selection } from "../types/BannerStrategy.js";
+import type { Banner } from "../types/Banner.js";
+import { Items } from "../types/Items.js";
+import { BannerTypes } from "../types/BannerTypes.js";
+import Database from "./Database.js";
 import LoadStrategies from "../helpers/LoadStrategies.js";
 import Gacha from "../helpers/Gacha.js";
 import GenerateToken from "../helpers/GenerateToken.js";
 import PityCalculator from "../helpers/PityCalculator.js";
 import Switch from "../helpers/Switch.js";
+import StrategyRegistry from "./StrategyRegistry.js";
 
 Database.DB.exec(`
     CREATE TABLE IF NOT EXISTS GachaData(
@@ -49,34 +54,6 @@ Database.DB.exec(`
 
 await LoadStrategies();
 
-export interface ProfileBanner {
-    Count: number;
-    RollsWithoutSixStar: number;
-    RollsSinceLast6StarsRateUp: number;
-    RollsSinceLast5StarsRateUp: number;
-    RollsSinceLast4StarsRateUp: number;
-    Focused: boolean;
-    TenRolls: boolean;
-    Storage: {
-        SixStars: Record<string, number>;
-        FiveStars: Record<string, number>;
-        FourStars: Record<string, number>;
-        ThreeStars: Record<string, number>;
-    };
-}
-export type GachaProfile = Record<string, ProfileBanner>;
-
-export interface Selection {
-    SixStarsSelection: string[];
-    FiveStarsSelection: string[];
-}
-
-export enum RateUp {
-    Primary,
-    Secondary,
-    None
-}
-
 interface GachaProfileStorageRow {
     UserToken: string;
     Banner: string;
@@ -86,7 +63,7 @@ interface GachaProfileStorageRow {
 }
 interface GachaProfileDataRow {
     UserToken: string;
-    Banner: string;
+    Banner: string; 
     Count: number;
     RollsWithoutSixStar: number;
     RollsSinceLast6StarsRateUp: number;
@@ -158,8 +135,6 @@ export default new class {
         Database.DB.prepare<[string], void>("DELETE FROM GachaProfiles WHERE Token = ?").run(Token);
     });
 
-    public readonly StrategyRegistry: Map<BannerTypes, new () => BannerStrategy> = new Map();
-
     public constructor() {
         const StorageQuery: GachaProfileStorageRow[] = Database.DB.prepare<[], GachaProfileStorageRow>(`
             SELECT GP.Token, GS.Banner, GS.Rarity, GS.ID, GS.Count
@@ -204,7 +179,7 @@ export default new class {
             3: (): number => this.GachaProfiles[Row.UserToken][Row.Banner].Storage.SixStars[Row.ID] = Row.Count
         }));
     }
-    
+
     public CreateProfile(): string {
         const Token: string = GenerateToken(Token => !!this.GachaProfiles[Token]);
         this.CreateGachaProfileSTMT.run(Token);
@@ -226,8 +201,8 @@ export default new class {
     public Roll(Token: string, BannerName: string, WriteDB?: boolean, Selection?: Selection): [string, Items] | undefined;
     public Roll(Token: string, BannerName: string, WriteDB: boolean = true, Selection?: Selection): [string, Items] | undefined {
         const Banner: Banner | undefined = Database.Manager.GetBanner(BannerName);
-        
-        if(!Banner || !this.GachaProfiles[Token])
+
+        if (!Banner || !this.GachaProfiles[Token])
             return;
 
         this.GachaProfiles[Token][BannerName] ??= {
@@ -245,7 +220,7 @@ export default new class {
                 ThreeStars: {}
             }
         };
-        
+
         const BannerProfile: ProfileBanner = this.GachaProfiles[Token][BannerName];
         BannerProfile.Count++;
 
@@ -256,30 +231,30 @@ export default new class {
             { Value: Items.ThreeStars, Chance: 40 }
         ];
 
-        if(BannerProfile.RollsWithoutSixStar > 50) 
+        if (BannerProfile.RollsWithoutSixStar > 50)
             StandardRate = PityCalculator(StandardRate, Items.SixStars, (BannerProfile.RollsWithoutSixStar - 50) * 2);
-        if(BannerProfile.Count === 9 && !BannerProfile.TenRolls) 
+        if (BannerProfile.Count === 9 && !BannerProfile.TenRolls)
             StandardRate = [{ Value: Items.SixStars, Chance: 2 }, { Value: Items.FiveStars, Chance: 98 }];
-        
+
         const Result: Items = Banner.Type === BannerTypes.Crossover && BannerProfile.RollsSinceLast6StarsRateUp >= 119
-                ? Items.SixStars
+            ? Items.SixStars
             : Banner.Type === BannerTypes.Crossover && BannerProfile.RollsSinceLast5StarsRateUp >= 49
                 ? Items.FiveStars
-            : Gacha(StandardRate)
-        ;
+                : Gacha(StandardRate)
+            ;
 
-        const StrategyClass: new () => BannerStrategy = this.StrategyRegistry.get(Banner.Type)!;
+        const StrategyClass: new () => BannerStrategy = StrategyRegistry.get(Banner.Type)!;
         const Strategy: BannerStrategy = new StrategyClass();
 
         const Output: string = Strategy.Roll(Banner, BannerProfile, Result, Selection);
 
-        if(Result >= 5) {
-            if(Result === Items.SixStars)
+        if (Result >= 5) {
+            if (Result === Items.SixStars)
                 BannerProfile.RollsWithoutSixStar = 0;
             BannerProfile.TenRolls = false;
         }
 
-        if(!WriteDB)
+        if (!WriteDB)
             return [Output, Result];
 
         const ToWrite: number = Switch(Result, {
@@ -320,7 +295,7 @@ export default new class {
             Number(BannerProfile.Focused),
             Number(BannerProfile.TenRolls)
         );
-        
+
         return [Output, Result];
     }
 
@@ -332,7 +307,7 @@ export default new class {
         }, {});
     }
     public RollMulti(Token: string, BannerName: string, Count: number, Selection?: { SixStarsSelection: string[]; FiveStarsSelection: string[]; }): string[] | undefined {
-        if(!this.GachaProfiles[Token])
+        if (!this.GachaProfiles[Token])
             return;
 
         this.GachaProfiles[Token][BannerName] ??= {
@@ -354,10 +329,10 @@ export default new class {
         const BannerProfile: ProfileBanner = this.GachaProfiles[Token][BannerName];
 
         const Result: [string, Items][] = [];
-        while(Result.push(this.Roll(Token, BannerName, false, Selection)!) < Count);
+        while (Result.push(this.Roll(Token, BannerName, false, Selection)!) < Count);
         const OperatorMap: Record<string, Items> = Object.fromEntries(Result);
 
-        for(const [OperatorID, Rarity] of Object.entries(OperatorMap)) {
+        for (const [OperatorID, Rarity] of Object.entries(OperatorMap)) {
             this.RefreshStorageSTMT.run(
                 Token,
                 BannerName,

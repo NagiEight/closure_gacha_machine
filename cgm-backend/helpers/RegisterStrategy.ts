@@ -1,10 +1,10 @@
-import type { BannerTypes } from "../singletons/Database.js";
 import type { BannerStrategy } from "../types/BannerStrategy.js";
-import GachaSystem from "../singletons/GachaSystem.js";
+import type { BannerTypes } from "../types/BannerTypes.js";
+import StrategyRegistry from "../singletons/StrategyRegistry.js";
 
 export default (Type: BannerTypes) => <T extends new() => BannerStrategy>(ctor: T) => {
-    if(GachaSystem.StrategyRegistry.has(Type))
+    if(StrategyRegistry.has(Type))
         throw new Error(`Banner type ${Type} has already been registered.`);
     
-    GachaSystem.StrategyRegistry.set(Type, ctor);
+    StrategyRegistry.set(Type, ctor);
 };

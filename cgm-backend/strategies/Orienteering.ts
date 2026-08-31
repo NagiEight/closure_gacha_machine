@@ -1,6 +1,9 @@
-import { BannerTypes, Items, type Banner } from "../singletons/Database.js";
 import type { BannerStrategy } from "../types/BannerStrategy.js";
-import { type ProfileBanner, type Selection } from "../singletons/GachaSystem.js";
+import type { ProfileBanner } from "../types/GachaProfile.js";
+import type { Banner } from "../types/Banner.js";
+import type { Selection } from "../types/BannerStrategy.js";
+import { Items } from "../types/Items.js";
+import { BannerTypes } from "../types/BannerTypes.js";
 import Switch from "../helpers/Switch.js";
 import crypto from "crypto";
 import Gacha from "../helpers/Gacha.js";

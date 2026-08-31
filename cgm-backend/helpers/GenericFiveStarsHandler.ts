@@ -1,6 +1,6 @@
-import type { Banner } from "../singletons/Database.js";
-import type { ProfileBanner } from "../singletons/GachaSystem.js";
 import type { GachaItems } from "./Gacha.js";
+import type { Banner } from "../types/Banner.js";
+import type { ProfileBanner } from "../types/GachaProfile.js";
 import Gacha from "./Gacha.js";
 import crypto from "crypto";
 

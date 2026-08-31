@@ -1,7 +1,15 @@
-import express, { type Express } from "express";
-import rateLimit, { type RateLimitRequestHandler } from "express-rate-limit";
-import Database, { BannerTypes, type Banner, type Operator, type SearchQuery } from "./singletons/Database.js";
-import GachaSystem, { type GachaProfile, type Selection } from "./singletons/GachaSystem.js";
+import type { Banner } from "./types/Banner.js";
+import type { Operator } from "./types/Operator.js";
+import type { Selection } from "./types/BannerStrategy.js";
+import type { GachaProfile } from "./types/GachaProfile.js";
+import type { SearchQuery } from "./types/SearchQuery.js";
+import type { Express } from "express";
+import type { RateLimitRequestHandler } from "express-rate-limit";
+import { BannerTypes } from "./types/BannerTypes.js";
+import express from "express";
+import rateLimit from "express-rate-limit";
+import Database from "./singletons/Database.js";
+import GachaSystem from "./singletons/GachaSystem.js";
 import LoadEnv from "./singletons/LoadEnv.js";
 
 const Server: Express = express();
@@ -368,4 +376,4 @@ Server.post("/gacha/create", (_, Res) => {
     Res.send("Delete profile successfully.");
 });
 
-Server.listen(LoadEnv.PORT, (): void => console.log(`Server is running on port ${LoadEnv.PORT}.`));
+Server.listen(LoadEnv.PORT, "0.0.0.0", (): void => console.log(`Server is running on port ${LoadEnv.PORT}.`));

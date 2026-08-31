@@ -1,4 +1,10 @@
 import type { Database as DBType } from "better-sqlite3";
+import type { BannerTypes } from "../types/BannerTypes.js";
+import type { Banner } from "../types/Banner.js";
+import type { Operator } from "../types/Operator.js";
+import type { SearchQuery } from "../types/SearchQuery.js";
+import type { SearchResult } from "../types/SearchResult.js";
+import { Items } from "../types/Items.js";
 import LoadEnv from "./LoadEnv.js";
 import Database from "better-sqlite3";
 import path from "path";
@@ -47,39 +53,6 @@ DB.exec(`
     );
 `);
 
-export enum BannerTypes {
-    Standard,
-    Limited,
-	Crossover,
-    Orienteering,
-    JointOperation,
-    TFTW
-}
-export enum Items {
-    SixStars = 6,
-    FiveStars = 5,
-    FourStars = 4,
-    ThreeStars = 3
-}
-
-export interface Banner {
-    ReleaseDate: number;
-    Type: BannerTypes;
-    SixStarsPool: {
-        Primary: string[];
-        Secondary: string[];
-        Standard: string[];
-    };
-    FiveStarsPool: {
-        Primary: string[];
-        Standard: string[];
-    };
-    FourStarsPool: {
-        Primary: string[];
-        Standard: string[];
-    };
-    ThreeStarsPool: string[];
-}
 interface BannersRow {
     Name: string;
     ReleaseDate: number;
@@ -90,32 +63,12 @@ interface BannersRow {
     Standard: string;
 }
 
-export interface Operator {
-    Name: string;
-    Rarity: Items;
-    ReleaseDate: number | null;
-    Limited: boolean;
-}
 interface OperatorsRow {
     ID: string;
     Name: string;
     Rarity: Items;
     ReleaseDate: number | null;
     Limited: number;
-}
-
-export interface SearchQuery {
-    NameQuery?: string;
-    BannerType?: BannerTypes;
-    Includes?: string[];
-    From?: number;
-    To?: number;
-}
-
-export interface SearchReturn {
-    Name: string;
-    Type: BannerTypes;
-    ReleaseDate: number;
 }
 
 class DataManager {
@@ -188,8 +141,8 @@ class DataManager {
     };
 
     // We'll see how bad this is
-    public SearchBanners(Page: number, { NameQuery, BannerType, Includes, From, To }: SearchQuery): SearchReturn[] {
-        const Output: SearchReturn[] = [];
+    public SearchBanners(Page: number, { NameQuery, BannerType, Includes, From, To }: SearchQuery): SearchResult[] {
+        const Output: SearchResult[] = [];
         
         if(Includes)
             Includes = [...new Set(Includes)];
@@ -238,7 +191,7 @@ class DataManager {
     public GetBanner(Name: string): Banner | undefined {
         return this.Banners.get(Name);
     }
-    public GetBanners(Page: number): SearchReturn[] {
+    public GetBanners(Page: number): SearchResult[] {
         return [...Paginate(LoadEnv.PAGE_SIZE, Page, this.Banners.entries())].map(([Name, Banner]) => ({
             Name,
             Type: Banner.Type,
