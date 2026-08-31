@@ -363,14 +363,14 @@ export default new class {
         return [Output, Result];
     }
 
-    public RollMultiReduced(Token: string, BannerName: string, Count: number, Selection?: { SixStarsSelection: string[]; FiveStarsSelection: string[]; }): Record<string, number> | undefined {
+    public RollMultiReduced(Token: string, BannerName: string, Count: number, Selection?: Selection): Record<string, number> | undefined {
         return this.RollMulti(Token, BannerName, Count, Selection)?.reduce((Acc: Record<string, number>, Item: string): Record<string, number> => {
             Acc[Item] ??= 0;
             Acc[Item]++;
             return Acc;
         }, {});
     }
-    public RollMulti(Token: string, BannerName: string, Count: number, Selection?: { SixStarsSelection: string[]; FiveStarsSelection: string[]; }): string[] | undefined {
+    public RollMulti(Token: string, BannerName: string, Count: number, Selection?: Selection): string[] | undefined {
         if(!this.GachaProfiles[Token])
             return;
 
