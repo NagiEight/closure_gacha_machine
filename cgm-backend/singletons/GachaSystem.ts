@@ -6,7 +6,6 @@ import { Items } from "../types/Items.js";
 import { BannerTypes } from "../types/BannerTypes.js";
 import { RateUp } from "../types/RateUp.js";
 import Database from "./Database.js";
-import LoadStrategies from "../helpers/LoadStrategies.js";
 import Gacha from "../helpers/Gacha.js";
 import GenerateToken from "../helpers/GenerateToken.js";
 import PityCalculator from "../helpers/PityCalculator.js";
@@ -53,7 +52,7 @@ Database.DB.exec(`
     );
 `);
 
-await LoadStrategies();
+await StrategyManager.Load();
 
 interface GachaProfileStorageRow {
     UserToken: string;
