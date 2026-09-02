@@ -217,19 +217,20 @@ Server.post("/gacha/create", (_, Res) => {
             });
             
             if(IsValid) {
-                Res.status(400).json(
-                    `Operator${Excluded.length > 1 ? "s" : ""} ${Excluded.join(", ")}` +
-                    ` do${Excluded.length > 1 ? "" : "es"} not exist or not included in ${BannerName} ${Rarity} stars pool.`
-                );
+                Res.status(400).json({ 
+                    message: `Operator${Excluded.length > 1 ? "s" : ""} ${Excluded.join(", ")}` +
+                        ` do${Excluded.length > 1 ? "" : "es"} not exist or not included in ${BannerName} ${Rarity} stars pool.`
+                 });
                 return false;
             }
             return true;
         };
 
-        if(
-            !Checker(Body.SixStarsSelection, Banner.SixStarsPool.Primary, 6) || 
-            !Checker(Body.FiveStarsSelection, Banner.FiveStarsPool.Primary, 5)
-        ) return;
+        if(!Checker(Body.SixStarsSelection, Banner.SixStarsPool.Primary, 6))
+            return;
+
+        if(!Checker(Body.FiveStarsSelection, Banner.FiveStarsPool.Primary, 5))
+            return;
 
         Res.json({
             Result: GachaSystem.Roll(Token, BannerName, true, Body)
@@ -299,21 +300,22 @@ Server.post("/gacha/create", (_, Res) => {
                     Excluded.push(OP);
                 return IsIncluded;
             });
-
+            
             if(IsValid) {
-                Res.status(400).json(
-                    `Operator${Excluded.length > 1 ? "s" : ""} ${Excluded.join(", ")}` +
-                    ` do${Excluded.length > 1 ? "" : "es"} not exist or not included in ${BannerName} ${Rarity} stars pool.`
-                );
+                Res.status(400).json({ 
+                    message: `Operator${Excluded.length > 1 ? "s" : ""} ${Excluded.join(", ")}` +
+                        ` do${Excluded.length > 1 ? "" : "es"} not exist or not included in ${BannerName} ${Rarity} stars pool.`
+                 });
                 return false;
             }
             return true;
         };
 
-        if(
-            !Checker(Body.SixStarsSelection, Banner.SixStarsPool.Primary, 6) || 
-            !Checker(Body.FiveStarsSelection, Banner.FiveStarsPool.Primary, 5)
-        ) return;
+        if(!Checker(Body.SixStarsSelection, Banner.SixStarsPool.Primary, 6))
+            return;
+
+        if(!Checker(Body.FiveStarsSelection, Banner.FiveStarsPool.Primary, 5))
+            return;
 
         const Reduced: string | undefined = Req.query.reduced?.toString().trim().toLowerCase();
         Res.json({
