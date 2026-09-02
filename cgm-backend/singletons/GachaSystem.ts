@@ -317,34 +317,25 @@ export default new class {
             Profile.TenRolls = false;
         }
 
+        const Storage: Record<string, number> = Switch(Result, {
+            [Items.SixStars]: (): Record<string, number> => this.GachaProfiles[Token][BannerName].Storage.SixStars,
+            [Items.FiveStars]: (): Record<string, number> => this.GachaProfiles[Token][BannerName].Storage.FiveStars,
+            [Items.FourStars]: (): Record<string, number> => this.GachaProfiles[Token][BannerName].Storage.FourStars,
+            [Items.ThreeStars]: (): Record<string, number> => this.GachaProfiles[Token][BannerName].Storage.ThreeStars
+        });
+        
+        Storage[Output] ??= 0;
+        Storage[Output]++;
+
         if(!WriteDB)
             return [Output, Result];
-
-        const ToWrite: number = Switch(Result, {
-            [Items.SixStars]: (): number => {
-                this.GachaProfiles[Token][BannerName].Storage.SixStars[Output] ??= 0;
-                return ++this.GachaProfiles[Token][BannerName].Storage.SixStars[Output];
-            },
-            [Items.FiveStars]: (): number => {
-                this.GachaProfiles[Token][BannerName].Storage.FiveStars[Output] ??= 0;
-                return ++this.GachaProfiles[Token][BannerName].Storage.FiveStars[Output];
-            },
-            [Items.FourStars]: (): number => {
-                this.GachaProfiles[Token][BannerName].Storage.FourStars[Output] ??= 0;
-                return ++this.GachaProfiles[Token][BannerName].Storage.FourStars[Output];
-            },
-            [Items.ThreeStars]: (): number => {
-                this.GachaProfiles[Token][BannerName].Storage.ThreeStars[Output] ??= 0;
-                return ++this.GachaProfiles[Token][BannerName].Storage.ThreeStars[Output];
-            }
-        });
-
+        
         this.RefreshStorageSTMT.run(
             Token,
             BannerName,
             Result,
             Output,
-            ToWrite
+            Storage[Output]
         );
 
         this.RefreshDataSTMT.run(

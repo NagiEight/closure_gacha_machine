@@ -19,8 +19,7 @@ export default new class {
                 .filter(File => File.endsWith(Extension))
                 .map(File => import(pathToFileURL(path.join(PathToDir, File)).href))
         );
-    };
-
+    }
     public Register(Type: BannerTypes): <T extends new () => BannerStrategy>(ctor: T) => void {
         return <T extends new() => BannerStrategy>(ctor: T) => {
             if(this.StrategyRegistry.has(Type))
@@ -28,5 +27,5 @@ export default new class {
             
             this.StrategyRegistry.set(Type, ctor);
         };
-    };
-};
+    }
+}();
