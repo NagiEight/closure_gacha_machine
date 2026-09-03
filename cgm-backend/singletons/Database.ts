@@ -47,9 +47,7 @@ DB.exec(`
     CREATE TABLE IF NOT EXISTS Banners(
         Name TEXT PRIMARY KEY,
         ReleaseDate INTEGER NOT NULL,
-        Type INTEGER NOT NULL,
-
-        CHECK(Type IN (0, 1, 2, 3, 4, 5))
+        Type TEXT NOT NULL
     );
 `);
 
