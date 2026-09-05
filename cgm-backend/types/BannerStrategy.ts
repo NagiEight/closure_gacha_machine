@@ -17,7 +17,7 @@ export interface RollParams {
 }
 
 export interface BannerStrategy {
-    RateUp?: Mapping;
+    readonly RateUp?: Mapping;
 
     Roll({
         Banner,

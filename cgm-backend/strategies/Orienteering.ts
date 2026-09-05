@@ -10,7 +10,7 @@ import StrategyManager from "../singletons/StrategyManager.js";
 
 @StrategyManager.Register(BannerTypes.Orienteering)
 export default class Orienteering implements BannerStrategy {
-    public RateUp: Partial<Record<Items, GachaItems<RateUp>[]>> = {
+    public readonly RateUp: Partial<Record<Items, GachaItems<RateUp>[]>> = {
         [Items.FiveStars]: [
             { Value: RateUp.Primary, Chance: 60 },
             { Value: RateUp.None, Chance: 40 }

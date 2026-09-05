@@ -11,7 +11,7 @@ import crypto from "crypto";
 
 @StrategyManager.Register(BannerTypes.Limited)
 export default class Limited implements BannerStrategy {
-    public RateUp: Partial<Record<Items, GachaItems<RateUp>[]>> = {
+    public readonly RateUp: Partial<Record<Items, GachaItems<RateUp>[]>> = {
         [Items.SixStars]: [
             { Value: RateUp.Primary, Chance: 70 },
             { Value: RateUp.Secondary, Chance: 25 },

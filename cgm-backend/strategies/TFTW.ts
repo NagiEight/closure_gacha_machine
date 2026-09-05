@@ -11,7 +11,7 @@ import crypto from "crypto";
 
 @StrategyManager.Register(BannerTypes.TFTW)
 export default class JointOperation implements BannerStrategy {
-    public RateUp: Partial<Record<Items, GachaItems<RateUp>[]>> = {
+    public readonly RateUp: Partial<Record<Items, GachaItems<RateUp>[]>> = {
         [Items.FiveStars]: [
             { Value: RateUp.Primary, Chance: 60 },
             { Value: RateUp.None, Chance: 40 }

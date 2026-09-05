@@ -1,5 +1,5 @@
 import type { GachaItems } from "../helpers/Gacha.js";
-import type { GachaProfile, ProfileBanner } from "../types/GachaProfile.js";
+import type { GachaProfile, ProfileBanner, ProfileStorage } from "../types/GachaProfile.js";
 import type { BannerStrategy, Selection } from "../types/BannerStrategy.js";
 import type { Banner } from "../types/Banner.js";
 import { Items } from "../types/Items.js";
@@ -190,12 +190,16 @@ export default new class {
                 }
             };
         });
-        StorageQuery.forEach(Row => Switch(Row.Rarity, {
-            6: (): number => this.GachaProfiles[Row.UserToken][Row.Banner].Storage.ThreeStars[Row.ID] = Row.Count,
-            5: (): number => this.GachaProfiles[Row.UserToken][Row.Banner].Storage.FourStars[Row.ID] = Row.Count,
-            4: (): number => this.GachaProfiles[Row.UserToken][Row.Banner].Storage.FiveStars[Row.ID] = Row.Count,
-            3: (): number => this.GachaProfiles[Row.UserToken][Row.Banner].Storage.SixStars[Row.ID] = Row.Count
-        }));
+        
+        StorageQuery.forEach(Row => {
+            const Storage: ProfileStorage = this.GachaProfiles[Row.UserToken][Row.Banner].Storage;
+            Switch(Row.Rarity, {
+                6: (): Record<string, number> => Storage.ThreeStars,
+                5: (): Record<string, number> => Storage.FourStars,
+                4: (): Record<string, number> => Storage.FiveStars,
+                3: (): Record<string, number> => Storage.SixStars
+            })[Row.ID] = Row.Count;
+        });
     }
 
     public CreateProfile(): string {
@@ -318,10 +322,10 @@ export default new class {
         }
 
         const Storage: Record<string, number> = Switch(Result, {
-            [Items.SixStars]: (): Record<string, number> => this.GachaProfiles[Token][BannerName].Storage.SixStars,
-            [Items.FiveStars]: (): Record<string, number> => this.GachaProfiles[Token][BannerName].Storage.FiveStars,
-            [Items.FourStars]: (): Record<string, number> => this.GachaProfiles[Token][BannerName].Storage.FourStars,
-            [Items.ThreeStars]: (): Record<string, number> => this.GachaProfiles[Token][BannerName].Storage.ThreeStars
+            [Items.SixStars]: (): Record<string, number> => Profile.Storage.SixStars,
+            [Items.FiveStars]: (): Record<string, number> => Profile.Storage.FiveStars,
+            [Items.FourStars]: (): Record<string, number> => Profile.Storage.FourStars,
+            [Items.ThreeStars]: (): Record<string, number> => Profile.Storage.ThreeStars
         });
         
         Storage[Output] ??= 0;

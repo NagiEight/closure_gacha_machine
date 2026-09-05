@@ -105,24 +105,26 @@ class DataManager {
             };
             Switch(Row.Rarity, {
                 [Items.SixStars]: (): void => {
-                    Banner.ThreeStarsPool = JSON.parse(Row.Standard);
+                    Banner.SixStarsPool = {
+                        Primary: JSON.parse(Row.Prima ?? "[]"),
+                        Secondary: JSON.parse(Row.Secondary ?? "[]"),
+                        Standard: JSON.parse(Row.Standard)
+                    };
                 },
                 [Items.FiveStars]: (): void => {
-                    if(Row.Prima)
-                        Banner.FourStarsPool.Primary = JSON.parse(Row.Prima);
-                    Banner.FourStarsPool.Standard = JSON.parse(Row.Standard);
+                    Banner.FiveStarsPool = {
+                        Primary: JSON.parse(Row.Prima ?? "[]"),
+                        Standard: JSON.parse(Row.Standard)
+                    };
                 },
                 [Items.FourStars]: (): void => {
-                    if(Row.Prima)
-                        Banner.FiveStarsPool.Primary = JSON.parse(Row.Prima);
-                    Banner.FiveStarsPool.Standard = JSON.parse(Row.Standard);
+                    Banner.FourStarsPool = {
+                        Primary: JSON.parse(Row.Prima ?? "[]"),
+                        Standard: JSON.parse(Row.Standard)
+                    };
                 },
                 [Items.ThreeStars]: (): void => {
-                    if(Row.Prima)
-                        Banner.SixStarsPool.Primary = JSON.parse(Row.Prima);
-                    if(Row.Secondary)
-                        Banner.SixStarsPool.Secondary = JSON.parse(Row.Secondary);
-                    Banner.SixStarsPool.Standard = JSON.parse(Row.Standard);
+                    Banner.ThreeStarsPool = JSON.parse(Row.Standard);
                 }
             });
 
