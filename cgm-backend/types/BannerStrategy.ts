@@ -1,8 +1,8 @@
-import type { GachaItems } from "../helpers/Gacha.js";
-import type { Banner } from "../types/Banner.js";
-import type { ProfileBanner } from "./GachaProfile.js";
-import type { Items } from "./Items.js";
-import type { RateUp } from "./RateUp.js";
+import type { GachaItems } from "#helpers/Gacha";
+import type { Banner } from "#types/Banner";
+import type { ProfileBanner } from "#types/GachaProfile";
+import type { Items } from "#types/Items";
+import type { RateUp } from "#types/RateUp";
 
 export type Mapping = Partial<
     Record<Items, GachaItems<RateUp>[]>
@@ -12,7 +12,7 @@ export interface RollParams {
     Banner: Banner;
     Result: Items;
     RU: RateUp;
-    Profile?: ProfileBanner;
+    Profile: ProfileBanner;
     Selection?: Selection;
 }
 

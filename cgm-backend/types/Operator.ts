@@ -1,4 +1,4 @@
-import type { Items } from "./Items.js";
+import type { Items } from "#types/Items";
 
 export interface Operator {
     Name: string;

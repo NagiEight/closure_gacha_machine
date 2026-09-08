@@ -1,12 +1,12 @@
-import type { BannerStrategy, RollParams } from "../types/BannerStrategy.js";
-import { Items } from "../types/Items.js";
-import { BannerTypes } from "../types/BannerTypes.js";
-import { RateUp } from "../types/RateUp.js";
-import type { GachaItems } from "../helpers/Gacha.js";
-import Switch from "../helpers/Switch.js";
-import GenericFourStarsHandler from "../helpers/GenericFourStarsHandler.js";
-import GenericFiveStarsHandler from "../helpers/GenericFiveStarsHandler.js";
-import StrategyManager from "../singletons/StrategyManager.js";
+import type { BannerStrategy, RollParams } from "#types/BannerStrategy";
+import type { GachaItems } from "#helpers/Gacha";
+import { Items } from "#types/Items";
+import { BannerTypes } from "#types/BannerTypes";
+import { RateUp } from "#types/RateUp";
+import Switch from "#helpers/Switch";
+import GenericFourStarsHandler from "#helpers/GenericFourStarsHandler";
+import GenericFiveStarsHandler from "#helpers/GenericFiveStarsHandler";
+import StrategyManager from "#StrategyManager";
 import crypto from "crypto";
 
 @StrategyManager.Register(BannerTypes.TFTW)

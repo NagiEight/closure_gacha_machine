@@ -1,4 +1,4 @@
-import type { BannerTypes } from "./BannerTypes.js";
+import type { BannerTypes } from "#types/BannerTypes";
 
 export interface SearchResult {
     Name: string;

@@ -1,16 +1,16 @@
 import type { Database as DBType } from "better-sqlite3";
-import type { BannerTypes } from "../types/BannerTypes.js";
-import type { Banner } from "../types/Banner.js";
-import type { Operator } from "../types/Operator.js";
-import type { SearchQuery } from "../types/SearchQuery.js";
-import type { SearchResult } from "../types/SearchResult.js";
-import { Items } from "../types/Items.js";
-import LoadEnv from "./LoadEnv.js";
+import type { BannerTypes } from "#types/BannerTypes";
+import type { Banner } from "#types/Banner";
+import type { Operator } from "#types/Operator";
+import type { SearchQuery } from "#types/SearchQuery";
+import type { SearchResult } from "#types/SearchResult";
+import { Items } from "#types/Items";
+import LoadEnv from "#LoadEnv";
+import Paginate from "#helpers/Paginate";
+import Switch from "#helpers/Switch";
 import Database from "better-sqlite3";
 import path from "path";
 import fs from "fs/promises";
-import Paginate from "../helpers/Paginate.js";
-import Switch from "../helpers/Switch.js";
 
 const DBDir: string = path.join(import.meta.dirname, "..", "database");
 await fs.mkdir(DBDir, { recursive: true });

@@ -1,10 +1,10 @@
-import type { BannerStrategy } from "../types/BannerStrategy.js";
-import { BannerTypes } from "../types/BannerTypes.js";
+import type { BannerStrategy } from "#types/BannerStrategy";
+import { BannerTypes } from "#types/BannerTypes";
 import { pathToFileURL } from "url";
 import path from "path";
 import fs from "fs/promises";
 
-export default new class {
+export default new class StrategyManager {
     public StrategyRegistry: Map<BannerTypes, new () => BannerStrategy> = new Map<BannerTypes, new () => BannerStrategy>();
     
     public async Load(): Promise<void> {

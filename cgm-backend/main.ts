@@ -1,14 +1,14 @@
-import type { Banner } from "./types/Banner.js";
-import type { Operator } from "./types/Operator.js";
-import type { Selection } from "./types/BannerStrategy.js";
-import type { GachaProfile } from "./types/GachaProfile.js";
-import type { SearchQuery } from "./types/SearchQuery.js";
+import type { Banner } from "#types/Banner";
+import type { Operator } from "#types/Operator";
+import type { Selection } from "#types/BannerStrategy";
+import type { GachaProfile } from "#types/GachaProfile";
+import type { SearchQuery } from "#types/SearchQuery";
 import type { Express } from "express";
 import type { RateLimitRequestHandler } from "express-rate-limit";
-import { BannerTypes } from "./types/BannerTypes.js";
-import Database from "./singletons/Database.js";
-import GachaSystem from "./singletons/GachaSystem.js";
-import LoadEnv from "./singletons/LoadEnv.js";
+import { BannerTypes } from "#types/BannerTypes";
+import Database from "#Database";
+import GachaSystem from "#GachaSystem";
+import LoadEnv from "#LoadEnv";
 import rateLimit from "express-rate-limit";
 import express from "express";
 

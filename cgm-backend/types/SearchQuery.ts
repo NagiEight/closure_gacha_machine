@@ -1,9 +1,9 @@
-import type { BannerTypes } from "./BannerTypes.js";
+import type { BannerTypes } from "#types/BannerTypes";
 
-export interface SearchQuery {
-    NameQuery?: string;
-    BannerType?: BannerTypes;
-    Includes?: string[];
-    From?: number;
-    To?: number;
-}
+export type SearchQuery = Partial<{
+    NameQuery: string;
+    BannerType: BannerTypes;
+    Includes: string[];
+    From: number;
+    To: number;
+}>;
