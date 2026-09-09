@@ -223,7 +223,7 @@ export default new class GachaSystem {
     public Roll(Token: string, BannerName: string, WriteDB?: boolean): [string, Items] | undefined;
     public Roll(Token: string, BannerName: string, WriteDB?: boolean, Selection?: Selection): [string, Items] | undefined;
     public Roll(Token: string, BannerName: string, WriteDB: boolean = true, Selection?: Selection): [string, Items] | undefined {
-        const Banner: Banner | undefined = Database.Manager.GetBanner(BannerName);
+        const Banner: Banner | undefined = Database.Manager.Banners.get(BannerName);
 
         if(!Banner || !this.GachaProfiles[Token])
             return;

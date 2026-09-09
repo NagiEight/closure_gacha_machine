@@ -13,12 +13,11 @@ export default class Standard implements BannerStrategy {
     public Roll({ Banner, Result, RU, Profile }: RollParams): string {
         return Switch(Result, {
             [Items.SixStars]: (): string => {
-                if(Profile.Count > 149 && !Profile.Focused || RU === RateUp.Primary) {
-                    Profile.Focused = true;
-                    return Banner.SixStarsPool.Primary[crypto.randomInt(Banner.SixStarsPool.Primary.length)];
-                }
-                
-                return Banner.SixStarsPool.Standard[crypto.randomInt(Banner.SixStarsPool.Standard.length)];
+                if((Profile.Count <= 149 || Profile.Focused) && RU !== RateUp.Primary) 
+                    return Banner.SixStarsPool.Standard[crypto.randomInt(Banner.SixStarsPool.Standard.length)];
+
+                Profile.Focused = true;
+                return Banner.SixStarsPool.Primary[crypto.randomInt(Banner.SixStarsPool.Primary.length)];
             },
             [Items.FiveStars]: (): string => GenericFiveStarsHandler(Banner, RU),
             [Items.FourStars]: (): string => GenericFourStarsHandler(Banner, RU),

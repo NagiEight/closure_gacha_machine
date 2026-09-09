@@ -1,12 +1,11 @@
 import type { Database as DBType } from "better-sqlite3";
-import type { BannerTypes } from "#types/BannerTypes";
+import { BannerTypes } from "#types/BannerTypes";
 import type { Banner } from "#types/Banner";
 import type { Operator } from "#types/Operator";
 import type { SearchQuery } from "#types/SearchQuery";
 import type { SearchResult } from "#types/SearchResult";
 import { Items } from "#types/Items";
 import LoadEnv from "#LoadEnv";
-import Paginate from "#helpers/Paginate";
 import Switch from "#helpers/Switch";
 import Database from "better-sqlite3";
 import path from "path";
@@ -70,22 +69,27 @@ interface OperatorsRow {
 }
 
 class DataManager {
-    private readonly Operators: Map<string, Operator> = new Map<string, Operator>(
+    public readonly Operators: Map<string, Operator> = new Map<string, Operator>(
         DB.prepare<[], OperatorsRow>("SELECT ID, Name, Rarity, ReleaseDate, Limited FROM Operators").all().map(Row => 
             [Row.ID, { Name: Row.Name, Rarity: Row.Rarity, ReleaseDate: Row.ReleaseDate, Limited: !!Row.Limited }]
         )
     );
-    private readonly Banners: Map<string, Banner>;
+    public readonly Banners: Map<string, Banner> = new Map();
+    public readonly GetBannersSTMT = DB.prepare<[number, number], SearchResult>(`
+        SELECT * FROM Banners
+        ORDER BY ReleaseDate DESC
+        LIMIT ? OFFSET ?
+    `);
 
     public constructor() {
         const Query: BannersRow[] = DB.prepare<[], BannersRow>(`
             SELECT B.Name, B.ReleaseDate, B.Type, BP.Rarity, BP.Prima, BP.Secondary, BP.Standard
             FROM BannerPools BP JOIN Banners B ON BP.BannerName = B.Name
+            ORDER BY ReleaseDate DESC
         `).all();
-        const Banners: Map<string, Banner> = new Map();
         for(const Row of Query) {
             const Name: string = Row.Name;
-            const Banner: Banner = Banners.get(Name) ?? {
+            const Banner: Banner = this.Banners.get(Name) ?? {
                 ReleaseDate: Row.ReleaseDate,
                 Type: Row.Type,
                 SixStarsPool: {
@@ -128,10 +132,8 @@ class DataManager {
                 }
             });
 
-            Banners.set(Name, Banner);
+            this.Banners.set(Name, Banner);
         }
-
-        this.Banners = new Map([...Banners.entries()].sort((A, B) => B[1].ReleaseDate - A[1].ReleaseDate));
     }
 
     private static FormMediaURL(Base: string, Name: string): string {
@@ -188,16 +190,7 @@ class DataManager {
 
         return Output;
     }
-    public GetBanner(Name: string): Banner | undefined {
-        return this.Banners.get(Name);
-    }
-    public GetBanners(Page: number): SearchResult[] {
-        return [...Paginate(LoadEnv.PAGE_SIZE, Page, this.Banners.entries())].map(([Name, Banner]) => ({
-            Name,
-            Type: Banner.Type,
-            ReleaseDate: Banner.ReleaseDate
-        }));
-    }
+
     public GetBannerCover(Name: string): string | undefined {
         return this.Banners.has(Name) 
             ? DataManager.FormMediaURL("banners/covers", Name) 
@@ -205,9 +198,6 @@ class DataManager {
         ;
     }
 
-    public GetOperator(OperatorID: string): Operator | undefined {
-        return this.Operators.get(OperatorID);
-    }
     public GetOperatorArt(OperatorID: string): string | undefined {
         return this.Operators.has(OperatorID) 
             ? DataManager.FormMediaURL("operators/e0", OperatorID) 

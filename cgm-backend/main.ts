@@ -47,23 +47,19 @@ Server.get("/api/banners/search", (Req, Res) => {
 
     Res.json(Database.Manager.SearchBanners(Page, Body));
 })
+.get("/api/banners/all", (_, Res) => Res.json(Database.DB.prepare<[], { Name: string; }>("SELECT Name FROM Banners").all().map(Row => Row.Name)))
 .get("/api/banners/:Page", (Req, Res) => {
-    if(Req.params.Page === "all") {
-        Res.json(Database.DB.prepare<[], { Name: string; }>("SELECT Name FROM Banners").all().map(Row => Row.Name));
-        return;
-    }
-
     const Page: number = Number(Req.params.Page) || -1;    
     if(Page <= 0) {
         Res.status(400).json({ message: "Invalid pagination index." });
         return;
     }
 
-    Res.json(Database.Manager.GetBanners(Page));
+    Res.json(Database.Manager.GetBannersSTMT.all(LoadEnv.PAGE_SIZE, Page * LoadEnv.PAGE_SIZE));
 })
 .get("/api/banner/:BannerName", (Req, Res) => {
     const BannerName: string = Req.params.BannerName;
-    const Banner: Banner | undefined = Database.Manager.GetBanner(BannerName);
+    const Banner: Banner | undefined = Database.Manager.Banners.get(BannerName);
 
     if(!Banner) {
         Res.status(404).json({ message: `Banner '${BannerName}' doesn't exist.` });
@@ -77,7 +73,7 @@ Server.get("/api/banners/search", (Req, Res) => {
 })
 .get("/api/operator/:OperatorID", (Req, Res) => {
     const OperatorID: string = Req.params.OperatorID;
-    const Operator: Operator | undefined = Database.Manager.GetOperator(OperatorID);
+    const Operator: Operator | undefined = Database.Manager.Operators.get(OperatorID);
 
     if(!Operator) {
         Res.status(404).json({ message: `Operator '${OperatorID}' doesn't exist.` });
@@ -179,7 +175,7 @@ Server.post("/gacha/create", (_, Res) => {
     }
     
     const BannerName: string = Req.params.BannerName;
-    const Banner: Banner | undefined = Database.Manager.GetBanner(BannerName);
+    const Banner: Banner | undefined = Database.Manager.Banners.get(BannerName);
     
     if(!Banner) {
         Res.status(404).json({ message: `Banner '${BannerName}' doesn't exist.` });
@@ -264,7 +260,7 @@ Server.post("/gacha/create", (_, Res) => {
     }
     
     const BannerName: string = Req.params.BannerName;
-    const Banner: Banner | undefined = Database.Manager.GetBanner(BannerName);
+    const Banner: Banner | undefined = Database.Manager.Banners.get(BannerName);
     
     if(!Banner) {
         Res.status(404).json({ message: `Banner '${BannerName}' doesn't exist.` });
@@ -349,7 +345,7 @@ Server.post("/gacha/create", (_, Res) => {
     }
 
     const BannerName: string = Req.params.BannerName;
-    const Banner: Banner | undefined = Database.Manager.GetBanner(BannerName);
+    const Banner: Banner | undefined = Database.Manager.Banners.get(BannerName);
 
     if(!Banner) {
         Res.status(404).json({ message: `Banner '${BannerName}' doesn't exist.` });

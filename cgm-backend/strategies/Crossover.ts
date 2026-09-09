@@ -12,23 +12,22 @@ export default class Crossover implements BannerStrategy {
     public Roll({ Banner, Result, RU, Profile }: RollParams): string {
         return Switch(Result, {
             [Items.SixStars]: (): string => {
-                if(Profile.RollsSinceLast6StarsRateUp >= 119 || RU === RateUp.Primary) {
-                    Profile.RollsSinceLast6StarsRateUp = 0;
-                    return Banner.SixStarsPool.Primary[crypto.randomInt(Banner.SixStarsPool.Primary.length)];
-                }
-                return Banner.SixStarsPool.Standard[crypto.randomInt(Banner.SixStarsPool.Primary.length)];
+                if(Profile.RollsSinceLast6StarsRateUp < 119 && RU !== RateUp.Primary) 
+                    return Banner.SixStarsPool.Standard[crypto.randomInt(Banner.SixStarsPool.Primary.length)];
+
+                Profile.RollsSinceLast6StarsRateUp = 0;
+                return Banner.SixStarsPool.Primary[crypto.randomInt(Banner.SixStarsPool.Primary.length)];  
             },
             [Items.FiveStars]: (): string => {
-                if(Profile.RollsSinceLast5StarsRateUp >= 49 || RU === RateUp.Primary) {
-                    const Remainings: string[] = Banner.FiveStarsPool.Primary.filter(OP => !Profile.Storage.FiveStars[OP]);
+                if(Profile.RollsSinceLast5StarsRateUp < 49 && RU !== RateUp.Primary) 
+                    return Banner.FiveStarsPool.Standard[crypto.randomInt(Banner.FiveStarsPool.Standard.length)];
+                
+                const Remainings: string[] = Banner.FiveStarsPool.Primary.filter(OP => !Profile.Storage.FiveStars[OP]);
 
-                    return Remainings.length === 0
-                        ? Banner.FiveStarsPool.Primary[crypto.randomInt(Banner.FiveStarsPool.Primary.length)]
-                        : Remainings[crypto.randomInt(Remainings.length)]
-                    ;
-                }
-
-                return Banner.FiveStarsPool.Standard[crypto.randomInt(Banner.FiveStarsPool.Standard.length)];
+                return Remainings.length === 0
+                    ? Banner.FiveStarsPool.Primary[crypto.randomInt(Banner.FiveStarsPool.Primary.length)]
+                    : Remainings[crypto.randomInt(Remainings.length)]
+                ;
             },
             [Items.FourStars]: (): string => GenericFourStarsHandler(Banner, RU),
             [Items.ThreeStars]: (): string => Banner.ThreeStarsPool[crypto.randomInt(Banner.ThreeStarsPool.length)]
