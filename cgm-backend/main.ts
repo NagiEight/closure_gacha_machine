@@ -30,7 +30,7 @@ Server.get("/api/banners/search", (Req, Res) => {
     const Body: SearchQuery = Req.body ?? {};
     const Page: number = Number(Req.query.page?.toString()) || -1;
 
-    if(Page <= 0) {
+    if(Page < 1) {
         Res.status(400).json({ message: "Invalid pagination index." });
         return;
     }
@@ -50,7 +50,7 @@ Server.get("/api/banners/search", (Req, Res) => {
 .get("/api/banners/all", (_, Res) => Res.json(Database.DB.prepare<[], { Name: string; }>("SELECT Name FROM Banners").all().map(Row => Row.Name)))
 .get("/api/banners/:Page", (Req, Res) => {
     const Page: number = Number(Req.params.Page) || -1;    
-    if(Page <= 0) {
+    if(Page < 1) {
         Res.status(400).json({ message: "Invalid pagination index." });
         return;
     }
@@ -205,21 +205,20 @@ Server.post("/gacha/create", (_, Res) => {
 
         const Checker = (Selection: string[], Pool: string[], Rarity: number): boolean => {
             const Excluded: string[] = [];
-            const IsValid: boolean = Selection.length !== 3 || !Selection.every(OP => {
+            const IsValid: boolean = Selection.length === 3 && Selection.every(OP => {
                 const IsIncluded: boolean = Pool.includes(OP);
                 if(!IsIncluded)
                     Excluded.push(OP);
                 return IsIncluded;
             });
-            
-            if(IsValid) {
+
+            if(!IsValid) {
                 Res.status(400).json({ 
                     message: `Operator${Excluded.length > 1 ? "s" : ""} ${Excluded.join(", ")}` +
                         ` do${Excluded.length > 1 ? "" : "es"} not exist or not included in ${BannerName} ${Rarity} stars pool.`
                  });
-                return false;
             }
-            return true;
+            return IsValid;
         };
 
         if(!Checker(Body.SixStarsSelection, Banner.SixStarsPool.Primary, 6))
@@ -290,21 +289,20 @@ Server.post("/gacha/create", (_, Res) => {
 
         const Checker = (Selection: string[], Pool: string[], Rarity: number): boolean => {
             const Excluded: string[] = [];
-            const IsValid: boolean = Selection.length !== 3 || !Selection.every(OP => {
+            const IsValid: boolean = Selection.length === 3 && Selection.every(OP => {
                 const IsIncluded: boolean = Pool.includes(OP);
                 if(!IsIncluded)
                     Excluded.push(OP);
                 return IsIncluded;
             });
-            
-            if(IsValid) {
+
+            if(!IsValid) {
                 Res.status(400).json({ 
                     message: `Operator${Excluded.length > 1 ? "s" : ""} ${Excluded.join(", ")}` +
                         ` do${Excluded.length > 1 ? "" : "es"} not exist or not included in ${BannerName} ${Rarity} stars pool.`
                  });
-                return false;
             }
-            return true;
+            return IsValid;
         };
 
         if(!Checker(Body.SixStarsSelection, Banner.SixStarsPool.Primary, 6))

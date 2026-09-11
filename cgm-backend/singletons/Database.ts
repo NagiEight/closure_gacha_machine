@@ -1,9 +1,9 @@
 import type { Database as DBType } from "better-sqlite3";
-import { BannerTypes } from "#types/BannerTypes";
 import type { Banner } from "#types/Banner";
 import type { Operator } from "#types/Operator";
 import type { SearchQuery } from "#types/SearchQuery";
 import type { SearchResult } from "#types/SearchResult";
+import { BannerTypes } from "#types/BannerTypes";
 import { Items } from "#types/Items";
 import LoadEnv from "#LoadEnv";
 import Switch from "#helpers/Switch";
@@ -49,6 +49,16 @@ DB.exec(`
         Type TEXT NOT NULL
     );
 `);
+DB.function(
+    "some",
+    { deterministic: true },
+    (SubsetJSON: string, SupersetJSON: string): 0 | 1 => {
+        const Subset: string[] = JSON.parse(SubsetJSON);
+        const Superset: Set<string> = new Set(JSON.parse(SupersetJSON));
+
+        return Number(Subset.some(x => Superset.has(x))) as 0 | 1;
+    }
+);
 
 interface BannersRow {
     Name: string;
@@ -80,6 +90,60 @@ class DataManager {
         ORDER BY ReleaseDate DESC
         LIMIT ? OFFSET ?
     `);
+    public readonly SearchBannersSTMT = DB.transaction((
+        PageIndex: number,
+        PageSize: number,
+        {
+            NameQuery,
+            BannerType,
+            Includes,
+            From,
+            To
+        }: SearchQuery
+    ): SearchResult[] => {
+        const Condition: string[] = [];
+        const Args: any[] = [];
+
+        if(NameQuery) {
+            Condition.push("B.Name LIKE ?");
+            Args.push(`%${NameQuery}%`);
+        }
+
+        if(BannerType) {
+            Condition.push("B.Type = ?");
+            Args.push(BannerType);
+        }
+        
+        if(From) {
+            Condition.push("B.ReleaseDate >= ?");
+            Args.push(From);
+        }
+
+        if(To) {
+            Condition.push("B.ReleaseDate <= ?");
+            Args.push(To);
+        }
+
+        if(Includes) {
+            const JSONString: string = JSON.stringify(Includes);
+            Condition.push(`
+                BP.Prima IS NULL OR some(?, BP.Prima) OR
+                BP.Secondary IS NULL OR some(?, BP.Secondary) OR
+                some(?, BP.Standard)
+            `);
+            Args.push(...new Array(3).fill(JSONString));
+        }
+
+        return DB.prepare<any[], SearchResult>(`
+            SELECT B.Name, B.ReleaseDate, B.Type
+            FROM BannerPools BP JOIN Banners B ON BP.BannerName = B.Name
+            ${Condition.length ? `
+                WHERE ${Condition.join(" AND ")}
+            ` : ""}
+            LIMIT ? OFFSET ?
+            ORDER BY ReleaseDate DESC
+        `).all(...Args, PageSize, PageIndex * PageSize);
+    });
 
     public constructor() {
         const Query: BannersRow[] = DB.prepare<[], BannersRow>(`
@@ -179,7 +243,7 @@ class DataManager {
             if(!IsMatch)
                 continue;
 
-            if(Matched >= PageStart && Matched < PageEnd) 
+            if(Matched >= PageStart && Matched < PageEnd)
                 Output.push({ Name, Type: Banner.Type, ReleaseDate: Banner.ReleaseDate });
 
             Matched++
