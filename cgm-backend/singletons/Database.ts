@@ -56,7 +56,7 @@ DB.function(
         const Subset: string[] = JSON.parse(SubsetJSON);
         const Superset: Set<string> = new Set(JSON.parse(SupersetJSON));
 
-        return Number(Subset.some(x => Superset.has(x))) as 0 | 1;
+        return Number(Subset.length && Subset.every(x => Superset.has(x))) as 0 | 1;
     }
 );
 
@@ -126,12 +126,12 @@ class DataManager {
 
         if(Includes) {
             const JSONString: string = JSON.stringify(Includes);
-            Condition.push(`
+            Condition.push(`(
                 BP.Prima IS NULL OR some(?, BP.Prima) OR
                 BP.Secondary IS NULL OR some(?, BP.Secondary) OR
                 some(?, BP.Standard)
-            `);
-            Args.push(...new Array(3).fill(JSONString));
+            )`);
+            Args.push(JSONString, JSONString, JSONString);
         }
 
         return DB.prepare<any[], SearchResult>(`
