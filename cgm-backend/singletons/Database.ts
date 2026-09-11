@@ -7,6 +7,7 @@ import { BannerTypes } from "#types/BannerTypes";
 import { Items } from "#types/Items";
 import LoadEnv from "#LoadEnv";
 import Switch from "#helpers/Switch";
+import FormMediaURL from "#helpers/FormMediaURL";
 import Database from "better-sqlite3";
 import path from "path";
 import fs from "fs/promises";
@@ -200,12 +201,6 @@ class DataManager {
         }
     }
 
-    private static FormMediaURL(Base: string, Name: string): string {
-        const MediaURL: URL = new URL(`${LoadEnv.BASE_MEDIA_URL}/${Base}/${encodeURIComponent(Name).replace(/\ /g, "_")}.png`);
-        MediaURL.pathname = MediaURL.pathname.replace(/\/+/g, '/');
-        return MediaURL.toString();
-    };
-
     // We'll see how bad this is
     public SearchBanners(Page: number, { NameQuery, BannerType, Includes, From, To }: SearchQuery): SearchResult[] {
         const Output: SearchResult[] = [];
@@ -257,26 +252,26 @@ class DataManager {
 
     public GetBannerCover(Name: string): string | undefined {
         return this.Banners.has(Name) 
-            ? DataManager.FormMediaURL("banners/covers", Name) 
+            ? FormMediaURL("banners/covers", Name) 
             : undefined
         ;
     }
 
     public GetOperatorArt(OperatorID: string): string | undefined {
         return this.Operators.has(OperatorID) 
-            ? DataManager.FormMediaURL("operators/e0", OperatorID) 
+            ? FormMediaURL("operators/e0", OperatorID) 
             : undefined
         ;
     }
     public GetOperatorE2Art(OperatorID: string): string | undefined {
         return this.Operators.has(OperatorID) 
-            ? DataManager.FormMediaURL("operators/e2", OperatorID) 
+            ? FormMediaURL("operators/e2", OperatorID) 
             : undefined
         ;
     }
     public GetOperatorCard(OperatorID: string): string | undefined {
         return this.Operators.has(OperatorID) 
-            ? DataManager.FormMediaURL("operators/cards", OperatorID) 
+            ? FormMediaURL("operators/cards", OperatorID) 
             : undefined
         ;
     }
