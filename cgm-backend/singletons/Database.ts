@@ -51,7 +51,7 @@ DB.exec(`
     );
 `);
 DB.function(
-    "some",
+    "every",
     { deterministic: true },
     (SubsetJSON: string, SupersetJSON: string): 0 | 1 => {
         const Subset: string[] = JSON.parse(SubsetJSON);
@@ -128,9 +128,9 @@ class DataManager {
         if(Includes) {
             const JSONString: string = JSON.stringify(Includes);
             Condition.push(`(
-                BP.Prima IS NULL OR some(?, BP.Prima) OR
-                BP.Secondary IS NULL OR some(?, BP.Secondary) OR
-                some(?, BP.Standard)
+                BP.Prima IS NOT NULL AND every(?, BP.Prima) OR
+                BP.Secondary IS NOT NULL AND every(?, BP.Secondary) OR
+                every(?, BP.Standard)
             )`);
             Args.push(JSONString, JSONString, JSONString);
         }
@@ -138,9 +138,7 @@ class DataManager {
         return DB.prepare<any[], SearchResult>(`
             SELECT B.Name, B.ReleaseDate, B.Type
             FROM BannerPools BP JOIN Banners B ON BP.BannerName = B.Name
-            ${Condition.length ? `
-                WHERE ${Condition.join(" AND ")}
-            ` : ""}
+            ${Condition.length ? `WHERE ${Condition.join(" AND ")}` : ""}
             LIMIT ? OFFSET ?
             ORDER BY ReleaseDate DESC
         `).all(...Args, PageSize, PageIndex * PageSize);
