@@ -102,45 +102,50 @@ class DataManager {
             To
         }: SearchQuery
     ): SearchResult[] => {
-        const Condition: string[] = [];
+        const Conditions: string[] = [];
         const Args: any[] = [];
 
         if(NameQuery) {
-            Condition.push("LOWER(B.Name) LIKE ?");
+            Conditions.push("LOWER(B.Name) LIKE ?");
             Args.push(`%${NameQuery}%`.toLowerCase());
         }
 
         if(BannerType) {
-            Condition.push("B.Type = ?");
+            Conditions.push("B.Type = ?");
             Args.push(BannerType);
         }
         
         if(From) {
-            Condition.push("B.ReleaseDate >= ?");
+            Conditions.push("B.ReleaseDate >= ?");
             Args.push(From);
         }
 
         if(To) {
-            Condition.push("B.ReleaseDate <= ?");
+            Conditions.push("B.ReleaseDate <= ?");
             Args.push(To);
         }
 
         if(Includes) {
             const JSONString: string = JSON.stringify(Includes);
-            Condition.push(`(
-                BP.Prima IS NOT NULL AND every(?, BP.Prima) OR
-                BP.Secondary IS NOT NULL AND every(?, BP.Secondary) OR
-                every(?, BP.Standard)
+            Conditions.push(`EXISTS (
+                SELECT 1 FROM BannerPools BP WHERE
+                    BP.BannerName = B.Name
+                    AND (
+                        (BP.Prima IS NOT NULL AND every(?, BP.Prima))
+                        OR
+                        (BP.Secondary IS NOT NULL AND every(?, BP.Secondary))
+                        OR
+                        every(?, BP.Standard)
+                    )
             )`);
             Args.push(JSONString, JSONString, JSONString);
         }
 
         return DB.prepare<any[], SearchResult>(`
-            SELECT B.Name, B.ReleaseDate, B.Type
-            FROM BannerPools BP JOIN Banners B ON BP.BannerName = B.Name
-            ${Condition.length ? `WHERE ${Condition.join(" AND ")}` : ""}
+            SELECT B.Name, B.ReleaseDate, B.Type FROM Banners B
+            ${Conditions.length ? `WHERE ${Conditions.join(" AND ")}` : ""}
+            ORDER BY B.ReleaseDate DESC
             LIMIT ? OFFSET ?
-            ORDER BY ReleaseDate DESC
         `).all(...Args, PageSize, PageIndex * PageSize);
     });
 
