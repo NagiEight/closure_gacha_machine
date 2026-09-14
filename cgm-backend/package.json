@@ -27,7 +27,7 @@
   "name": "cgm-backend",
   "description": "## Base URL ``` http://localhost:3000 ```",
   "version": "1.0.0",
-  "main": "index.js",
+  "main": "main.js",
   "keywords": [],
   "author": "",
   "license": "GPL-3.0-only"
