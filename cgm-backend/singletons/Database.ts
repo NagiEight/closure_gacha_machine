@@ -106,8 +106,8 @@ class DataManager {
         const Args: any[] = [];
 
         if(NameQuery) {
-            Condition.push("B.Name LIKE ?");
-            Args.push(`%${NameQuery}%`);
+            Condition.push("LOWER(B.Name) LIKE ?");
+            Args.push(`%${NameQuery}%`.toLowerCase());
         }
 
         if(BannerType) {
