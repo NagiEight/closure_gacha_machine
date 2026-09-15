@@ -11,6 +11,7 @@ import GachaSystem from "#GachaSystem";
 import LoadEnv from "#LoadEnv";
 import rateLimit from "express-rate-limit";
 import express from "express";
+import type { SearchResult } from "#types/SearchResult";
 
 const Server: Express = express();
 const Limiter: RateLimitRequestHandler = rateLimit({
@@ -40,12 +41,13 @@ Server.get("/api/banners/search", (Req, Res) => {
         return;
     }
 
-    if(Body.BannerType && Object.values(BannerTypes).includes(Body.BannerType)) {
+    if(Body.BannerType && !Object.values(BannerTypes).includes(Body.BannerType)) {
         Res.status(404).json({ message: `Unknown banner type '${Body.BannerType}'.` });
         return;
     }
 
-    Res.json(Database.Manager.SearchBanners(Page, Body));
+    const Result: SearchResult[] = Database.Manager.SearchBannersSTMT(Page, LoadEnv.PAGE_SIZE, Body);
+    Res.json(Result);
 })
 .get("/api/banners/all", (_, Res) => Res.json(Database.DB.prepare<[], { Name: string; }>("SELECT Name FROM Banners").all().map(Row => Row.Name)))
 .get("/api/banners/:Page", (Req, Res) => {
@@ -216,7 +218,7 @@ Server.post("/gacha/create", (_, Res) => {
                 Res.status(400).json({ 
                     message: `Operator${Excluded.length > 1 ? "s" : ""} ${Excluded.join(", ")}` +
                         ` do${Excluded.length > 1 ? "" : "es"} not exist or not included in ${BannerName} ${Rarity} stars pool.`
-                 });
+                });
             }
             return IsValid;
         };

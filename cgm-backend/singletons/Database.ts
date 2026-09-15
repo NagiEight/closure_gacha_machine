@@ -5,7 +5,6 @@ import type { SearchQuery } from "#types/SearchQuery";
 import type { SearchResult } from "#types/SearchResult";
 import { BannerTypes } from "#types/BannerTypes";
 import { Items } from "#types/Items";
-import LoadEnv from "#LoadEnv";
 import Switch from "#helpers/Switch";
 import FormMediaURL from "#helpers/FormMediaURL";
 import Database from "better-sqlite3";
@@ -53,11 +52,10 @@ DB.exec(`
 DB.function(
     "every",
     { deterministic: true },
-    (SubsetJSON: string, SupersetJSON: string): 0 | 1 => {
-        const Subset: string[] = JSON.parse(SubsetJSON);
-        const Superset: Set<string> = new Set(JSON.parse(SupersetJSON));
-
-        return Number(Subset.length && Subset.every(x => Superset.has(x))) as 0 | 1;
+    (SetJSON: string, BannerName: string): 0 | 1 => {
+        const set: string[] = JSON.parse(SetJSON);
+        const PoolOps: Set<string> = Manager.BannerPoolCache.get(BannerName)!;
+        return Number(set.length && set.every(OP => PoolOps.has(OP))) as 0 | 1;
     }
 );
 
@@ -78,14 +76,15 @@ interface OperatorsRow {
     ReleaseDate: number | null;
     Limited: number;
 }
-
 class DataManager {
     public readonly Operators: Map<string, Operator> = new Map<string, Operator>(
-        DB.prepare<[], OperatorsRow>("SELECT ID, Name, Rarity, ReleaseDate, Limited FROM Operators").all().map(Row => 
+        DB.prepare<[], OperatorsRow>("SELECT * FROM Operators").all().map(Row => 
             [Row.ID, { Name: Row.Name, Rarity: Row.Rarity, ReleaseDate: Row.ReleaseDate, Limited: !!Row.Limited }]
         )
     );
     public readonly Banners: Map<string, Banner> = new Map();
+    public readonly BannerPoolCache: Map<string, Set<string>> = new Map();
+
     public readonly GetBannersSTMT = DB.prepare<[number, number], SearchResult>(`
         SELECT * FROM Banners
         ORDER BY ReleaseDate DESC
@@ -106,47 +105,37 @@ class DataManager {
         const Args: any[] = [];
 
         if(NameQuery) {
-            Conditions.push("LOWER(B.Name) LIKE ?");
-            Args.push(`%${NameQuery}%`.toLowerCase());
+            Conditions.push("LOWER(Name) LIKE ?");
+            Args.push(`%${NameQuery.trim().toLowerCase()}%`);
         }
 
         if(BannerType) {
-            Conditions.push("B.Type = ?");
+            Conditions.push("Type = ?");
             Args.push(BannerType);
         }
         
-        if(From) {
-            Conditions.push("B.ReleaseDate >= ?");
+        if(From != undefined) {
+            Conditions.push("ReleaseDate >= ?");
             Args.push(From);
         }
 
-        if(To) {
-            Conditions.push("B.ReleaseDate <= ?");
+        if(To != undefined) {
+            Conditions.push("ReleaseDate <= ?");
             Args.push(To);
         }
 
-        if(Includes) {
+        if(Includes?.length) {
             const JSONString: string = JSON.stringify(Includes);
-            Conditions.push(`EXISTS (
-                SELECT 1 FROM BannerPools BP WHERE
-                    BP.BannerName = B.Name
-                    AND (
-                        (BP.Prima IS NOT NULL AND every(?, BP.Prima))
-                        OR
-                        (BP.Secondary IS NOT NULL AND every(?, BP.Secondary))
-                        OR
-                        every(?, BP.Standard)
-                    )
-            )`);
-            Args.push(JSONString, JSONString, JSONString);
+            Conditions.push(`every(?, Name)`);
+            Args.push(JSONString);
         }
 
         return DB.prepare<any[], SearchResult>(`
-            SELECT B.Name, B.ReleaseDate, B.Type FROM Banners B
+            SELECT * FROM Banners
             ${Conditions.length ? `WHERE ${Conditions.join(" AND ")}` : ""}
-            ORDER BY B.ReleaseDate DESC
+            ORDER BY ReleaseDate DESC
             LIMIT ? OFFSET ?
-        `).all(...Args, PageSize, PageIndex * PageSize);
+        `).all(...Args, PageSize, (PageIndex - 1) * PageSize);
     });
 
     public constructor() {
@@ -175,82 +164,35 @@ class DataManager {
                 },
                 ThreeStarsPool: []
             };
+
+            const Primary: string[] = JSON.parse(Row.Prima ?? "[]");
+            const Secondary: string[] = JSON.parse(Row.Secondary ?? "[]");
+            const Standard: string[] = JSON.parse(Row.Standard);
+
+            this.BannerPoolCache.set(Name, new Set([
+                ...(this.BannerPoolCache.get(Name) ?? []),
+                ...Primary,
+                ...Secondary,
+                ...Standard
+            ]));
+
             Switch(Row.Rarity, {
                 [Items.SixStars]: (): void => {
-                    Banner.SixStarsPool = {
-                        Primary: JSON.parse(Row.Prima ?? "[]"),
-                        Secondary: JSON.parse(Row.Secondary ?? "[]"),
-                        Standard: JSON.parse(Row.Standard)
-                    };
+                    Banner.SixStarsPool = { Primary, Secondary, Standard };
                 },
                 [Items.FiveStars]: (): void => {
-                    Banner.FiveStarsPool = {
-                        Primary: JSON.parse(Row.Prima ?? "[]"),
-                        Standard: JSON.parse(Row.Standard)
-                    };
+                    Banner.FiveStarsPool = { Primary, Standard };
                 },
                 [Items.FourStars]: (): void => {
-                    Banner.FourStarsPool = {
-                        Primary: JSON.parse(Row.Prima ?? "[]"),
-                        Standard: JSON.parse(Row.Standard)
-                    };
+                    Banner.FourStarsPool = { Primary, Standard };
                 },
                 [Items.ThreeStars]: (): void => {
-                    Banner.ThreeStarsPool = JSON.parse(Row.Standard);
+                    Banner.ThreeStarsPool = Standard;
                 }
             });
 
             this.Banners.set(Name, Banner);
         }
-    }
-
-    // We'll see how bad this is
-    public SearchBanners(Page: number, { NameQuery, BannerType, Includes, From, To }: SearchQuery): SearchResult[] {
-        const Output: SearchResult[] = [];
-        
-        if(Includes)
-            Includes = [...new Set(Includes)];
-
-        const IncludesIn = (OP: string, Banner: Banner): boolean => 
-            Banner.SixStarsPool.Primary.includes(OP) ||
-            Banner.SixStarsPool.Secondary.includes(OP) ||
-            Banner.SixStarsPool.Standard.includes(OP) ||
-            
-            Banner.FiveStarsPool.Primary.includes(OP) ||
-            Banner.FiveStarsPool.Standard.includes(OP) ||
-
-            Banner.FourStarsPool.Primary.includes(OP) ||
-            Banner.FourStarsPool.Standard.includes(OP) ||
-
-            Banner.ThreeStarsPool.includes(OP)
-        ;
-
-        const PageStart: number = (Page - 1) * LoadEnv.PAGE_SIZE;
-        const PageEnd: number = PageStart + LoadEnv.PAGE_SIZE;
-        let Matched: number = 0;
-
-        for(const [Name, Banner] of this.Banners) {
-            const IsMatch: boolean =
-                (NameQuery == undefined || Name.toLowerCase().includes(NameQuery.trim().toLowerCase())) &&
-                (BannerType == undefined || Banner.Type === BannerType) &&
-                (Includes == undefined || !!Includes.length && Includes.every(OP => IncludesIn(OP, Banner))) &&
-                (From == undefined || Banner.ReleaseDate >= From) &&
-                (To == undefined || Banner.ReleaseDate <= To)
-            ;
-
-            if(!IsMatch)
-                continue;
-
-            if(Matched >= PageStart && Matched < PageEnd)
-                Output.push({ Name, Type: Banner.Type, ReleaseDate: Banner.ReleaseDate });
-
-            Matched++
-            if(Matched >= PageEnd) {
-                break;
-            }
-        }
-
-        return Output;
     }
 
     public GetBannerCover(Name: string): string | undefined {
@@ -280,7 +222,6 @@ class DataManager {
     }
 }
 
-export default {
-    DB,
-    Manager: new DataManager()
-};
+const Manager: DataManager = new DataManager();
+
+export default { DB, Manager };

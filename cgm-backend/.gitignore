@@ -3,3 +3,5 @@
 dev/
 node_modules/
 public/
+*.db-shm
+*.db-wal
