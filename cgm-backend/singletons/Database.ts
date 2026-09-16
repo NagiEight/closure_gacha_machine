@@ -177,18 +177,10 @@ class DataManager {
             ]));
 
             Switch(Row.Rarity, {
-                [Items.SixStars]: (): void => {
-                    Banner.SixStarsPool = { Primary, Secondary, Standard };
-                },
-                [Items.FiveStars]: (): void => {
-                    Banner.FiveStarsPool = { Primary, Standard };
-                },
-                [Items.FourStars]: (): void => {
-                    Banner.FourStarsPool = { Primary, Standard };
-                },
-                [Items.ThreeStars]: (): void => {
-                    Banner.ThreeStarsPool = Standard;
-                }
+                [Items.SixStars]: (): any => Banner.SixStarsPool = { Primary, Secondary, Standard },
+                [Items.FiveStars]: (): any => Banner.FiveStarsPool = { Primary, Standard },
+                [Items.FourStars]: (): any => Banner.FourStarsPool = { Primary, Standard },
+                [Items.ThreeStars]: (): any => Banner.ThreeStarsPool = Standard
             });
 
             this.Banners.set(Name, Banner);
@@ -196,27 +188,27 @@ class DataManager {
     }
 
     public GetBannerCover(Name: string): string | undefined {
-        return this.Banners.has(Name) 
-            ? FormMediaURL("banners/covers", Name) 
+        return this.Banners.has(Name)
+            ? FormMediaURL("banners/covers", Name)
             : undefined
         ;
     }
 
     public GetOperatorArt(OperatorID: string): string | undefined {
-        return this.Operators.has(OperatorID) 
-            ? FormMediaURL("operators/e0", OperatorID) 
+        return this.Operators.has(OperatorID)
+            ? FormMediaURL("operators/e0", OperatorID)
             : undefined
         ;
     }
     public GetOperatorE2Art(OperatorID: string): string | undefined {
-        return this.Operators.has(OperatorID) 
-            ? FormMediaURL("operators/e2", OperatorID) 
+        return this.Operators.has(OperatorID)
+            ? FormMediaURL("operators/e2", OperatorID)
             : undefined
         ;
     }
     public GetOperatorCard(OperatorID: string): string | undefined {
-        return this.Operators.has(OperatorID) 
-            ? FormMediaURL("operators/cards", OperatorID) 
+        return this.Operators.has(OperatorID)
+            ? FormMediaURL("operators/cards", OperatorID)
             : undefined
         ;
     }

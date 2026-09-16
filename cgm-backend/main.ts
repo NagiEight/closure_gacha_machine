@@ -5,13 +5,13 @@ import type { GachaProfile } from "#types/GachaProfile";
 import type { SearchQuery } from "#types/SearchQuery";
 import type { Express } from "express";
 import type { RateLimitRequestHandler } from "express-rate-limit";
+import type { SearchResult } from "#types/SearchResult";
 import { BannerTypes } from "#types/BannerTypes";
 import Database from "#Database";
 import GachaSystem from "#GachaSystem";
 import LoadEnv from "#LoadEnv";
 import rateLimit from "express-rate-limit";
 import express from "express";
-import type { SearchResult } from "#types/SearchResult";
 
 const Server: Express = express();
 const Limiter: RateLimitRequestHandler = rateLimit({
@@ -241,7 +241,7 @@ Server.post("/gacha/create", (_, Res) => {
 .post("/gacha/:BannerName/roll/:Count", (Req, Res) => {
     const Count: number = Number(Req.params.Count) || -1;
     
-    if(Count <= 0) {
+    if(Count < 1) {
         Res.status(400).json({ message: "Roll count must be a number greater than 0." });
         return;
     }
