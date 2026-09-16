@@ -53,9 +53,9 @@ DB.function(
     "every",
     { deterministic: true },
     (SetJSON: string, BannerName: string): 0 | 1 => {
-        const set: string[] = JSON.parse(SetJSON);
+        const Set: string[] = JSON.parse(SetJSON);
         const PoolOps: Set<string> = Manager.BannerPoolCache.get(BannerName)!;
-        return Number(set.length && set.every(OP => PoolOps.has(OP))) as 0 | 1;
+        return +Set.every(OP => PoolOps.has(OP)) as 0 | 1;
     }
 );
 
@@ -78,9 +78,10 @@ interface OperatorsRow {
 }
 class DataManager {
     public readonly Operators: Map<string, Operator> = new Map<string, Operator>(
-        DB.prepare<[], OperatorsRow>("SELECT * FROM Operators").all().map(Row => 
-            [Row.ID, { Name: Row.Name, Rarity: Row.Rarity, ReleaseDate: Row.ReleaseDate, Limited: !!Row.Limited }]
-        )
+        DB.prepare<[], OperatorsRow>("SELECT * FROM Operators").all().map(Row => {
+            const { ID, Limited, ...Rest } = Row;
+            return [ID, { ...Rest, Limited: !!Limited }];
+        })
     );
     public readonly Banners: Map<string, Banner> = new Map();
     public readonly BannerPoolCache: Map<string, Set<string>> = new Map();

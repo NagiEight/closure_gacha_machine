@@ -14,7 +14,7 @@ import StrategyManager from "#StrategyManager";
 
 Database.DB.exec(`
     CREATE TABLE IF NOT EXISTS GachaData(
-        UserToken TEXT NOT NULL,
+        Token TEXT NOT NULL,
         Banner TEXT NOT NULL,
 
         Count INTEGER NOT NULL,
@@ -25,23 +25,23 @@ Database.DB.exec(`
         Focused INTEGER NOT NULL,
         TenRolls INTEGER NOT NULL,
 
-        PRIMARY KEY (UserToken, Banner),
-        FOREIGN KEY (UserToken) REFERENCES GachaProfiles(Token),
+        PRIMARY KEY (Token, Banner),
+        FOREIGN KEY (Token) REFERENCES GachaProfiles(Token),
 
         CHECK(Focused IN (0, 1)),
         CHECK(TenRolls IN (0, 1))
     );
 
     CREATE TABLE IF NOT EXISTS GachaStorage(
-        UserToken TEXT NOT NULL,
+        Token TEXT NOT NULL,
         Banner TEXT NOT NULL,
         Rarity INTEGER NOT NULL,
         ID TEXT NOT NULL,
 
         Count INTEGER NOT NULL,
 
-        PRIMARY KEY (UserToken, Banner, Rarity, ID),
-        FOREIGN KEY (UserToken) REFERENCES GachaProfiles(Token),
+        PRIMARY KEY (Token, Banner, Rarity, ID),
+        FOREIGN KEY (Token) REFERENCES GachaProfiles(Token),
 
         CHECK(Rarity IN (3, 4, 5, 6)),
         CHECK(Count >= 0)
@@ -55,14 +55,14 @@ Database.DB.exec(`
 await StrategyManager.Load();
 
 interface GachaProfileStorageRow {
-    UserToken: string;
+    Token: string;
     Banner: string;
     Rarity: Items;
     ID: string;
     Count: number;
 }
 interface GachaProfileDataRow {
-    UserToken: string;
+    Token: string;
     Banner: string; 
     Count: number;
     RollsWithoutSixStar: number;
@@ -99,25 +99,25 @@ export default new class GachaSystem {
     `);
     private readonly RefreshStorageSTMT = Database.DB.prepare<GachaProfileStorageRow, void>(`
         INSERT INTO GachaStorage(
-            UserToken,
+            Token,
             Banner,
             Rarity,
             ID,
             Count
         )
         VALUES(
-            @UserToken,
+            @Token,
             @Banner,
             @Rarity,
             @ID,
             @Count
         )
-        ON CONFLICT(UserToken, Banner, Rarity, ID) DO UPDATE SET
+        ON CONFLICT(Token, Banner, Rarity, ID) DO UPDATE SET
             Count = excluded.Count
     `);
     private readonly RefreshDataSTMT = Database.DB.prepare<GachaProfileDataRow, void>(`
         INSERT INTO GachaData(
-            UserToken,
+            Token,
             Banner,
             Count,
             RollsWithoutSixStar,
@@ -128,7 +128,7 @@ export default new class GachaSystem {
             TenRolls
         )
         VALUES(
-            @UserToken,
+            @Token,
             @Banner,
             @Count,
             @RollsWithoutSixStar,
@@ -137,7 +137,7 @@ export default new class GachaSystem {
             @Focused,
             @TenRolls
         )
-        ON CONFLICT(UserToken, Banner) DO UPDATE SET
+        ON CONFLICT(Token, Banner) DO UPDATE SET
             Count = excluded.Count,
             RollsWithoutSixStar = excluded.RollsWithoutSixStar,
             RollsSinceLast6StarsRateUp = excluded.RollsSinceLast6StarsRateUp,
@@ -149,23 +149,23 @@ export default new class GachaSystem {
     private readonly ResetBannerSTMT = Database.DB.transaction((Token: string, BannerName: string): void => {
         Database.DB.prepare<[string, string], void>(`
             DELETE FROM GachaData
-            WHERE UserToken = ? AND Banner = ?
+            WHERE Token = ? AND Banner = ?
         `).run(Token, BannerName);
         Database.DB.prepare<[string, string], void>(`
             DELETE FROM GachaStorage
-            WHERE UserToken = ? AND Banner = ?
+            WHERE Token = ? AND Banner = ?
         `).run(Token, BannerName);
     });
     private readonly DeleteProfileSTMT = Database.DB.transaction((Token: string): void => {
-        Database.DB.prepare<[string], void>("DELETE FROM GachaStorage WHERE UserToken = ?").run(Token);
-        Database.DB.prepare<[string], void>("DELETE FROM GachaData WHERE UserToken = ?").run(Token);
+        Database.DB.prepare<[string], void>("DELETE FROM GachaStorage WHERE Token = ?").run(Token);
+        Database.DB.prepare<[string], void>("DELETE FROM GachaData WHERE Token = ?").run(Token);
         Database.DB.prepare<[string], void>("DELETE FROM GachaProfiles WHERE Token = ?").run(Token);
     });
 
     public constructor() {
         const StorageQuery: GachaProfileStorageRow[] = Database.DB.prepare<[], GachaProfileStorageRow>(`
             SELECT GP.Token, GS.Banner, GS.Rarity, GS.ID, GS.Count
-            FROM GachaStorage GS JOIN GachaProfiles GP ON GP.Token = GS.UserToken
+            FROM GachaStorage GS JOIN GachaProfiles GP ON GP.Token = GS.Token
         `).all();
         const DataQuery: GachaProfileDataRow[] = Database.DB.prepare<[], GachaProfileDataRow>(`
             SELECT
@@ -178,19 +178,16 @@ export default new class GachaSystem {
                 GD.RollsSinceLast4StarsRateUp,
                 GD.TenRolls,
                 GD.Count
-            FROM GachaData GD JOIN GachaProfiles GP ON GP.Token = GD.UserToken
+            FROM GachaData GD JOIN GachaProfiles GP ON GP.Token = GD.Token
         `).all();
 
         DataQuery.forEach(Row => {
-            this.GachaProfiles[Row.UserToken] ??= {};
-            this.GachaProfiles[Row.UserToken][Row.Banner] ??= {
-                Count: Row.Count,
-                RollsWithoutSixStar: Row.RollsWithoutSixStar,
-                RollsSinceLast6StarsRateUp: Row.RollsSinceLast6StarsRateUp,
-                RollsSinceLast5StarsRateUp: Row.RollsSinceLast5StarsRateUp,
-                RollsSinceLast4StarsRateUp: Row.RollsSinceLast4StarsRateUp,
-                Focused: !!Row.Focused,
-                TenRolls: !!Row.TenRolls,
+            const { Token, Banner, Focused, TenRolls, ...Rest } = Row;
+            this.GachaProfiles[Token] ??= {};
+            this.GachaProfiles[Token][Banner] ??= {
+                ...Rest,
+                Focused: !!Focused,
+                TenRolls: !!TenRolls,
                 Storage: {
                     SixStars: {},
                     FiveStars: {},
@@ -201,7 +198,7 @@ export default new class GachaSystem {
         });
         
         StorageQuery.forEach(Row => {
-            const Storage: ProfileStorage = this.GachaProfiles[Row.UserToken][Row.Banner].Storage;
+            const Storage: ProfileStorage = this.GachaProfiles[Row.Token][Row.Banner].Storage;
             Switch(Row.Rarity, {
                 6: (): Record<string, number> => Storage.SixStars,
                 5: (): Record<string, number> => Storage.FiveStars,
@@ -346,7 +343,7 @@ export default new class GachaSystem {
             return [Output, Result];
 
         this.RefreshStorageSTMT.run({
-            UserToken: Token,
+            Token,
             Banner: BannerName,
             Rarity: Result,
             ID: Output,
@@ -354,11 +351,11 @@ export default new class GachaSystem {
         });
 
         this.RefreshDataSTMT.run({
-            UserToken: Token,
+            Token,
             Banner: BannerName,
             ...Rest,
-            Focused: Number(Focused) as 0 | 1,
-            TenRolls: Number(TenRolls) as 0 | 1
+            Focused: +Focused as 0 | 1,
+            TenRolls: +TenRolls as 0 | 1
         });
 
         return [Output, Result];
@@ -395,31 +392,27 @@ export default new class GachaSystem {
 
         const Result: [string, Items][] = [];
         while(Result.push(this.Roll(Token, BannerName, false, Selection)!) < Count);
-        const OperatorMap: Map<string, Items> = new Map(Result);
-
         const { Storage, Focused, TenRolls, ...Rest } = Profile;
 
-        for(const [ID, Rarity] of OperatorMap) {
-            this.RefreshStorageSTMT.run({
-                UserToken: Token,
-                Banner: BannerName,
-                Rarity,
-                ID,
-                Count: Switch(Rarity, {
-                    [Items.SixStars]: (): Record<string, number> => Storage.SixStars,
-                    [Items.FiveStars]: (): Record<string, number> => Storage.FiveStars,
-                    [Items.FourStars]: (): Record<string, number> => Storage.FourStars,
-                    [Items.ThreeStars]: (): Record<string, number> => Storage.ThreeStars
-                })[ID]
-            });
-        }
+        Iterator.from(new Map(Result)).forEach(([ID, Rarity]): any => this.RefreshStorageSTMT.run({
+            Token,
+            Banner: BannerName,
+            Rarity,
+            ID,
+            Count: Switch(Rarity, {
+                [Items.SixStars]: (): Record<string, number> => Storage.SixStars,
+                [Items.FiveStars]: (): Record<string, number> => Storage.FiveStars,
+                [Items.FourStars]: (): Record<string, number> => Storage.FourStars,
+                [Items.ThreeStars]: (): Record<string, number> => Storage.ThreeStars
+            })[ID]
+        }));
 
         this.RefreshDataSTMT.run({
-            UserToken: Token,
+            Token,
             Banner: BannerName,
             ...Rest,
-            Focused: Number(Focused) as 0 | 1,
-            TenRolls: Number(TenRolls) as 0 | 1
+            Focused: +Focused as 0 | 1,
+            TenRolls: +TenRolls as 0 | 1
         });
         return Result.map(Item => Item[0]);
     }

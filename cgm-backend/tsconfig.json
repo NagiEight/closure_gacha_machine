@@ -1,9 +1,12 @@
 {
   "compilerOptions": {
-    "target": "ES2022",
+    "target": "ES2025",
     "module": "nodenext",
     "moduleResolution": "nodenext",
-    "lib": ["ES2022"],
+    "lib": [
+      "ES2025",
+      "ES2025.Iterator"
+    ],
     "types": ["node"],
 
     "outDir": "./public",
@@ -29,5 +32,5 @@
     "verbatimModuleSyntax": true
   },
   "include": ["./**/*"],
-  "exclude": ["node_modules", "dist", "./dev/**/*", "*test*"]
+  "exclude": ["node_modules", "public", "./dev/**/*", "*test*", "types"]
 }
