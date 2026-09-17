@@ -4,16 +4,16 @@ import { Items } from "#types/Items";
 import Switch from "#helpers/Switch";
 import GenericFourStarsHandler from "#helpers/GenericFourStarsHandler";
 import StrategyManager from "#StrategyManager";
-import crypto from "crypto";
+import RandomItem from "#helpers/RandomItem";
 
 @StrategyManager.Register(BannerTypes.JointOperation)
 export default class JointOperation implements BannerStrategy {
     public Roll({ Banner, Result, RU }: RollParams): string {
         return Switch(Result, {
-            [Items.SixStars]: (): string => Banner.SixStarsPool.Primary[crypto.randomInt(Banner.SixStarsPool.Primary.length)],
-            [Items.FiveStars]: (): string => Banner.FiveStarsPool.Primary[crypto.randomInt(Banner.FiveStarsPool.Primary.length)],
+            [Items.SixStars]: (): string => RandomItem(Banner.SixStarsPool.Primary),
+            [Items.FiveStars]: (): string => RandomItem(Banner.FiveStarsPool.Primary),
             [Items.FourStars]: (): string => GenericFourStarsHandler(Banner, RU),
-            [Items.ThreeStars]: (): string => Banner.ThreeStarsPool[crypto.randomInt(Banner.ThreeStarsPool.length)]
+            [Items.ThreeStars]: (): string => RandomItem(Banner.ThreeStarsPool)
         });
     }
 }

@@ -7,7 +7,7 @@ import Switch from "#helpers/Switch";
 import GenericFiveStarsHandler from "#helpers/GenericFiveStarsHandler";
 import GenericFourStarsHandler from "#helpers/GenericFourStarsHandler";
 import StrategyManager from "#StrategyManager";
-import crypto from "crypto";
+import RandomItem from "#helpers/RandomItem";
 
 @StrategyManager.Register(BannerTypes.Limited)
 export default class Limited implements BannerStrategy {
@@ -22,13 +22,13 @@ export default class Limited implements BannerStrategy {
     public Roll({ Banner, Result, RU }: RollParams): string {
         return Switch(Result, {
             [Items.SixStars]: (): string => Switch(RU, {
-                [RateUp.Primary]: (): string => Banner.SixStarsPool.Primary[crypto.randomInt(Banner.SixStarsPool.Primary.length)],
-                [RateUp.Secondary]:  (): string => Banner.SixStarsPool.Secondary[crypto.randomInt(Banner.SixStarsPool.Secondary.length)],
-                [RateUp.None]:  (): string => Banner.SixStarsPool.Standard[crypto.randomInt(Banner.SixStarsPool.Standard.length)]
+                [RateUp.Primary]: (): string => RandomItem(Banner.SixStarsPool.Primary),
+                [RateUp.Secondary]:  (): string => RandomItem(Banner.SixStarsPool.Secondary),
+                [RateUp.None]:  (): string => RandomItem(Banner.SixStarsPool.Standard)
             }),
             [Items.FiveStars]: (): string => GenericFiveStarsHandler(Banner, RU),
             [Items.FourStars]: (): string => GenericFourStarsHandler(Banner, RU),
-            [Items.ThreeStars]: (): string => Banner.ThreeStarsPool[crypto.randomInt(Banner.ThreeStarsPool.length)]
+            [Items.ThreeStars]: (): string => RandomItem(Banner.ThreeStarsPool)
         });
     }
 }

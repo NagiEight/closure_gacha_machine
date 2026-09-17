@@ -6,7 +6,7 @@ import { RateUp } from "#types/RateUp";
 import Switch from "#helpers/Switch";
 import GenericFourStarsHandler from "#helpers/GenericFourStarsHandler";
 import StrategyManager from "#StrategyManager";
-import crypto from "crypto";
+import RandomItem from "#helpers/RandomItem";
 
 @StrategyManager.Register(BannerTypes.Orienteering)
 export default class Orienteering implements BannerStrategy {
@@ -20,16 +20,16 @@ export default class Orienteering implements BannerStrategy {
     public Roll({ Banner, Result, RU, Selection }: RollParams): string {
         return Switch(Result, {
             [Items.SixStars]: (): string => 
-                Selection && Selection.SixStarsSelection[crypto.randomInt(Selection.SixStarsSelection.length)] ||
-                Banner.SixStarsPool.Primary[crypto.randomInt(Banner.SixStarsPool.Primary.length)]
+                Selection && RandomItem(Selection.SixStarsSelection) ||
+                RandomItem(Banner.SixStarsPool.Primary)
             ,
             [Items.FiveStars]: (): string => RU === RateUp.Primary
-                ? Selection && Selection.FiveStarsSelection[crypto.randomInt(Selection.FiveStarsSelection.length)] ||
-                    Banner.FiveStarsPool.Primary[crypto.randomInt(Banner.FiveStarsPool.Primary.length)]
-                : Banner.FiveStarsPool.Standard[crypto.randomInt(Banner.FiveStarsPool.Standard.length)]
+                ? Selection && RandomItem(Selection.FiveStarsSelection) ||
+                    RandomItem(Banner.FiveStarsPool.Primary)
+                : RandomItem(Banner.FiveStarsPool.Standard)
             ,
             [Items.FourStars]: (): string => GenericFourStarsHandler(Banner, RU),
-            [Items.ThreeStars]: (): string => Banner.ThreeStarsPool[crypto.randomInt(Banner.ThreeStarsPool.length)]
+            [Items.ThreeStars]: (): string => RandomItem(Banner.ThreeStarsPool)
         });
     }
 }
