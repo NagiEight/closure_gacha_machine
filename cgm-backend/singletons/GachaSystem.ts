@@ -106,11 +106,11 @@ export default new class GachaSystem {
             Count
         )
         VALUES(
-            @Token,
-            @Banner,
-            @Rarity,
-            @ID,
-            @Count
+            :Token,
+            :Banner,
+            :Rarity,
+            :ID,
+            :Count
         )
         ON CONFLICT(Token, Banner, Rarity, ID) DO UPDATE SET
             Count = excluded.Count
@@ -128,14 +128,15 @@ export default new class GachaSystem {
             TenRolls
         )
         VALUES(
-            @Token,
-            @Banner,
-            @Count,
-            @RollsWithoutSixStar,
-            @RollsSinceLast6StarsRateUp, @RollsSinceLast5StarsRateUp,
-            @RollsSinceLast4StarsRateUp,
-            @Focused,
-            @TenRolls
+            :Token,
+            :Banner,
+            :Count,
+            :RollsWithoutSixStar,
+            :RollsSinceLast6StarsRateUp,
+            :RollsSinceLast5StarsRateUp,
+            :RollsSinceLast4StarsRateUp,
+            :Focused,
+            :TenRolls
         )
         ON CONFLICT(Token, Banner) DO UPDATE SET
             Count = excluded.Count,
@@ -164,7 +165,12 @@ export default new class GachaSystem {
 
     public constructor() {
         const StorageQuery: GachaProfileStorageRow[] = Database.DB.prepare<[], GachaProfileStorageRow>(`
-            SELECT GP.Token, GS.Banner, GS.Rarity, GS.ID, GS.Count
+            SELECT
+                GP.Token,
+                GS.Banner,
+                GS.Rarity,
+                GS.ID,
+                GS.Count
             FROM GachaStorage GS JOIN GachaProfiles GP ON GP.Token = GS.Token
         `).all();
         const DataQuery: GachaProfileDataRow[] = Database.DB.prepare<[], GachaProfileDataRow>(`

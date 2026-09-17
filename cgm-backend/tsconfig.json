@@ -7,7 +7,6 @@
       "ES2025",
       "ES2025.Iterator"
     ],
-    "types": ["node"],
 
     "outDir": "./public",
     "rootDir": "./",
@@ -32,5 +31,5 @@
     "verbatimModuleSyntax": true
   },
   "include": ["./**/*"],
-  "exclude": ["node_modules", "public", "./dev/**/*", "*test*", "types"]
+  "exclude": ["node_modules", "public", "./dev/**/*", "*test*"]
 }

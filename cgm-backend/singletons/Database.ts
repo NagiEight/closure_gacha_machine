@@ -141,7 +141,14 @@ class DataManager {
 
     public constructor() {
         const Query: BannersRow[] = DB.prepare<[], BannersRow>(`
-            SELECT B.Name, B.ReleaseDate, B.Type, BP.Rarity, BP.Prima, BP.Secondary, BP.Standard
+            SELECT
+                B.Name,
+                B.ReleaseDate,
+                B.Type,
+                BP.Rarity,
+                BP.Prima,
+                BP.Secondary,
+                BP.Standard
             FROM BannerPools BP JOIN Banners B ON BP.BannerName = B.Name
             ORDER BY ReleaseDate DESC
         `).all();

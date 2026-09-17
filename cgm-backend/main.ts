@@ -46,6 +46,26 @@ Server.get("/api/banners/search", (Req, Res) => {
         return;
     }
 
+    if(Body.NameQuery && typeof Body.NameQuery !== "string") {
+        Res.status(404).json({ message: "Incorrect data type for option 'NameQuery'." });
+        return;
+    }
+
+    if(Body.From && typeof Body.From !== "number") {
+        Res.status(404).json({ message: "Incorrect data type for option 'From'." });
+        return;
+    }
+
+    if(Body.To && typeof Body.To !== "number") {
+        Res.status(404).json({ message: "Incorrect data type for option 'To'." });
+        return;
+    }
+
+    if(Body.Includes && !Array.isArray(Body.Includes)) {
+        Res.status(404).json({ message: "Incorrect data type for option 'Includes'." });
+        return;
+    }
+
     const Result: SearchResult[] = Database.Manager.SearchBannersSTMT(Page, LoadEnv.PAGE_SIZE, Body);
     Res.json(Result);
 })
