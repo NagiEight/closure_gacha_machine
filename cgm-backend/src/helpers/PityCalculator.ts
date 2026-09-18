@@ -1,4 +1,4 @@
-import type { GachaItems } from "#helpers/Gacha";
+import type { GachaItems } from "./Gacha.js";
 
 export default <T>(Rates: GachaItems<T>[], Target: T, Increase: number): GachaItems<T>[] => {
     const TargetItem: GachaItems<T> = Rates.find(Item => Item.Value === Target)!;

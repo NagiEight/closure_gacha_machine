@@ -16,21 +16,21 @@
   "type": "module",
   "imports": {
     "#*": {
-      "types": "./singletons/*.js",
+      "types": "./src/singletons/*.js",
       "default": "./public/singletons/*.js"
     },
     "#types/*": {
-      "types": "./singletons/*.js",
+      "types": "./src/types/*.js",
       "default": "./public/types/*.js"
     },
     "#helpers/*": {
-      "types": "./helpers/*.js",
+      "types": "./src/helpers/*.js",
       "default": "./public/helpers/*.js"
     }
   },
   "scripts": {
     "dev": "tsx main.ts",
-    "start": "node public/main.js",
+    "start": "node ./public/main.js",
     "build": "tsc"
   },
   "name": "cgm-backend",

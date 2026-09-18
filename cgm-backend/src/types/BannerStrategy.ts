@@ -1,4 +1,4 @@
-import type { GachaItems } from "#helpers/Gacha";
+import type { GachaItems } from "../helpers/Gacha.js";
 import type { Banner } from "#types/Banner";
 import type { ProfileBanner } from "#types/GachaProfile";
 import type { Items } from "#types/Items";

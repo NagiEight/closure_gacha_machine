@@ -5,13 +5,13 @@ import type { SearchQuery } from "#types/SearchQuery";
 import type { SearchResult } from "#types/SearchResult";
 import { BannerTypes } from "#types/BannerTypes";
 import { Items } from "#types/Items";
-import Switch from "#helpers/Switch";
-import FormMediaURL from "#helpers/FormMediaURL";
+import Switch from "../helpers/Switch.js";
+import FormMediaURL from "../helpers/FormMediaURL.js";
 import Database from "better-sqlite3";
 import path from "path";
 import fs from "fs/promises";
 
-const DBDir: string = path.join(import.meta.dirname, "..", "database");
+const DBDir: string = path.join(import.meta.dirname, "..", "..", "database");
 await fs.mkdir(DBDir, { recursive: true });
 
 const DB: DBType = new Database(path.join(DBDir, "Banners.db"));

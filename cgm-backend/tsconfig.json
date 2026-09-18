@@ -9,7 +9,7 @@
     ],
 
     "outDir": "./public",
-    "rootDir": "./",
+    "rootDir": "./src",
 
     "strict": true,
     "noImplicitReturns": true,
@@ -30,6 +30,6 @@
     "isolatedModules": true,
     "verbatimModuleSyntax": true
   },
-  "include": ["./**/*"],
+  "include": ["./src/**/*"],
   "exclude": ["node_modules", "public", "./dev/**/*", "*test*"]
 }
