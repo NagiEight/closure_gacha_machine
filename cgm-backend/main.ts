@@ -79,17 +79,17 @@ Server.get("/api/banners/search", (Req, Res) => {
 
     Res.json(Database.Manager.GetBannersSTMT.all(LoadEnv.PAGE_SIZE, Page * LoadEnv.PAGE_SIZE));
 })
-.get("/api/banner/:BannerName", (Req, Res) => {
-    const BannerName: string = Req.params.BannerName;
-    const Banner: Banner | undefined = Database.Manager.Banners.get(BannerName);
+.get("/api/banner/:Name", (Req, Res) => {
+    const Name: string = Req.params.Name;
+    const Banner: Banner | undefined = Database.Manager.Banners.get(Name);
 
     if(!Banner) {
-        Res.status(404).json({ message: `Banner '${BannerName}' doesn't exist.` });
+        Res.status(404).json({ message: `Banner '${Name}' doesn't exist.` });
         return;
     }
 
     Res.json({
-        Name: BannerName,
+        Name,
         OperatorPool: Banner
     });
 })

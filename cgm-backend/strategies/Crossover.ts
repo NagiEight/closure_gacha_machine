@@ -16,7 +16,7 @@ export default class Crossover implements BannerStrategy {
                     return RandomItem(Banner.SixStarsPool.Standard);
 
                 Profile.RollsSinceLast6StarsRateUp = 0;
-                return RandomItem(Banner.SixStarsPool.Primary);  
+                return RandomItem(Banner.SixStarsPool.Primary);
             },
             [Items.FiveStars]: (): string => {
                 if(Profile.RollsSinceLast5StarsRateUp < 49 && RU !== RateUp.Primary) 
