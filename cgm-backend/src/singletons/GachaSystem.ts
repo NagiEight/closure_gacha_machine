@@ -1,16 +1,16 @@
-import type { GachaItems } from "../helpers/Gacha.js";
+import type { GachaItems } from "#helpers/Gacha";
 import type { GachaProfile, ProfileBanner, ProfileStorage } from "#types/GachaProfile";
 import type { BannerStrategy, Selection } from "#types/BannerStrategy";
 import type { Banner } from "#types/Banner";
 import { Items } from "#types/Items";
 import { BannerTypes } from "#types/BannerTypes";
 import { RateUp } from "#types/RateUp";
-import Database from "./Database.js";
-import Gacha from "../helpers/Gacha.js";
-import GenerateToken from "../helpers/GenerateToken.js";
-import PityCalculator from "../helpers/PityCalculator.js";
-import Switch from "../helpers/Switch.js";
-import StrategyManager from "./StrategyManager.js";
+import Database from "#Database";
+import Gacha from "#helpers/Gacha";
+import GenerateToken from "#helpers/GenerateToken";
+import PityCalculator from "#helpers/PityCalculator";
+import Switch from "#helpers/Switch";
+import StrategyManager from "#StrategyManager";
 
 Database.DB.exec(`
     CREATE TABLE IF NOT EXISTS GachaData(

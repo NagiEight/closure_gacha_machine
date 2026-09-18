@@ -7,9 +7,9 @@ import type { Express } from "express";
 import type { RateLimitRequestHandler } from "express-rate-limit";
 import type { SearchResult } from "#types/SearchResult";
 import { BannerTypes } from "#types/BannerTypes";
-import Database from "./singletons/Database.js";
-import GachaSystem from "./singletons/GachaSystem.js";
-import LoadEnv from "./singletons/LoadEnv.js";
+import Database from "#Database";
+import GachaSystem from "#GachaSystem";
+import LoadEnv from "#LoadEnv";
 import rateLimit from "express-rate-limit";
 import express from "express";
 
