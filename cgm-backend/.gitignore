@@ -1,7 +1,9 @@
-*test*
-.env
 dev/
+loading/
 node_modules/
 public/
+
+*test*
+.env
 *.db-shm
 *.db-wal
