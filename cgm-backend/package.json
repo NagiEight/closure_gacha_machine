@@ -15,9 +15,18 @@
   },
   "type": "module",
   "imports": {
-    "#*": "./public/singletons/*.js",
-    "#types/*": "./public/types/*.js",
-    "#helpers/*": "./public/helpers/*.js"
+    "#*": {
+      "types": "./singletons/*.js",
+      "default": "./public/singletons/*.js"
+    },
+    "#types/*": {
+      "types": "./singletons/*.js",
+      "default": "./public/types/*.js"
+    },
+    "#helpers/*": {
+      "types": "./helpers/*.js",
+      "default": "./public/helpers/*.js"
+    }
   },
   "scripts": {
     "dev": "tsx main.ts",
