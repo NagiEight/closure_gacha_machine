@@ -3,7 +3,7 @@ import type { Banner } from "#types/Banner";
 import type { Operator } from "#types/Operator";
 import type { SearchQuery } from "#types/SearchQuery";
 import type { SearchResult } from "#types/SearchResult";
-import { BannerTypes } from "#types/BannerTypes";
+import type { BannerTypes } from "#types/BannerTypes";
 import { Items } from "#types/Items";
 import Switch from "#helpers/Switch";
 import FormMediaURL from "#helpers/FormMediaURL";
@@ -30,15 +30,15 @@ DB.exec(`
     );
 
     CREATE TABLE IF NOT EXISTS BannerPools(
-        BannerName TEXT NOT NULL,
+        Name TEXT NOT NULL,
         Rarity INTEGER NOT NULL,
 
         Prima TEXT,
         Secondary TEXT,
         Standard TEXT NOT NULL,
 
-        PRIMARY KEY (BannerName, Rarity),
-        FOREIGN KEY (BannerName) REFERENCES Banners(Name),
+        PRIMARY KEY (Name, Rarity),
+        FOREIGN KEY (Name) REFERENCES Banners(Name),
 
         CHECK(Rarity IN (3, 4, 5, 6))
     );
@@ -52,9 +52,9 @@ DB.exec(`
 DB.function(
     "every",
     { deterministic: true },
-    (SetJSON: string, BannerName: string): 0 | 1 => {
+    (SetJSON: string, Name: string): 0 | 1 => {
         const Set: string[] = JSON.parse(SetJSON);
-        const PoolOps: Set<string> = Manager.BannerPoolCache.get(BannerName)!;
+        const PoolOps: Set<string> = Manager.BannerPoolCache.get(Name)!;
         return +Set.every(OP => PoolOps.has(OP)) as 0 | 1;
     }
 );
@@ -126,9 +126,8 @@ class DataManager {
         }
 
         if(Includes?.length) {
-            const JSONString: string = JSON.stringify(Includes);
             Conditions.push(`every(?, Name)`);
-            Args.push(JSONString);
+            Args.push(JSON.stringify(Includes));
         }
 
         return DB.prepare<any[], SearchResult>(`
@@ -149,14 +148,14 @@ class DataManager {
                 BP.Prima,
                 BP.Secondary,
                 BP.Standard
-            FROM BannerPools BP JOIN Banners B ON BP.BannerName = B.Name
+            FROM BannerPools BP JOIN Banners B ON BP.Name = B.Name
             ORDER BY ReleaseDate DESC
         `).all();
-        for(const Row of Query) {
-            const Name: string = Row.Name;
+
+        Query.forEach(Row => {
+            const { Name, ...Rest } = Row;
             const Banner: Banner = this.Banners.get(Name) ?? {
-                ReleaseDate: Row.ReleaseDate,
-                Type: Row.Type,
+                ...Rest,
                 SixStarsPool: {
                     Primary: [],
                     Secondary: [],
@@ -192,7 +191,7 @@ class DataManager {
             });
 
             this.Banners.set(Name, Banner);
-        }
+        });
     }
 
     public GetBannerCover(Name: string): string | undefined {
