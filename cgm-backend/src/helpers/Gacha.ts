@@ -1,4 +1,5 @@
 import crypto from "crypto";
+import Sum from "#helpers/Sum";
 
 export interface GachaItems<T> {
     Value: T;
@@ -6,7 +7,7 @@ export interface GachaItems<T> {
 }
 
 export default <T>(Items: GachaItems<T>[]): T => {
-    const Random: number = crypto.randomInt(Items.reduce((Sum, Item) => Sum + Item.Chance, 0));
+    const Random: number = crypto.randomInt(Sum(Items, Item => Item.Chance));
     let Cumulative: number = 0;
     for(const Item of Items) {
         Cumulative += Item.Chance;

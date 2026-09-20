@@ -111,7 +111,7 @@ Server.get("/api/banners/search", (Req, Res) => {
 // Assets endpoint
 Server.get("/assets/banner/:BannerName", (Req, Res) => {
     const BannerName: string = Req.params.BannerName;
-    const BannerCover: string | undefined = Database.Manager.GetBannerCover(BannerName);
+    const BannerCover: string | undefined = Database.Manager.GetBannerCover(BannerName)?.toString();
 
     if(!BannerCover) {
         Res.status(404).json({ message: `Banner '${BannerName}' doesn't exist.` });
@@ -123,7 +123,7 @@ Server.get("/assets/banner/:BannerName", (Req, Res) => {
 })
 .get("/assets/operator/:OperatorID", (Req, Res) => {
     const OperatorID: string = Req.params.OperatorID;
-    const OperatorArt: string | undefined = Database.Manager.GetOperatorArt(OperatorID);
+    const OperatorArt: string | undefined = Database.Manager.GetOperatorArt(OperatorID)?.toString();
 
     if(!OperatorArt) {
         Res.status(404).json({ message: `Operator '${OperatorID}' doesn't exist.` });
@@ -135,7 +135,7 @@ Server.get("/assets/banner/:BannerName", (Req, Res) => {
 })
 .get("/assets/e2operator/:OperatorID", (Req, Res) => {
     const OperatorID: string = Req.params.OperatorID;
-    const OperatorArt: string | undefined = Database.Manager.GetOperatorE2Art(OperatorID);
+    const OperatorArt: string | undefined = Database.Manager.GetOperatorE2Art(OperatorID)?.toString();
 
     if(!OperatorArt) {
         Res.status(404).json({ message: `Operator '${OperatorID}' doesn't exist.` });
@@ -147,7 +147,7 @@ Server.get("/assets/banner/:BannerName", (Req, Res) => {
 })
 .get("/assets/card/:OperatorID", (Req, Res) => {
     const OperatorID: string = Req.params.OperatorID;
-    const OperatorArt: string | undefined = Database.Manager.GetOperatorCard(OperatorID);
+    const OperatorArt: string | undefined = Database.Manager.GetOperatorCard(OperatorID)?.toString();
 
     if(!OperatorArt) {
         Res.status(404).json({ message: `Operator '${OperatorID}' doesn't exist.` });

@@ -194,26 +194,26 @@ class DataManager {
         });
     }
 
-    public GetBannerCover(Name: string): string | undefined {
+    public GetBannerCover(Name: string): URL | undefined {
         return this.Banners.has(Name)
             ? FormMediaURL("banners/covers", Name)
             : undefined
         ;
     }
 
-    public GetOperatorArt(OperatorID: string): string | undefined {
+    public GetOperatorArt(OperatorID: string): URL | undefined {
         return this.Operators.has(OperatorID)
             ? FormMediaURL("operators/e0", OperatorID)
             : undefined
         ;
     }
-    public GetOperatorE2Art(OperatorID: string): string | undefined {
+    public GetOperatorE2Art(OperatorID: string): URL | undefined {
         return this.Operators.has(OperatorID)
             ? FormMediaURL("operators/e2", OperatorID)
             : undefined
         ;
     }
-    public GetOperatorCard(OperatorID: string): string | undefined {
+    public GetOperatorCard(OperatorID: string): URL | undefined {
         return this.Operators.has(OperatorID)
             ? FormMediaURL("operators/cards", OperatorID)
             : undefined

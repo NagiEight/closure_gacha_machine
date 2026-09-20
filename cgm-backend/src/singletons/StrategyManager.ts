@@ -1,6 +1,7 @@
 import type { BannerStrategy } from "#types/BannerStrategy";
 import { BannerTypes } from "#types/BannerTypes";
 import { pathToFileURL } from "url";
+import AsyncMap from "#helpers/AsyncMap";
 import path from "path";
 import fs from "fs/promises";
 
@@ -13,11 +14,10 @@ export default new class StrategyManager {
             ? ".ts"
             : ".js"
         ;
-    
-        await Promise.all(
-            (await fs.readdir(PathToDir))
-                .filter(File => File.endsWith(Extension))
-                .map(File => import(pathToFileURL(path.join(PathToDir, File)).href))
+
+        await AsyncMap(
+            (await fs.readdir(PathToDir)).filter(File => File.endsWith(Extension)),
+            File => import(pathToFileURL(path.join(PathToDir, File)).href)
         );
     }
     public Register(Type: BannerTypes): <T extends new () => BannerStrategy>(ctor: T) => void {
