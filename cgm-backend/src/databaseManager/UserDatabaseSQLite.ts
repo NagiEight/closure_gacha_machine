@@ -1,15 +1,15 @@
 import type { GachaProfileDataRow } from "#types/GachaProfileDataRow";
 import type { GachaProfileStorageRow } from "#types/GachaProfileStorageRow";
-import type { UserDatabase } from "#types/UserDatabase";
 import type { Database as DBType } from "better-sqlite3";
+import UserDatabase from "#types/UserDatabase";
 import Database from "better-sqlite3";
 import path from "path";
 
-export default class UserDatabaseSQLite implements UserDatabase {
+export default class UserDatabaseSQLite extends UserDatabase {
     public readonly DB: DBType = new Database(path.join(import.meta.dirname, "..", "..", "database", "Userthis.DB"));
     public readonly CreateGachaProfileSTMT = this.DB.prepare<[string], void>(`
         INSERT INTO GachaProfiles(Token)
-            VALUES(?)    
+        VALUES(?)
     `);
     public readonly RefreshStorageSTMT = this.DB.prepare<GachaProfileStorageRow, void>(`
         INSERT INTO GachaStorage(
@@ -78,6 +78,8 @@ export default class UserDatabaseSQLite implements UserDatabase {
     });
     
     public constructor() {
+        super();
+
         this.DB.pragma("journal_mode = WAL");
         this.DB.pragma("foreign_keys = ON");
         this.DB.exec(`
@@ -119,10 +121,6 @@ export default class UserDatabaseSQLite implements UserDatabase {
                 Token TEXT PRIMARY KEY
             );
         `);
-    }
-
-    public async Initialize(): Promise<UserDatabase> {
-        return this;
     }
 
     public async CreateProfile(Token: string): Promise<void> {

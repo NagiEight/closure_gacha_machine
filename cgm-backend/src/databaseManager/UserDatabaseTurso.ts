@@ -1,11 +1,11 @@
 import type { GachaProfileDataRow } from "#types/GachaProfileDataRow";
 import type { GachaProfileStorageRow } from "#types/GachaProfileStorageRow";
-import type { UserDatabase } from "#types/UserDatabase";
 import type { Client, Transaction } from "@libsql/client";
 import { createClient } from "@libsql/client";
+import UserDatabase from "#types/UserDatabase";
 import LoadEnv from "#LoadEnv";
 
-export default class UserDatabaseTurso implements UserDatabase {
+export default class UserDatabaseTurso extends UserDatabase {
     public readonly DB: Client = createClient({
         url: LoadEnv.DATABASE_URL,
         authToken: LoadEnv.DATABASE_TOKEN
