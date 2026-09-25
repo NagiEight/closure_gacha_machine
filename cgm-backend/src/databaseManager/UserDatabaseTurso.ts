@@ -13,7 +13,6 @@ export default class UserDatabaseTurso implements UserDatabase {
 
     public async Initialize(): Promise<UserDatabaseTurso> {
         await this.DB.batch([
-            "PRAGMA journal_mode = WAL",
             "PRAGMA foreign_keys = ON",
             `CREATE TABLE IF NOT EXISTS GachaData(
                 Token TEXT NOT NULL,
