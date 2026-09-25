@@ -1,7 +1,7 @@
-import type { UserDatabase } from "#types/UserDatabase";
 import { pathToFileURL } from "url";
-import path from "path";
+import UserDatabase from "#types/UserDatabase";
 import LoadEnv from "#LoadEnv";
+import path from "path";
 
 export default async (): Promise<new () =>  UserDatabase> => {
     const PathToDir: string = path.join(import.meta.dirname, "..", "databaseManager");
