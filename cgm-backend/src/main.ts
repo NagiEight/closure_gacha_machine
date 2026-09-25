@@ -69,7 +69,7 @@ Server.get("/api/banners/search", (Req, Res) => {
     const Result: SearchResult[] = Database.Manager.SearchBannersSTMT(Page, LoadEnv.PAGE_SIZE, Body);
     Res.json(Result);
 })
-.get("/api/banners/all", (_, Res) => Res.json(Database.DB.prepare<[], { Name: string; }>("SELECT Name FROM Banners").all().map(Row => Row.Name)))
+.get("/api/banners/all", (_, Res) => Res.json(Database.Manager.BannerNameCache))
 .get("/api/banners/:Page", (Req, Res) => {
     const Page: number = Number(Req.params.Page) || -1;    
     if(Page < 1) {
@@ -159,8 +159,8 @@ Server.get("/assets/banner/:BannerName", (Req, Res) => {
 });
 
 // Gacha endpoint
-Server.post("/gacha/create", (_, Res) => {
-    const Token: string = GachaSystem.CreateProfile();
+Server.post("/gacha/create", async (_, Res) => {
+    const Token: string = await GachaSystem.CreateProfile();
     Res.set("Session-Token", Token);
     Res.send("Create profile successfully.");
 })
@@ -181,7 +181,7 @@ Server.post("/gacha/create", (_, Res) => {
 
     Res.json(Profile);
 })
-.post("/gacha/:BannerName/roll", (Req, Res) => {
+.post("/gacha/:BannerName/roll", async (Req, Res) => {
     const Token: string | undefined = Req.get("Session-Token");
     
     if(!Token) {
@@ -255,10 +255,10 @@ Server.post("/gacha/create", (_, Res) => {
         return;
     }
 
-    const Result: string = GachaSystem.Roll(Token, BannerName)![0];
+    const Result: string = (await GachaSystem.Roll(Token, BannerName))![0];
     Res.json({ Result });
 })
-.post("/gacha/:BannerName/roll/:Count", (Req, Res) => {
+.post("/gacha/:BannerName/roll/:Count", async (Req, Res) => {
     const Count: number = Number(Req.params.Count) || -1;
     
     if(Count < 1) {
@@ -336,8 +336,8 @@ Server.post("/gacha/create", (_, Res) => {
         const Reduced: string | undefined = Req.query.reduced?.toString().trim().toLowerCase();
         Res.json({
             Result: Reduced === "true" || Reduced === "1"
-                ? GachaSystem.RollMultiReduced(Token, BannerName, Count, Body)!
-                : GachaSystem.RollMulti(Token, BannerName, Count, Body)!
+                ? await GachaSystem.RollMultiReduced(Token, BannerName, Count, Body)!
+                : await GachaSystem.RollMulti(Token, BannerName, Count, Body)!
         });
         return;
     }
@@ -345,11 +345,11 @@ Server.post("/gacha/create", (_, Res) => {
     const Reduced: string | undefined = Req.query.reduced?.toString().trim().toLowerCase();
     Res.json({
         Result: Reduced === "true" || Reduced === "1"
-            ? GachaSystem.RollMultiReduced(Token, BannerName, Count)!
-            : GachaSystem.RollMulti(Token, BannerName, Count)!
+            ? await GachaSystem.RollMultiReduced(Token, BannerName, Count)!
+            : await GachaSystem.RollMulti(Token, BannerName, Count)!
     });
 })
-.patch("/gacha/reset/:BannerName", (Req, Res) => {
+.patch("/gacha/reset/:BannerName", async (Req, Res) => {
     const Token: string | undefined = Req.get("Session-Token");
 
     if(!Token) {
@@ -372,10 +372,10 @@ Server.post("/gacha/create", (_, Res) => {
         return;
     }
 
-    GachaSystem.ResetBanner(Token, BannerName);
+    await GachaSystem.ResetBanner(Token, BannerName);
     Res.send(`Progress on ${BannerName} has been reset successfully.`);
 })
-.purge("/gacha/delete", (Req, Res) => {
+.purge("/gacha/delete", async (Req, Res) => {
     const Token: string | undefined = Req.get("Session-Token");
 
     if(!Token) {
@@ -390,7 +390,7 @@ Server.post("/gacha/create", (_, Res) => {
         return;
     }
 
-    GachaSystem.DeleteProfile(Token);
+    await GachaSystem.DeleteProfile(Token);
     Res.send("Delete profile successfully.");
 });
 

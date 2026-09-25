@@ -84,6 +84,7 @@ class DataManager {
         })
     );
     public readonly Banners: Map<string, Banner> = new Map();
+    public readonly BannerNameCache: string[] = DB.prepare<[], { Name: string; }>("SELECT Name FROM Banners").all().map(Row => Row.Name);
     public readonly BannerPoolCache: Map<string, Set<string>> = new Map();
 
     public readonly GetBannersSTMT = DB.prepare<[number, number], SearchResult>(`

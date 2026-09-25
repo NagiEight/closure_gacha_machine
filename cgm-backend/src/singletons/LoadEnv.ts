@@ -2,7 +2,7 @@ import "dotenv/config";
 
 const ParseNumber = (Env?: string, Default: number = -1): number => Number(Env) || Default;
 
-const ParseArray = (Env?: string, Default?: any[]): any[] => {
+const ParseArray = <T>(Env?: string, Default?: T[]): T[] => {
     if(!Default)
         Default = [];
 
@@ -31,5 +31,8 @@ export default EnvLoader({
     PAGE_SIZE: 10,
     PORT: 3000,
     RATE_LIMIT: 50,
-    BASE_MEDIA_URL: ""
+    BASE_MEDIA_URL: "",
+    DATABASE_TOKEN: "",
+    DATABASE_URL: "",
+    DATABASE_MANAGER_FILENAME: ""
 });
