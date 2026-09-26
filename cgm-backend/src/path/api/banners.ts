@@ -1,4 +1,4 @@
-import Database from "#Database";
+import DataManager from "#DataManager";
 import LoadEnv from "#LoadEnv";
 import Server from "#Server";
 
@@ -9,5 +9,5 @@ Server.get("/api/banners/:Page", (Req, Res) => {
         return;
     }
 
-    Res.json(Database.Manager.GetBannersSTMT.all(LoadEnv.PAGE_SIZE, Page * LoadEnv.PAGE_SIZE));
+    Res.json(DataManager.GetBannersSTMT.all(LoadEnv.PAGE_SIZE, Page * LoadEnv.PAGE_SIZE));
 });

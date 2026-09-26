@@ -14,9 +14,9 @@ const Limiter: RateLimitRequestHandler = rateLimit({
     standardHeaders: true,
     legacyHeaders: false
 });
-
 Server.use(Limiter, express.json());
 
 await LoadPath();
 
+process.on("SIGINT", () => process.exit());
 Server.listen(LoadEnv.PORT, "0.0.0.0", (): void => console.log(`Server is running on port ${LoadEnv.PORT}.`));

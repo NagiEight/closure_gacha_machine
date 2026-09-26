@@ -80,6 +80,8 @@ export default class UserDatabaseSQLite extends UserDatabase {
     public constructor() {
         super();
 
+        process.on("SIGINT", () => this.DB.close());
+
         this.DB.pragma("journal_mode = WAL");
         this.DB.pragma("foreign_keys = ON");
         this.DB.exec(`

@@ -1,4 +1,4 @@
-import type { Database as DBType } from "better-sqlite3";
+import type { Database as DBType, Statement } from "better-sqlite3";
 import type { Banner } from "#types/Banner";
 import type BannerTypes from "#types/BannerTypes";
 import type { Operator } from "#types/Operator";
@@ -13,51 +13,6 @@ import Items from "#types/Items";
 
 const DBDir: string = path.join(import.meta.dirname, "..", "..", "database");
 await fs.mkdir(DBDir, { recursive: true });
-
-const DB: DBType = new Database(path.join(DBDir, "Banners.db"));
-DB.pragma("journal_mode = WAL");
-DB.pragma("foreign_keys = ON");
-DB.exec(`
-    CREATE TABLE IF NOT EXISTS Operators(
-        ID TEXT PRIMARY KEY,
-        Name TEXT NOT NULL,
-        Rarity INTEGER NOT NULL,
-        Limited INTEGER NOT NULL,
-        ReleaseDate INTEGER,
-
-        CHECK(Rarity IN (3, 4, 5, 6)),
-        CHECK(Limited IN (0, 1))
-    );
-
-    CREATE TABLE IF NOT EXISTS BannerPools(
-        Name TEXT NOT NULL,
-        Rarity INTEGER NOT NULL,
-
-        Prima TEXT,
-        Secondary TEXT,
-        Standard TEXT NOT NULL,
-
-        PRIMARY KEY (Name, Rarity),
-        FOREIGN KEY (Name) REFERENCES Banners(Name),
-
-        CHECK(Rarity IN (3, 4, 5, 6))
-    );
-
-    CREATE TABLE IF NOT EXISTS Banners(
-        Name TEXT PRIMARY KEY,
-        ReleaseDate INTEGER NOT NULL,
-        Type TEXT NOT NULL
-    );
-`);
-DB.function(
-    "every",
-    { deterministic: true },
-    (SetJSON: string, Name: string): 0 | 1 => {
-        const Set: string[] = JSON.parse(SetJSON);
-        const PoolOps: Set<string> = Manager.BannerPoolCache.get(Name)!;
-        return +Set.every(OP => PoolOps.has(OP)) as 0 | 1;
-    }
-);
 
 interface BannersRow {
     Name: string;
@@ -76,23 +31,11 @@ interface OperatorsRow {
     ReleaseDate: number | null;
     Limited: number;
 }
-class DataManager {
-    public readonly Operators: Map<string, Operator> = new Map<string, Operator>(
-        DB.prepare<[], OperatorsRow>("SELECT * FROM Operators").all().map(Row => {
-            const { ID, Limited, ...Rest } = Row;
-            return [ID, { ...Rest, Limited: !!Limited }];
-        })
-    );
-    public readonly Banners: Map<string, Banner> = new Map();
-    public readonly BannerNameCache: string[] = DB.prepare<[], { Name: string; }>("SELECT Name FROM Banners").all().map(Row => Row.Name);
-    public readonly BannerPoolCache: Map<string, Set<string>> = new Map();
 
-    public readonly GetBannersSTMT = DB.prepare<[number, number], SearchResult>(`
-        SELECT * FROM Banners
-        ORDER BY ReleaseDate DESC
-        LIMIT ? OFFSET ?
-    `);
-    public readonly SearchBannersSTMT = DB.transaction((
+class DataManager {
+    public readonly DB: DBType = new Database(path.join(DBDir, "Banners.db"));
+    public readonly GetBannersSTMT: Statement<[number, number], SearchResult>;
+    public readonly SearchBannersSTMT = this.DB.transaction((
         PageIndex: number,
         PageSize: number,
         {
@@ -131,7 +74,7 @@ class DataManager {
             Args.push(JSON.stringify(Includes));
         }
 
-        return DB.prepare<any[], SearchResult>(`
+        return this.DB.prepare<any[], SearchResult>(`
             SELECT * FROM Banners
             ${Conditions.length ? `WHERE ${Conditions.join(" AND ")}` : ""}
             ORDER BY ReleaseDate DESC
@@ -139,8 +82,72 @@ class DataManager {
         `).all(...Args, PageSize, (PageIndex - 1) * PageSize);
     });
 
+    public readonly Operators: Map<string, Operator>;
+    public readonly Banners: Map<string, Banner> = new Map();
+    public readonly BannerNameCache: string[];
+    public readonly BannerPoolCache: Map<string, Set<string>> = new Map();
+    
     public constructor() {
-        const Query: BannersRow[] = DB.prepare<[], BannersRow>(`
+        process.on("SIGINT", () => this.DB.close());
+
+        this.DB.pragma("journal_mode = WAL");
+        this.DB.pragma("foreign_keys = ON");
+        this.DB.exec(`
+            CREATE TABLE IF NOT EXISTS Operators(
+                ID TEXT PRIMARY KEY,
+                Name TEXT NOT NULL,
+                Rarity INTEGER NOT NULL,
+                Limited INTEGER NOT NULL,
+                ReleaseDate INTEGER,
+
+                CHECK(Rarity IN (3, 4, 5, 6)),
+                CHECK(Limited IN (0, 1))
+            );
+
+            CREATE TABLE IF NOT EXISTS BannerPools(
+                Name TEXT NOT NULL,
+                Rarity INTEGER NOT NULL,
+
+                Prima TEXT,
+                Secondary TEXT,
+                Standard TEXT NOT NULL,
+
+                PRIMARY KEY (Name, Rarity),
+                FOREIGN KEY (Name) REFERENCES Banners(Name),
+
+                CHECK(Rarity IN (3, 4, 5, 6))
+            );
+
+            CREATE TABLE IF NOT EXISTS Banners(
+                Name TEXT PRIMARY KEY,
+                ReleaseDate INTEGER NOT NULL,
+                Type TEXT NOT NULL
+            );
+        `);
+        this.DB.function(
+            "every",
+            { deterministic: true },
+            (SetJSON: string, Name: string): 0 | 1 => {
+                const Set: string[] = JSON.parse(SetJSON);
+                const PoolOps: Set<string> = this.BannerPoolCache.get(Name)!;
+                return +Set.every(OP => PoolOps.has(OP)) as 0 | 1;
+            }
+        );
+        this.GetBannersSTMT = this.DB.prepare<[number, number], SearchResult>(`
+            SELECT * FROM Banners
+            ORDER BY ReleaseDate DESC
+            LIMIT ? OFFSET ?
+        `);
+
+        this.Operators = new Map<string, Operator>(
+            this.DB.prepare<[], OperatorsRow>("SELECT * FROM Operators").all().map(Row => {
+                const { ID, Limited, ...Rest } = Row;
+                return [ID, { ...Rest, Limited: !!Limited }];
+            })
+        );
+        this.BannerNameCache = this.DB.prepare<[], { Name: string; }>("SELECT Name FROM Banners").all().map(Row => Row.Name);
+
+        const Query: BannersRow[] = this.DB.prepare<[], BannersRow>(`
             SELECT
                 B.Name,
                 B.ReleaseDate,
@@ -222,6 +229,4 @@ class DataManager {
     }
 }
 
-const Manager: DataManager = new DataManager();
-
-export default { DB, Manager };
+export default new DataManager();

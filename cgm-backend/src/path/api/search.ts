@@ -2,7 +2,7 @@ import type { SearchQuery } from "#types/SearchQuery";
 import type { SearchResult } from "#types/SearchResult";
 import LoadEnv from "#LoadEnv";
 import Server from "#Server";
-import Database from "#Database";
+import DataManager from "#DataManager";
 import BannerTypes from "#types/BannerTypes";
 
 Server.get("/api/banners/search", (Req, Res) => {
@@ -44,6 +44,6 @@ Server.get("/api/banners/search", (Req, Res) => {
         return;
     }
 
-    const Result: SearchResult[] = Database.Manager.SearchBannersSTMT(Page, LoadEnv.PAGE_SIZE, Body);
+    const Result: SearchResult[] = DataManager.SearchBannersSTMT(Page, LoadEnv.PAGE_SIZE, Body);
     Res.json(Result);
 });

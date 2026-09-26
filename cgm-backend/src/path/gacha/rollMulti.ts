@@ -4,7 +4,7 @@ import type { Selection } from "#types/BannerStrategy";
 import GachaSystem from "#GachaSystem";
 import Server from "#Server";
 import BannerTypes from "#types/BannerTypes";
-import Database from "#Database";
+import DataManager from "#DataManager";
 
 Server.post("/gacha/:BannerName/roll/:Count", async (Req, Res) => {
     const Count: number = Number(Req.params.Count) || -1;
@@ -29,7 +29,7 @@ Server.post("/gacha/:BannerName/roll/:Count", async (Req, Res) => {
     }
     
     const BannerName: string = Req.params.BannerName;
-    const Banner: Banner | undefined = Database.Manager.Banners.get(BannerName);
+    const Banner: Banner | undefined = DataManager.Banners.get(BannerName);
     
     if(!Banner) {
         Res.status(404).json({ message: `Banner '${BannerName}' doesn't exist.` });

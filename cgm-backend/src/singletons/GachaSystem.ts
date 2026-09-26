@@ -16,7 +16,7 @@ import StrategyManager from "#StrategyManager";
 import BannerTypes from "#types/BannerTypes";
 import Items from "#types/Items";
 import RateUp from "#types/RateUp";
-import Database from "#Database";
+import DataManager from "#DataManager";
 
 class GachaSystem {
     private readonly GachaProfiles: Record<string, GachaProfile> = {};
@@ -124,7 +124,7 @@ class GachaSystem {
         Selection?: Selection,
         Reduced?: boolean
     ): Promise<[string, Items][] | Record<string, number> | undefined> {
-        const Banner: Banner | undefined = Database.Manager.Banners.get(BannerName);
+        const Banner: Banner | undefined = DataManager.Banners.get(BannerName);
 
         if(!Banner || !this.GachaProfiles[Token])
             return;
@@ -153,9 +153,9 @@ class GachaSystem {
         const StrategyClass: new () => BannerStrategy = StrategyManager.StrategyRegistry.get(Banner.Type)!;
         const Strategy: BannerStrategy = new StrategyClass();
 
-        Profile.Count += Count;
-
+        
         for(let _: number = 0; _ < Count; _++) {
+            Profile.Count++;
             let StandardRate: GachaItems<Items>[] = [
                 { Value: Items.SixStars, Chance: 2 },
                 { Value: Items.FiveStars, Chance: 8 },
@@ -275,7 +275,6 @@ class GachaSystem {
 
         return Output;
     }
-
 };
 
 export default await GachaSystem.New();

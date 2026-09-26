@@ -1,9 +1,9 @@
-import Database from "#Database";
+import DataManager from "#DataManager";
 import Server from "#Server";
 
 Server.get("/assets/operator/:OperatorID", (Req, Res) => {
     const OperatorID: string = Req.params.OperatorID;
-    const OperatorArt: string | undefined = Database.Manager.GetOperatorArt(OperatorID)?.toString();
+    const OperatorArt: string | undefined = DataManager.GetOperatorArt(OperatorID)?.toString();
 
     if(!OperatorArt) {
         Res.status(404).json({ message: `Operator '${OperatorID}' doesn't exist.` });

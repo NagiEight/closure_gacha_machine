@@ -1,6 +1,6 @@
 import type { GachaProfile } from "#types/GachaProfile";
 import type { Banner } from "#types/Banner";
-import Database from "#Database";
+import DataManager from "#DataManager";
 import GachaSystem from "#GachaSystem";
 import Server from "#Server";
 
@@ -20,7 +20,7 @@ Server.patch("/gacha/reset/:BannerName", async (Req, Res) => {
     }
 
     const BannerName: string = Req.params.BannerName;
-    const Banner: Banner | undefined = Database.Manager.Banners.get(BannerName);
+    const Banner: Banner | undefined = DataManager.Banners.get(BannerName);
 
     if(!Banner) {
         Res.status(404).json({ message: `Banner '${BannerName}' doesn't exist.` });

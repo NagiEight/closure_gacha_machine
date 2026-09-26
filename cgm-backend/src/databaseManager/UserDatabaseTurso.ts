@@ -12,6 +12,8 @@ export default class UserDatabaseTurso extends UserDatabase {
     });
 
     public async Initialize(): Promise<UserDatabaseTurso> {
+        process.on("SIGINT", () => this.DB.close());
+        
         await this.DB.batch([
             "PRAGMA foreign_keys = ON",
             `CREATE TABLE IF NOT EXISTS GachaData(
