@@ -1,4 +1,4 @@
-import type BannerTypes from "@BannerTypes";
+import type BannerTypes from "#types/BannerTypes";
 
 export interface Banner {
     ReleaseDate: number;

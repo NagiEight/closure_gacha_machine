@@ -1,7 +1,7 @@
-import type { BannerStrategy } from "@BannerStrategy";
+import type { BannerStrategy } from "#types/BannerStrategy";
+import type BannerTypes from "#types/BannerTypes";
 import { pathToFileURL } from "url";
-import BannerTypes from "@BannerTypes";
-import AsyncMap from "@AsyncMap";
+import AsyncMap from "#helpers/AsyncMap";
 import path from "path";
 import fs from "fs/promises";
 

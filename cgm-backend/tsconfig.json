@@ -9,7 +9,9 @@
     ],
 
     "paths": {
-      "@*": ["./src/singletons/*.ts", "./src/types/*.ts", "./src/helpers/*.ts"]
+      "#*": ["./src/singletons/*.ts"],
+      "#types/*": ["./src/types/*.ts"],
+      "#helpers/*": ["./src/helpers/*.ts"]
     },
 
     "outDir": "./public",

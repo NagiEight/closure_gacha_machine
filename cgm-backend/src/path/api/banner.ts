@@ -1,6 +1,6 @@
-import type { Banner } from "@Banner";
-import Database from "@Database";
-import Server from "@Server";
+import type { Banner } from "#types/Banner";
+import Database from "#Database";
+import Server from "#Server";
 
 Server.get("/api/banner/:Name", (Req, Res) => {
     const Name: string = Req.params.Name;

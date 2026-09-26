@@ -1,10 +1,10 @@
-import type { Selection } from "@BannerStrategy";
-import type { GachaProfile } from "@GachaProfile";
-import type { Banner } from "@Banner";
-import Database from "@Database";
-import GachaSystem from "@GachaSystem";
-import Server from "@Server";
-import BannerTypes from "@BannerTypes";
+import type { Selection } from "#types/BannerStrategy";
+import type { GachaProfile } from "#types/GachaProfile";
+import type { Banner } from "#types/Banner";
+import Database from "#Database";
+import GachaSystem from "#GachaSystem";
+import Server from "#Server";
+import BannerTypes from "#types/BannerTypes";
 
 Server.post("/gacha/:BannerName/roll", async (Req, Res) => {
     const Token: string | undefined = Req.get("Session-Token");

@@ -1,5 +1,5 @@
-import GachaSystem from "@GachaSystem";
-import Server from "@Server";
+import GachaSystem from "#GachaSystem";
+import Server from "#Server";
 
 Server.post("/gacha/create", async (_, Res) => {
     const Token: string = await GachaSystem.CreateProfile();

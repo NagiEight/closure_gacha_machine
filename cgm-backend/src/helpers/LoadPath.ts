@@ -1,5 +1,5 @@
 import { pathToFileURL } from "url";
-import AsyncMap from "@AsyncMap";
+import AsyncMap from "#helpers/AsyncMap";
 import fs from "fs/promises";
 import path from "path";
 

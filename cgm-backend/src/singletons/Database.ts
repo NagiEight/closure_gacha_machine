@@ -1,15 +1,15 @@
-import type { Banner } from "@Banner";
-import type { Operator } from "@Operator";
-import type { SearchQuery } from "@SearchQuery";
-import type { SearchResult } from "@SearchResult";
-import type BannerTypes from "@BannerTypes";
 import type { Database as DBType } from "better-sqlite3";
-import Items from "@Items";
-import Switch from "@Switch";
-import FormMediaURL from "@FormMediaURL";
+import type { Banner } from "#types/Banner";
+import type BannerTypes from "#types/BannerTypes";
+import type { Operator } from "#types/Operator";
+import type { SearchQuery } from "#types/SearchQuery";
+import type { SearchResult } from "#types/SearchResult";
 import Database from "better-sqlite3";
 import path from "path";
 import fs from "fs/promises";
+import FormMediaURL from "#helpers/FormMediaURL";
+import Switch from "#helpers/Switch";
+import Items from "#types/Items";
 
 const DBDir: string = path.join(import.meta.dirname, "..", "..", "database");
 await fs.mkdir(DBDir, { recursive: true });

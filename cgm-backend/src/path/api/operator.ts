@@ -1,6 +1,6 @@
-import type { Operator } from "@Operator";
-import Database from "@Database";
-import Server from "@Server";
+import type { Operator } from "#types/Operator";
+import Database from "#Database";
+import Server from "#Server";
 
 Server.get("/api/operator/:OperatorID", (Req, Res) => {
     const OperatorID: string = Req.params.OperatorID;

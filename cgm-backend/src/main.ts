@@ -1,7 +1,7 @@
 import type { RateLimitRequestHandler } from "express-rate-limit";
-import Server from "@Server";
-import LoadEnv from "@LoadEnv";
-import LoadPath from "@LoadPath";
+import Server from "#Server";
+import LoadEnv from "#LoadEnv";
+import LoadPath from "#helpers/LoadPath";
 import rateLimit from "express-rate-limit";
 import express from "express";
 

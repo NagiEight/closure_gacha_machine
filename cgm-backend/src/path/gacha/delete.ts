@@ -1,6 +1,6 @@
-import type { GachaProfile } from "@GachaProfile";
-import GachaSystem from "@GachaSystem";
-import Server from "@Server";
+import type { GachaProfile } from "#types/GachaProfile";
+import GachaSystem from "#GachaSystem";
+import Server from "#Server";
 
 Server.purge("/gacha/delete", async (Req, Res) => {
     const Token: string | undefined = Req.get("Session-Token");

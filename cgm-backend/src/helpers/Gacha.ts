@@ -1,5 +1,5 @@
 import crypto from "crypto";
-import Sum from "@Sum";
+import Sum from "#helpers/Sum";
 
 export interface GachaItems<T> {
     Value: T;

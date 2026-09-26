@@ -1,5 +1,5 @@
-import Database from "@Database";
-import Server from "@Server";
+import Database from "#Database";
+import Server from "#Server";
 
 Server.get("/assets/card/:OperatorID", (Req, Res) => {
     const OperatorID: string = Req.params.OperatorID;

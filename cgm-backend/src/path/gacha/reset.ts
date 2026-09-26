@@ -1,8 +1,8 @@
-import type { GachaProfile } from "@GachaProfile";
-import type { Banner } from "@Banner";
-import Database from "@Database";
-import GachaSystem from "@GachaSystem";
-import Server from "@Server";
+import type { GachaProfile } from "#types/GachaProfile";
+import type { Banner } from "#types/Banner";
+import Database from "#Database";
+import GachaSystem from "#GachaSystem";
+import Server from "#Server";
 
 Server.patch("/gacha/reset/:BannerName", async (Req, Res) => {
     const Token: string | undefined = Req.get("Session-Token");

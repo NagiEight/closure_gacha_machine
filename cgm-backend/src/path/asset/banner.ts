@@ -1,5 +1,5 @@
-import Database from "@Database";
-import Server from "@Server";
+import Database from "#Database";
+import Server from "#Server";
 
 Server.get("/assets/banner/:BannerName", (Req, Res) => {
     const BannerName: string = Req.params.BannerName;

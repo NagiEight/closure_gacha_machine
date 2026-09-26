@@ -1,9 +1,9 @@
-import type { SearchQuery } from "@SearchQuery";
-import type { SearchResult } from "@SearchResult";
-import LoadEnv from "@LoadEnv";
-import Server from "@Server";
-import BannerTypes from "@BannerTypes";
-import Database from "@Database";
+import type { SearchQuery } from "#types/SearchQuery";
+import type { SearchResult } from "#types/SearchResult";
+import LoadEnv from "#LoadEnv";
+import Server from "#Server";
+import Database from "#Database";
+import BannerTypes from "#types/BannerTypes";
 
 Server.get("/api/banners/search", (Req, Res) => {
     const Body: SearchQuery = Req.body ?? {};

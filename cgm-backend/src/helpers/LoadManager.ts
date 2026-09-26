@@ -1,6 +1,6 @@
 import { pathToFileURL } from "url";
-import UserDatabase from "@UserDatabase";
-import LoadEnv from "@LoadEnv";
+import UserDatabase from "#types/UserDatabase";
+import LoadEnv from "#LoadEnv";
 import path from "path";
 
 export default async (): Promise<new () =>  UserDatabase> => {

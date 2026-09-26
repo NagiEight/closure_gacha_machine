@@ -1,6 +1,6 @@
-import Database from "@Database";
-import LoadEnv from "@LoadEnv";
-import Server from "@Server";
+import Database from "#Database";
+import LoadEnv from "#LoadEnv";
+import Server from "#Server";
 
 Server.get("/api/banners/:Page", (Req, Res) => {
     const Page: number = Number(Req.params.Page) || -1;    
