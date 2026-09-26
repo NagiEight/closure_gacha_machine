@@ -1,4 +1,4 @@
-import type { Items } from "#types/Items";
+import type Items from "@Items";
 
 export interface Operator {
     Name: string;

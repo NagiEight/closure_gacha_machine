@@ -1,10 +1,10 @@
-import type { BannerStrategy, RollParams } from "#types/BannerStrategy";
-import { BannerTypes } from "#types/BannerTypes";
-import { Items } from "#types/Items";
-import Switch from "#helpers/Switch";
-import GenericFourStarsHandler from "#helpers/GenericFourStarsHandler";
-import StrategyManager from "#StrategyManager";
-import RandomItem from "#helpers/RandomItem";
+import type { BannerStrategy, RollParams } from "@BannerStrategy";
+import BannerTypes from "@BannerTypes";
+import Items from "@Items";
+import Switch from "@Switch";
+import GenericFourStarsHandler from "@GenericFourStarsHandler";
+import StrategyManager from "@StrategyManager";
+import RandomItem from "@RandomItem";
 
 @StrategyManager.Register(BannerTypes.JointOperation)
 export default class JointOperation implements BannerStrategy {

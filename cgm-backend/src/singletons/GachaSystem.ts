@@ -1,23 +1,21 @@
-import type { GachaItems } from "#helpers/Gacha";
-import type { GachaProfile, ProfileBanner, ProfileStorage } from "#types/GachaProfile";
-import type { BannerStrategy, Selection } from "#types/BannerStrategy";
-import type { Banner } from "#types/Banner";
-import type { GachaProfileDataRow } from "#types/GachaProfileDataRow";
-import type { GachaProfileStorageRow } from "#types/GachaProfileStorageRow";
-import { Items } from "#types/Items";
-import { BannerTypes } from "#types/BannerTypes";
-import { RateUp } from "#types/RateUp";
-import UserDatabase from "#types/UserDatabase";
-import Database from "#Database";
-import Gacha from "#helpers/Gacha";
-import GenerateToken from "#helpers/GenerateToken";
-import PityCalculator from "#helpers/PityCalculator";
-import Switch from "#helpers/Switch";
-import StrategyManager from "#StrategyManager";
-import LoadManager from "#helpers/LoadManager";
-import AsyncMap from "#helpers/AsyncMap";
-
-await StrategyManager.Load();
+import type { GachaItems } from "@Gacha";
+import type { GachaProfile, ProfileBanner, ProfileStorage } from "@GachaProfile";
+import type { BannerStrategy, Selection } from "@BannerStrategy";
+import type { Banner } from "@Banner";
+import type { GachaProfileDataRow } from "@GachaProfileDataRow";
+import type { GachaProfileStorageRow } from "@GachaProfileStorageRow";
+import BannerTypes from "@BannerTypes";
+import RateUp from "@RateUp";
+import Items from "@Items";
+import UserDatabase from "@UserDatabase";
+import Database from "@Database";
+import Gacha from "@Gacha";
+import GenerateToken from "@GenerateToken";
+import PityCalculator from "@PityCalculator";
+import Switch from "@Switch";
+import StrategyManager from "@StrategyManager";
+import LoadManager from "@LoadManager";
+import AsyncMap from "@AsyncMap";
 
 class GachaSystem {
     private readonly GachaProfiles: Record<string, GachaProfile> = {};
@@ -38,6 +36,7 @@ class GachaSystem {
             { Value: RateUp.Primary, Chance: 100 }
         ]
     };
+    
     private constructor(
         StorageQuery: GachaProfileStorageRow[],
         DataQuery: GachaProfileDataRow[],
@@ -81,6 +80,7 @@ class GachaSystem {
             Manager
         );
 
+        await StrategyManager.Load();
         return Instance;
     }
 

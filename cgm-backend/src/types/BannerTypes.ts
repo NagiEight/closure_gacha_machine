@@ -1,4 +1,4 @@
-export enum BannerTypes {
+enum BannerTypes {
     Standard = "Standard",
     Limited = "Limited",
     Crossover = "Crossover",
@@ -6,3 +6,5 @@ export enum BannerTypes {
     JointOperation = "JointOperation",
     TFTW = "TFTW"
 }
+
+export default BannerTypes;

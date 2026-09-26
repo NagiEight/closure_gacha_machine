@@ -1,5 +1,7 @@
-export enum RateUp {
+enum RateUp {
     Primary,
     Secondary,
     None
 }
+
+export default RateUp;

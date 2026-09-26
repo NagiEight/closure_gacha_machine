@@ -1,4 +1,4 @@
-import type { Items } from "./Items.js";
+import type Items from "@Items";
 
 export interface GachaProfileStorageRow {
     Token: string;

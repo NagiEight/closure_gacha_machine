@@ -1,8 +1,8 @@
-import type { GachaItems } from "#helpers/Gacha";
-import type { Banner } from "#types/Banner";
-import type { ProfileBanner } from "#types/GachaProfile";
-import type { Items } from "#types/Items";
-import type { RateUp } from "#types/RateUp";
+import type { GachaItems } from "@Gacha";
+import type { Banner } from "@Banner";
+import type { ProfileBanner } from "@GachaProfile";
+import type RateUp from "@RateUp";
+import type Items from "@Items";
 
 export type Mapping = Partial<
     Record<Items, GachaItems<RateUp>[]>

@@ -1,11 +1,11 @@
-import type { BannerStrategy, RollParams } from "#types/BannerStrategy";
-import { Items } from "#types/Items";
-import { BannerTypes } from "#types/BannerTypes";
-import { RateUp } from "#types/RateUp";
-import Switch from "../helpers/Switch.js";
-import GenericFourStarsHandler from "../helpers/GenericFourStarsHandler.js";
-import StrategyManager from "../singletons/StrategyManager.js";
-import RandomItem from "../helpers/RandomItem.js";
+import type { BannerStrategy, RollParams } from "@BannerStrategy";
+import BannerTypes from "@BannerTypes";
+import RateUp from "@RateUp";
+import Items from "@Items";
+import Switch from "@Switch";
+import GenericFourStarsHandler from "@GenericFourStarsHandler";
+import StrategyManager from "@StrategyManager";
+import RandomItem from "@RandomItem";
 
 @StrategyManager.Register(BannerTypes.Crossover)
 export default class Crossover implements BannerStrategy {

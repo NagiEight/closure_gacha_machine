@@ -1,4 +1,4 @@
-import type { BannerTypes } from "#types/BannerTypes";
+import type BannerTypes from "@BannerTypes";
 
 export type SearchQuery = Partial<{
     NameQuery: string;

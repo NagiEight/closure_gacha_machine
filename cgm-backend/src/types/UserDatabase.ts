@@ -1,5 +1,5 @@
-import type { GachaProfileStorageRow } from "#types/GachaProfileStorageRow";
-import type { GachaProfileDataRow } from "./GachaProfileDataRow.js";
+import type { GachaProfileStorageRow } from "@GachaProfileStorageRow";
+import type { GachaProfileDataRow } from "@GachaProfileDataRow";
 
 export default abstract class UserDatabase {
     /**

@@ -1,12 +1,12 @@
-import type { BannerStrategy, RollParams } from "#types/BannerStrategy";
-import { Items } from "#types/Items";
-import { BannerTypes } from "#types/BannerTypes";
-import { RateUp } from "#types/RateUp";
-import Switch from "#helpers/Switch";
-import GenericFiveStarsHandler from "#helpers/GenericFiveStarsHandler";
-import GenericFourStarsHandler from "#helpers/GenericFourStarsHandler";
-import StrategyManager from "#StrategyManager";
-import RandomItem from "#helpers/RandomItem";
+import type { BannerStrategy, RollParams } from "@BannerStrategy";
+import RateUp from "@RateUp";
+import BannerTypes from "@BannerTypes";
+import Items from "@Items";
+import Switch from "@Switch";
+import GenericFiveStarsHandler from "@GenericFiveStarsHandler";
+import GenericFourStarsHandler from "@GenericFourStarsHandler";
+import StrategyManager from "@StrategyManager";
+import RandomItem from "@RandomItem";
 
 @StrategyManager.Register(BannerTypes.Standard)
 export default class Standard implements BannerStrategy {

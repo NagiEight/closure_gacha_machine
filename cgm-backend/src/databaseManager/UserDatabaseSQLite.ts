@@ -1,7 +1,7 @@
-import type { GachaProfileDataRow } from "#types/GachaProfileDataRow";
-import type { GachaProfileStorageRow } from "#types/GachaProfileStorageRow";
+import type { GachaProfileDataRow } from "@GachaProfileDataRow";
+import type { GachaProfileStorageRow } from "@GachaProfileStorageRow";
 import type { Database as DBType } from "better-sqlite3";
-import UserDatabase from "#types/UserDatabase";
+import UserDatabase from "@UserDatabase";
 import Database from "better-sqlite3";
 import path from "path";
 

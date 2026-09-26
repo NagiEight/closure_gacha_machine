@@ -8,6 +8,10 @@
       "ES2025.Iterator"
     ],
 
+    "paths": {
+      "@*": ["./src/singletons/*.ts", "./src/types/*.ts", "./src/helpers/*.ts"]
+    },
+
     "outDir": "./public",
     "rootDir": "./src",
 

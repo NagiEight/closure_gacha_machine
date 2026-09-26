@@ -1,13 +1,13 @@
-import type { BannerStrategy, RollParams } from "#types/BannerStrategy";
-import type { GachaItems } from "#helpers/Gacha";
-import { Items } from "#types/Items";
-import { BannerTypes } from "#types/BannerTypes";
-import { RateUp } from "#types/RateUp";
-import Switch from "#helpers/Switch";
-import GenericFourStarsHandler from "#helpers/GenericFourStarsHandler";
-import GenericFiveStarsHandler from "#helpers/GenericFiveStarsHandler";
-import StrategyManager from "#StrategyManager";
-import RandomItem from "#helpers/RandomItem";
+import type { BannerStrategy, RollParams } from "@BannerStrategy";
+import type { GachaItems } from "@Gacha";
+import RateUp from "@RateUp";
+import BannerTypes from "@BannerTypes";
+import Items from "@Items";
+import Switch from "@Switch";
+import GenericFourStarsHandler from "@GenericFourStarsHandler";
+import GenericFiveStarsHandler from "@GenericFiveStarsHandler";
+import StrategyManager from "@StrategyManager";
+import RandomItem from "@RandomItem";
 
 @StrategyManager.Register(BannerTypes.TFTW)
 export default class JointOperation implements BannerStrategy {

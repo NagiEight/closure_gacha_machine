@@ -1,12 +1,12 @@
+import type { Banner } from "@Banner";
+import type { Operator } from "@Operator";
+import type { SearchQuery } from "@SearchQuery";
+import type { SearchResult } from "@SearchResult";
+import type BannerTypes from "@BannerTypes";
 import type { Database as DBType } from "better-sqlite3";
-import type { Banner } from "#types/Banner";
-import type { Operator } from "#types/Operator";
-import type { SearchQuery } from "#types/SearchQuery";
-import type { SearchResult } from "#types/SearchResult";
-import type { BannerTypes } from "#types/BannerTypes";
-import { Items } from "#types/Items";
-import Switch from "#helpers/Switch";
-import FormMediaURL from "#helpers/FormMediaURL";
+import Items from "@Items";
+import Switch from "@Switch";
+import FormMediaURL from "@FormMediaURL";
 import Database from "better-sqlite3";
 import path from "path";
 import fs from "fs/promises";
@@ -154,7 +154,7 @@ class DataManager {
         `).all();
 
         Query.forEach(Row => {
-            const { Name, ...Rest } = Row;
+            const { Name, Prima, Secondary: Second, Standard: STD, ...Rest } = Row;
             const Banner: Banner = this.Banners.get(Name) ?? {
                 ...Rest,
                 SixStarsPool: {
@@ -173,9 +173,9 @@ class DataManager {
                 ThreeStarsPool: []
             };
 
-            const Primary: string[] = JSON.parse(Row.Prima ?? "[]");
-            const Secondary: string[] = JSON.parse(Row.Secondary ?? "[]");
-            const Standard: string[] = JSON.parse(Row.Standard);
+            const Primary: string[] = JSON.parse(Prima ?? "[]");
+            const Secondary: string[] = JSON.parse(Second ?? "[]");
+            const Standard: string[] = JSON.parse(STD);
 
             this.BannerPoolCache.set(Name, new Set([
                 ...(this.BannerPoolCache.get(Name) ?? []),

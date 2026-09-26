@@ -15,22 +15,8 @@
     "typescript": "^7.0.2"
   },
   "type": "module",
-  "imports": {
-    "#*": {
-      "types": "./src/singletons/*.js",
-      "default": "./public/singletons/*.js"
-    },
-    "#types/*": {
-      "types": "./src/types/*.js",
-      "default": "./public/types/*.js"
-    },
-    "#helpers/*": {
-      "types": "./src/helpers/*.js",
-      "default": "./public/helpers/*.js"
-    }
-  },
   "scripts": {
-    "dev": "tsx main.ts",
+    "dev": "tsx ./src/main.ts",
     "start": "node ./public/main.js",
     "build": "tsc"
   },
