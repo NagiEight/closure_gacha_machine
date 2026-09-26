@@ -84,8 +84,8 @@ Server.post("/gacha/:BannerName/roll/:Count", async (Req, Res) => {
         const Reduced: string | undefined = Req.query.reduced?.toString().trim().toLowerCase();
         Res.json({
             Result: Reduced === "true" || Reduced === "1"
-                ? await GachaSystem.RollMultiReduced(Token, BannerName, Count, Body)!
-                : await GachaSystem.RollMulti(Token, BannerName, Count, Body)!
+                ? await GachaSystem.Roll(Count, Token, BannerName, Body, true)
+                : await GachaSystem.Roll(Count, Token, BannerName, Body)
         });
         return;
     }
@@ -93,7 +93,7 @@ Server.post("/gacha/:BannerName/roll/:Count", async (Req, Res) => {
     const Reduced: string | undefined = Req.query.reduced?.toString().trim().toLowerCase();
     Res.json({
         Result: Reduced === "true" || Reduced === "1"
-            ? await GachaSystem.RollMultiReduced(Token, BannerName, Count)!
-            : await GachaSystem.RollMulti(Token, BannerName, Count)!
+            ? await GachaSystem.Roll(Count, Token, BannerName, undefined, true)!
+            : await GachaSystem.Roll(Count, Token, BannerName)!
     });
 });

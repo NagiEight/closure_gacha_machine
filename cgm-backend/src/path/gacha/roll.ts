@@ -75,11 +75,11 @@ Server.post("/gacha/:BannerName/roll", async (Req, Res) => {
             return;
 
         Res.json({
-            Result: GachaSystem.Roll(Token, BannerName, true, Body)
+            Result: (await GachaSystem.Roll(1, Token, BannerName, Body))![0][0]
         });
         return;
     }
 
-    const Result: string = (await GachaSystem.Roll(Token, BannerName))![0];
+    const Result: string = (await GachaSystem.Roll(1, Token, BannerName))![0][0];
     Res.json({ Result });
 });

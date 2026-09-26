@@ -102,15 +102,36 @@ class GachaSystem {
     public GetProfile(Token: string): GachaProfile | undefined {
         return this.GachaProfiles[Token];
     }
-
-    public Roll(Token: string, BannerName: string, WriteDB?: boolean): Promise<[string, Items] | undefined>;
-    public Roll(Token: string, BannerName: string, WriteDB?: boolean, Selection?: Selection): Promise<[string, Items] | undefined>;
-    public async Roll(Token: string, BannerName: string, WriteDB: boolean = true, Selection?: Selection): Promise<[string, Items] | undefined> {
+    
+    public Roll(
+        Count: number,
+        Token: string,
+        BannerName: string,
+        Selection?: Selection,
+        Reduced?: false
+    ): Promise<[string, Items][] | undefined>;
+    public Roll(
+        Count: number,
+        Token: string,
+        BannerName: string, 
+        Selection?: Selection,
+        Reduced?: true
+    ): Promise<Record<string, number> | undefined>;
+    public async Roll(
+        Count: number,
+        Token: string,
+        BannerName: string,
+        Selection?: Selection,
+        Reduced?: boolean
+    ): Promise<[string, Items][] | Record<string, number> | undefined> {
         const Banner: Banner | undefined = Database.Manager.Banners.get(BannerName);
 
         if(!Banner || !this.GachaProfiles[Token])
             return;
 
+        const Output: [string, Items][] | Record<string, number> = Reduced ? [] : {};
+        const OutputMap: Map<string, Items> = new Map(); 
+
         this.GachaProfiles[Token][BannerName] ??= {
             Count: 0,
             RollsWithoutSixStar: 0,
@@ -128,158 +149,108 @@ class GachaSystem {
         };
 
         const Profile: ProfileBanner = this.GachaProfiles[Token][BannerName];
-        Profile.Count++;
-
-        let StandardRate: GachaItems<Items>[] = [
-            { Value: Items.SixStars, Chance: 2 },
-            { Value: Items.FiveStars, Chance: 8 },
-            { Value: Items.FourStars, Chance: 50 },
-            { Value: Items.ThreeStars, Chance: 40 }
-        ];
-
-        if(Profile.RollsWithoutSixStar > 50)
-            StandardRate = PityCalculator(StandardRate, Items.SixStars, (Profile.RollsWithoutSixStar - 50) * 2);
-        if(Profile.Count === 9 && !Profile.TenRolls)
-            StandardRate = [{ Value: Items.SixStars, Chance: 2 }, { Value: Items.FiveStars, Chance: 98 }];
-
-        const Result: Items = Banner.Type === BannerTypes.Crossover && Profile.RollsSinceLast6StarsRateUp >= 119
-                ? Items.SixStars
-            : Banner.Type === BannerTypes.Crossover && Profile.RollsSinceLast5StarsRateUp >= 49
-                ? Items.FiveStars
-            : Gacha(StandardRate)
-        ;
 
         const StrategyClass: new () => BannerStrategy = StrategyManager.StrategyRegistry.get(Banner.Type)!;
         const Strategy: BannerStrategy = new StrategyClass();
 
-        const RU: RateUp = Gacha(Strategy.RateUp?.[Result] ?? this.StandardRate[Result]);
+        Profile.Count += Count;
 
-        Switch(Result, {
-            [Items.SixStars]: (): void => {
-                Profile.RollsSinceLast5StarsRateUp++;
-                Profile.RollsSinceLast4StarsRateUp++;
+        for(let _: number = 0; _ < Count; _++) {
+            let StandardRate: GachaItems<Items>[] = [
+                { Value: Items.SixStars, Chance: 2 },
+                { Value: Items.FiveStars, Chance: 8 },
+                { Value: Items.FourStars, Chance: 50 },
+                { Value: Items.ThreeStars, Chance: 40 }
+            ];
 
-                if(RU !== RateUp.Primary) {
-                    Profile.RollsSinceLast6StarsRateUp++;
-                    return;
-                }
+            if(Profile.RollsWithoutSixStar > 50)
+                StandardRate = PityCalculator(StandardRate, Items.SixStars, (Profile.RollsWithoutSixStar - 50) * 2);
+            if(Profile.Count === 9 && !Profile.TenRolls)
+                StandardRate = [{ Value: Items.SixStars, Chance: 2 }, { Value: Items.FiveStars, Chance: 98 }];
 
-                Profile.RollsSinceLast6StarsRateUp = 0;
-            },
-            [Items.FiveStars]: (): void => {
-                Profile.RollsSinceLast6StarsRateUp++;
-                Profile.RollsSinceLast4StarsRateUp++;
+            const Result: Items = Banner.Type === BannerTypes.Crossover && Profile.RollsSinceLast6StarsRateUp >= 119
+                    ? Items.SixStars
+                : Banner.Type === BannerTypes.Crossover && Profile.RollsSinceLast5StarsRateUp >= 49
+                    ? Items.FiveStars
+                : Gacha(StandardRate)
+            ;
 
-                if(RU !== RateUp.Primary) {
+            const RU: RateUp = Gacha(Strategy.RateUp?.[Result] ?? this.StandardRate[Result]);
+
+            Switch(Result, {
+                [Items.SixStars]: (): void => {
                     Profile.RollsSinceLast5StarsRateUp++;
-                    return;
-                }
-
-                Profile.RollsSinceLast5StarsRateUp = 0;
-            },
-            [Items.FourStars]: (): void => {
-                Profile.RollsSinceLast6StarsRateUp++;
-                Profile.RollsSinceLast5StarsRateUp++;
-
-                if(RU !== RateUp.Primary && Banner.FourStarsPool.Primary.length) {
                     Profile.RollsSinceLast4StarsRateUp++;
-                    return;
-                }
 
-                Profile.RollsSinceLast4StarsRateUp = 0;
-            },
-            [Items.ThreeStars]: (): void => {
-                Profile.RollsSinceLast6StarsRateUp++;
-                Profile.RollsSinceLast5StarsRateUp++;
-                if(Banner.FourStarsPool.Primary.length) {
+                    if(RU !== RateUp.Primary) {
+                        Profile.RollsSinceLast6StarsRateUp++;
+                        return;
+                    }
+
+                    Profile.RollsSinceLast6StarsRateUp = 0;
+                },
+                [Items.FiveStars]: (): void => {
+                    Profile.RollsSinceLast6StarsRateUp++;
                     Profile.RollsSinceLast4StarsRateUp++;
+
+                    if(RU !== RateUp.Primary) {
+                        Profile.RollsSinceLast5StarsRateUp++;
+                        return;
+                    }
+
+                    Profile.RollsSinceLast5StarsRateUp = 0;
+                },
+                [Items.FourStars]: (): void => {
+                    Profile.RollsSinceLast6StarsRateUp++;
+                    Profile.RollsSinceLast5StarsRateUp++;
+
+                    if(RU !== RateUp.Primary && Banner.FourStarsPool.Primary.length) {
+                        Profile.RollsSinceLast4StarsRateUp++;
+                        return;
+                    }
+
+                    Profile.RollsSinceLast4StarsRateUp = 0;
+                },
+                [Items.ThreeStars]: (): void => {
+                    Profile.RollsSinceLast6StarsRateUp++;
+                    Profile.RollsSinceLast5StarsRateUp++;
+                    if(Banner.FourStarsPool.Primary.length) {
+                        Profile.RollsSinceLast4StarsRateUp++;
+                    }
                 }
+            });
+            
+            const RollResult: string = Strategy.Roll({ Banner, Profile, Result, RU, Selection });
+            OutputMap.set(RollResult, Result);
+
+            if(Reduced) {
+                (Output as Record<string, number>)[RollResult] ??= 0;
+                (Output as Record<string, number>)[RollResult]++;
             }
-        });
-        
-        const Output: string = Strategy.Roll({ Banner, Profile, Result, RU, Selection });
+            else (Output as [string, number][]).push([RollResult, Result]);
+            
+            if(Result >= 5) {
+                if(Result === Items.SixStars)
+                    Profile.RollsWithoutSixStar = 0;
+                Profile.TenRolls = true;
+            }
 
-        if(Result >= 5) {
-            if(Result === Items.SixStars)
-                Profile.RollsWithoutSixStar = 0;
-            Profile.TenRolls = false;
+            const { Storage } = Profile;
+            const Rarity: Record<string, number> = Switch(Result, {
+                [Items.SixStars]: (): Record<string, number> => Storage.SixStars,
+                [Items.FiveStars]: (): Record<string, number> => Storage.FiveStars,
+                [Items.FourStars]: (): Record<string, number> => Storage.FourStars,
+                [Items.ThreeStars]: (): Record<string, number> => Storage.ThreeStars
+            });
+            
+            Rarity[RollResult] ??= 0;
+            Rarity[RollResult]++;
         }
 
         const { Storage, Focused, TenRolls, ...Rest } = Profile;
-        const Rarity: Record<string, number> = Switch(Result, {
-            [Items.SixStars]: (): Record<string, number> => Storage.SixStars,
-            [Items.FiveStars]: (): Record<string, number> => Storage.FiveStars,
-            [Items.FourStars]: (): Record<string, number> => Storage.FourStars,
-            [Items.ThreeStars]: (): Record<string, number> => Storage.ThreeStars
-        });
-        
-        Rarity[Output] ??= 0;
-        Rarity[Output]++;
-
-        if(!WriteDB)
-            return [Output, Result];
-
-        await this.Manager.RefreshStorage({
-            Token,
-            Banner: BannerName,
-            Rarity: Result,
-            ID: Output,
-            Count: Rarity[Output]
-        });
-
-        await this.Manager.RefreshData({
-            Token,
-            Banner: BannerName,
-            ...Rest,
-            Focused: +Focused as 0 | 1,
-            TenRolls: +TenRolls as 0 | 1
-        });
-
-        return [Output, Result];
-    }
-
-    public async RollMultiReduced(
-        Token: string,
-        BannerName: string,
-        Count: number,
-        Selection?: Selection
-    ): Promise<Record<string, number> | undefined> {
-        return (await this.RollMulti(Token, BannerName, Count, Selection))
-            ?.reduce((Acc: Record<string, number>, Item: string): Record<string, number> => {
-                Acc[Item] ??= 0;
-                Acc[Item]++;
-                return Acc;
-            }, {})
-        ;
-    }
-    public async RollMulti(Token: string, BannerName: string, Count: number, Selection?: Selection): Promise<string[] | undefined> {
-        if(!this.GachaProfiles[Token])
-            return;
-
-        this.GachaProfiles[Token][BannerName] ??= {
-            Count: 0,
-            RollsWithoutSixStar: 0,
-            RollsSinceLast6StarsRateUp: 0,
-            RollsSinceLast5StarsRateUp: 0,
-            RollsSinceLast4StarsRateUp: 0,
-            Focused: false,
-            TenRolls: false,
-            Storage: {
-                SixStars: {},
-                FiveStars: {},
-                FourStars: {},
-                ThreeStars: {}
-            }
-        };
-
-        const Profile: ProfileBanner = this.GachaProfiles[Token][BannerName];
-
-        const Result: [string, Items][] = [];
-        while(Result.push((await this.Roll(Token, BannerName, false, Selection))!) < Count);
-        const { Storage, Focused, TenRolls, ...Rest } = Profile;
 
         await AsyncMap(
-            Array.from(new Map(Result)),
+            Array.from(OutputMap),
             ([ID, Rarity]): Promise<any> => this.Manager.RefreshStorage({
                 Token,
                 Banner: BannerName,
@@ -293,6 +264,7 @@ class GachaSystem {
                 })[ID]
             })
         );
+
         await this.Manager.RefreshData({
             Token,
             Banner: BannerName,
@@ -301,8 +273,9 @@ class GachaSystem {
             TenRolls: +TenRolls as 0 | 1
         });
 
-        return Result.map(Item => Item[0]);
+        return Output;
     }
+
 };
 
 export default await GachaSystem.New();
