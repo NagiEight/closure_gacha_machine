@@ -4,11 +4,11 @@ import type { GachaProfileDataRow } from "#types/GachaProfileDataRow";
 export default abstract class UserDatabase {
     /**
      * An async method that used for setting up database (create table, setting pragmas,...) of async database library or async operations that might not be possible in a method's constructor. 
-     * #returns A new instance of the database manager or the same one that used to call this method.
+     * @returns A new instance of the database manager or the same one that used to call this method.
      */
     public async Initialize(): Promise<UserDatabase> {
-        return this
-    };
+        return this;
+    }
 
     public abstract CreateProfile(Token: string): Promise<void>;
     public abstract RefreshStorage(Args: GachaProfileStorageRow): Promise<void>;

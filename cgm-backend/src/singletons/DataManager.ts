@@ -32,7 +32,7 @@ interface OperatorsRow {
     Limited: number;
 }
 
-class DataManager {
+export default new class DataManager {
     public readonly DB: DBType = new Database(path.join(DBDir, "Banners.db"));
     public readonly GetBannersSTMT: Statement<[number, number], SearchResult>;
     public readonly SearchBannersSTMT = this.DB.transaction((
@@ -227,6 +227,4 @@ class DataManager {
             : undefined
         ;
     }
-}
-
-export default new DataManager();
+}();

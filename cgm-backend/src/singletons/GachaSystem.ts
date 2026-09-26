@@ -18,7 +18,7 @@ import Items from "#types/Items";
 import RateUp from "#types/RateUp";
 import DataManager from "#DataManager";
 
-class GachaSystem {
+export default await new class GachaSystem {
     private readonly GachaProfiles: Record<string, GachaProfile> = {};
     private readonly StandardRate: Record<Items, GachaItems<RateUp>[]> = {
         [Items.SixStars]: [
@@ -37,12 +37,14 @@ class GachaSystem {
             { Value: RateUp.Primary, Chance: 100 }
         ]
     };
+
+    public Manager!: UserDatabase;
     
-    private constructor(
-        StorageQuery: GachaProfileStorageRow[],
-        DataQuery: GachaProfileDataRow[],
-        public readonly Manager: UserDatabase
-    ) {
+    public async Initialize(): Promise<GachaSystem> {
+        const Manager: UserDatabase = await (new (await LoadManager())).Initialize();
+        const StorageQuery: GachaProfileStorageRow[] = await Manager.GetStorage();
+        const DataQuery: GachaProfileDataRow[] = await Manager.GetData();
+
         DataQuery.forEach(Row => {
             const { Token, Banner, Focused, TenRolls, ...Rest } = Row;
             this.GachaProfiles[Token] ??= {};
@@ -69,20 +71,11 @@ class GachaSystem {
                 3: (): Record<string, number> => Storage.ThreeStars
             })[ID] = Count;
         });
-    }
 
-    public static async New(): Promise<GachaSystem> {
-        const Manager: UserDatabase = await (new (await LoadManager())).Initialize();
-        const StorageQuery: GachaProfileStorageRow[] = await Manager.GetStorage();
-        const DataQuery: GachaProfileDataRow[] = await Manager.GetData();
-        const Instance: GachaSystem = new GachaSystem(
-            StorageQuery,
-            DataQuery,
-            Manager
-        );
+        this.Manager = Manager;
 
         await StrategyManager.Load();
-        return Instance;
+        return this;
     }
 
     public async CreateProfile(): Promise<string> {
@@ -275,6 +268,4 @@ class GachaSystem {
 
         return Output;
     }
-};
-
-export default await GachaSystem.New();
+}().Initialize();
