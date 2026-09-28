@@ -1,3 +1,4 @@
+import DeepFreeze from "#helpers/DeepFreeze";
 import "dotenv/config";
 
 const ParseNumber = (Env?: string, Default: number = -1): number => {
@@ -18,7 +19,7 @@ const ParseArray = <T>(Env?: string, Default?: T[]): T[] => {
     }
 };
 
-const EnvLoader = <T extends Record<string, any>>(Env: T): Readonly<T> => Object.freeze<T>(
+const EnvLoader = <T extends Record<string, any>>(Env: T): Readonly<T> => DeepFreeze(
     Object.fromEntries(
         Object.entries<T>(Env).map(([K, V]) => {
             if(typeof V === "number")

@@ -21,7 +21,7 @@ export default new class StrategyManager {
         );
     }
     public Register(Type: BannerTypes): <T extends new () => BannerStrategy>(ctor: T) => void {
-        return <T extends new() => BannerStrategy>(ctor: T) => {
+        return <T extends new () => BannerStrategy>(ctor: T) => {
             if(this.StrategyRegistry.has(Type))
                 throw new Error(`Banner type ${Type} has already been registered.`);
             
