@@ -1,6 +1,9 @@
 import "dotenv/config";
 
-const ParseNumber = (Env?: string, Default: number = -1): number => Number(Env) || Default;
+const ParseNumber = (Env?: string, Default: number = -1): number => {
+    const Value: number = Number(Env = Env?.trim());
+    return Env !== "" && !Number.isNaN(Value) ? Value : Default;
+};
 
 const ParseArray = <T>(Env?: string, Default?: T[]): T[] => {
     if(!Default)
@@ -15,7 +18,7 @@ const ParseArray = <T>(Env?: string, Default?: T[]): T[] => {
     }
 };
 
-const EnvLoader = <T extends Record<string, any>>(Env: T): T => Object.freeze<T>(
+const EnvLoader = <T extends Record<string, any>>(Env: T): Readonly<T> => Object.freeze<T>(
     Object.fromEntries(
         Object.entries<T>(Env).map(([K, V]) => {
             if(typeof V === "number")
