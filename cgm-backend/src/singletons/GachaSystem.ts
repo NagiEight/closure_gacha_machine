@@ -40,13 +40,11 @@ export default await new class GachaSystem {
     public Manager!: UserDatabase;
     
     public async Initialize(): Promise<GachaSystem> {
-        const ManagerConstructor: new () => UserDatabase = await LoadManager();
+        const Manager: UserDatabase = await (new (await LoadManager())().Initialize());
         
-        if(!(ManagerConstructor.prototype instanceof UserDatabase)) 
+        if(!(Manager instanceof UserDatabase)) 
             throw new TypeError("Database manager must inherit from UserDatabase or any of its children.");
         
-        const Manager: UserDatabase = await (new ManagerConstructor().Initialize());
-
         const StorageQuery: GachaProfileStorageRow[] = await Manager.GetStorage();
         const DataQuery: GachaProfileDataRow[] = await Manager.GetData();
 
