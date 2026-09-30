@@ -1,5 +1,8 @@
 import type { GachaItems } from "#helpers/Gacha";
 
+/**
+ * Calculate the gacha pity and proportionally decrease the chance of other items.
+ */
 export default <T>(Rates: GachaItems<T>[], Target: T, Increase: number): GachaItems<T>[] => {
     const TargetItem: GachaItems<T> = Rates.find(Item => Item.Value === Target)!;
     const OldTargetChance: number = TargetItem.Chance;

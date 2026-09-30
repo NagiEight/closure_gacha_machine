@@ -1,15 +1,15 @@
-import type { Database as DBType, Statement } from "better-sqlite3";
 import type { Banner } from "#types/Banner";
-import type BannerTypes from "#types/BannerTypes";
 import type { Operator } from "#types/Operator";
 import type { SearchQuery } from "#types/SearchQuery";
 import type { SearchResult } from "#types/SearchResult";
-import Database from "better-sqlite3";
-import path from "path";
-import fs from "fs/promises";
+import type { Database as DBType } from "better-sqlite3";
+import type BannerTypes from "#types/BannerTypes";
 import FormMediaURL from "#helpers/FormMediaURL";
 import Switch from "#helpers/Switch";
 import Items from "#types/Items";
+import Database from "better-sqlite3";
+import path from "path";
+import fs from "fs/promises";
 
 const DBDir: string = path.join(import.meta.dirname, "..", "..", "database");
 await fs.mkdir(DBDir, { recursive: true });
@@ -34,8 +34,18 @@ interface OperatorsRow {
 
 export default new class DataManager {
     public readonly DB: DBType = new Database(path.join(DBDir, "Banners.db"));
-    public readonly GetBannersSTMT: Statement<[number, number], SearchResult>;
-    public readonly SearchBannersSTMT = this.DB.transaction((
+    public readonly GetBannersSTMT: Database.Statement<[number, number], SearchResult>;
+    public readonly SearchBannersSTMT: Database.Transaction<(
+        PageIndex: number,
+        PageSize: number,
+        {
+            NameQuery,
+            BannerType,
+            Includes,
+            From,
+            To
+        }: SearchQuery
+    ) => SearchResult[]> = this.DB.transaction((
         PageIndex: number,
         PageSize: number,
         {
@@ -70,7 +80,7 @@ export default new class DataManager {
         }
 
         if(Includes?.length) {
-            Conditions.push(`every(?, Name)`);
+            Conditions.push("every(?, Name)");
             Args.push(JSON.stringify(Includes));
         }
 
@@ -123,8 +133,8 @@ export default new class DataManager {
                 ReleaseDate INTEGER NOT NULL,
                 Type TEXT NOT NULL
             );
-        `);
-        this.DB.function(
+        `)
+        .function(
             "every",
             { deterministic: true },
             (SetJSON: string, Name: string): 0 | 1 => {

@@ -1,11 +1,10 @@
-import type { BannerStrategy } from "#types/BannerStrategy";
+import type { BannerStrategy, Selection } from "#types/BannerStrategy";
 import type { GachaProfile, ProfileStorage, ProfileBanner } from "#types/GachaProfile";
 import type { GachaProfileDataRow } from "#types/GachaProfileDataRow";
 import type { GachaProfileStorageRow } from "#types/GachaProfileStorageRow";
 import type { GachaItems } from "#helpers/Gacha";
-import type { Selection } from "#types/BannerStrategy";
 import type { Banner } from "#types/Banner";
-import type UserDatabase from "#types/UserDatabase";
+import UserDatabase from "#types/UserDatabase";
 import AsyncMap from "#helpers/AsyncMap";
 import Gacha from "#helpers/Gacha";
 import GenerateToken from "#helpers/GenerateToken";
@@ -41,7 +40,13 @@ export default await new class GachaSystem {
     public Manager!: UserDatabase;
     
     public async Initialize(): Promise<GachaSystem> {
-        const Manager: UserDatabase = await (new (await LoadManager())).Initialize();
+        const ManagerConstructor: new () => UserDatabase = await LoadManager();
+        
+        if(!(ManagerConstructor.prototype instanceof UserDatabase)) 
+            throw new TypeError("Database manager must inherit from UserDatabase or any of its children.");
+        
+        const Manager: UserDatabase = await (new ManagerConstructor().Initialize());
+
         const StorageQuery: GachaProfileStorageRow[] = await Manager.GetStorage();
         const DataQuery: GachaProfileDataRow[] = await Manager.GetData();
 
@@ -146,7 +151,6 @@ export default await new class GachaSystem {
         const StrategyClass: new () => BannerStrategy = StrategyManager.StrategyRegistry.get(Banner.Type)!;
         const Strategy: BannerStrategy = new StrategyClass();
 
-        
         for(let _: number = 0; _ < Count; _++) {
             Profile.Count++;
             let StandardRate: GachaItems<Items>[] = [

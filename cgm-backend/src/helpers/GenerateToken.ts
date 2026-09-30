@@ -1,6 +1,9 @@
 import crypto from "crypto";
 
-export default (Prerequisite: (Token: string) => boolean): string => {
+/**
+ * Generate a unique uuid using {@link Prerequisite} to checks if that uuid already exists.
+ */
+const GenerateToken = (Prerequisite: (Token: string) => boolean): string => {
     let Token: string;
     
     do Token = crypto.randomUUID();
@@ -8,3 +11,5 @@ export default (Prerequisite: (Token: string) => boolean): string => {
     
     return Token;
 };
+
+export default GenerateToken;
