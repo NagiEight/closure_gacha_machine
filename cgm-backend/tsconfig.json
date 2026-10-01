@@ -4,8 +4,8 @@
     "module": "nodenext",
     "moduleResolution": "nodenext",
     "lib": [
-      "ES2025",
-      "ES2025.Iterator"
+      "ESNext",
+      "ESNext.Iterator"
     ],
 
     "paths": {

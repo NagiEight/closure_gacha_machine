@@ -172,7 +172,7 @@ export default new class DataManager {
 
         Query.forEach(Row => {
             const { Name, Prima, Secondary: Second, Standard: STD, ...Rest } = Row;
-            const Banner: Banner = this.Banners.get(Name) ?? {
+            const Banner: Banner = this.Banners.getOrInsert(Name, {
                 ...Rest,
                 SixStarsPool: {
                     Primary: [],
@@ -188,7 +188,7 @@ export default new class DataManager {
                     Standard: []
                 },
                 ThreeStarsPool: []
-            };
+            });
 
             const Primary: string[] = JSON.parse(Prima ?? "[]");
             const Secondary: string[] = JSON.parse(Second ?? "[]");
