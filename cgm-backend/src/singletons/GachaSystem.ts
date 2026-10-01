@@ -22,7 +22,7 @@ export default await new class GachaSystem {
     private readonly StandardRate: Record<Items, GachaItems<RateUp>[]> = {
         [Items.SixStars]: [
             { Value: RateUp.Primary, Chance: 70 },
-            { Value: RateUp.None, Chance: 30 }     
+            { Value: RateUp.None, Chance: 30 }
         ],
         [Items.FiveStars]: [
             { Value: RateUp.Primary, Chance: 50 },
@@ -40,7 +40,7 @@ export default await new class GachaSystem {
     public Manager!: UserDatabase;
     
     public async Initialize(): Promise<GachaSystem> {
-        const Manager: UserDatabase = await (new (await LoadManager())().Initialize());
+        const Manager: UserDatabase = await new (await LoadManager())().Initialize();
         
         if(!(Manager instanceof UserDatabase)) 
             throw new TypeError("Database manager must inherit from UserDatabase or any of its children.");
@@ -164,10 +164,10 @@ export default await new class GachaSystem {
                 StandardRate = [{ Value: Items.SixStars, Chance: 2 }, { Value: Items.FiveStars, Chance: 98 }];
 
             const Result: Items = Banner.Type === BannerTypes.Crossover && Profile.RollsSinceLast6StarsRateUp >= 119
-                    ? Items.SixStars
+                ? Items.SixStars
                 : Banner.Type === BannerTypes.Crossover && Profile.RollsSinceLast5StarsRateUp >= 49
                     ? Items.FiveStars
-                : Gacha(StandardRate)
+                    : Gacha(StandardRate)
             ;
 
             const RU: RateUp = Gacha(Strategy.RateUp?.[Result] ?? this.StandardRate[Result]);

@@ -1,5 +1,5 @@
 import DataManager from "#DataManager";
-import LoadEnv from "#LoadEnv";
+import Env from "#Env";
 import Server from "#Server";
 
 Server.get("/api/banners/:Page", (Req, Res) => {
@@ -9,5 +9,5 @@ Server.get("/api/banners/:Page", (Req, Res) => {
         return;
     }
 
-    Res.json(DataManager.GetBannersSTMT.all(LoadEnv.PAGE_SIZE, Page * LoadEnv.PAGE_SIZE));
+    Res.json(DataManager.GetBannersSTMT.all(Env.GetVariable("PAGE_SIZE"), Page * Env.GetVariable<number>("PAGE_SIZE")));
 });

@@ -2,13 +2,19 @@ import type { GachaProfileDataRow } from "#types/GachaProfileDataRow";
 import type { GachaProfileStorageRow } from "#types/GachaProfileStorageRow";
 import type { Client, Transaction } from "@libsql/client";
 import { createClient } from "@libsql/client";
-import LoadEnv from "#LoadEnv";
+import Env from "#Env";
 import UserDatabase from "#types/UserDatabase";
 
 export default class UserDatabaseTurso extends UserDatabase {
+    static {
+        Env.RegisterVariable("DATABASE_TOKEN")
+            .RegisterVariable("DATABASE_URL")
+        ;
+    }
+    
     public readonly DB: Client = createClient({
-        url: LoadEnv.DATABASE_URL,
-        authToken: LoadEnv.DATABASE_TOKEN
+        url: Env.GetVariable("DATABASE_URL"),
+        authToken: Env.GetVariable("DATABASE_TOKEN")
     });
 
     public async Initialize(): Promise<UserDatabaseTurso> {

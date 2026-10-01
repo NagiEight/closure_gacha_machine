@@ -6,7 +6,7 @@ import Database from "better-sqlite3";
 import path from "path";
 
 export default class UserDatabaseSQLite extends UserDatabase {
-    public readonly DB: DBType = new Database(path.join(import.meta.dirname, "..", "..", "database", "Userthis.DB"));
+    public readonly DB: DBType = new Database(path.join(import.meta.dirname, "..", "..", "database", "Users.DB"));
     public readonly CreateGachaProfileSTMT = this.DB.prepare<[string], void>(`
         INSERT INTO GachaProfiles(Token)
         VALUES(?)

@@ -1,6 +1,6 @@
 import { pathToFileURL } from "url";
 import UserDatabase from "#types/UserDatabase";
-import LoadEnv from "#LoadEnv";
+import Env from "#Env";
 import path from "path";
 
 /**
@@ -16,6 +16,6 @@ export default async (): Promise<new () =>  UserDatabase> => {
     ;
 
     return (await import(
-        pathToFileURL(path.join(PathToDir, LoadEnv.DATABASE_MANAGER_FILENAME + Extension)).href
+        pathToFileURL(path.join(PathToDir, Env.GetVariable("DATABASE_MANAGER_FILENAME") + Extension)).href
     )).default;
 };
