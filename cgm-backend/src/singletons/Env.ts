@@ -20,11 +20,20 @@ export default new class EnvLoader {
     /**
      * Add variable of name {@link Name}, do nothing if variable already registered. If {@link Default} is provided, then its value will be use if variable doesn't exist.
      * 
+     * Also takes a {@link Parser} function to parse custom array (comma-separated lists,...). By default this method use `JSON.parse` as its parser. Ignore if the reported type of the variable isn't array.
+     * 
      * This method does not reject empty strings if the reported type is string, otherwise treat empty string as missing variable and defaults to {@link Default} if a value was provided.
      * 
-     * @throws If reported type doesn't match with the variable's actual type (won't throw for this if variable is string), if registered variable doesn't exist in process.env and there is no default value provided, or if the type of {@link Default} doesn't match with the reported type of the variable.
+     * @throws If reported type doesn't match with the variable's actual type (won't throw for this if variable is string),if registered variable doesn't exist in process.env and there is no default value provided, or if the type of {@link Default} doesn't match with the reported type of the variable.
      */
-    public RegisterVariable(Name: string, Type: "number" | "array" | "string" = "string", Default?: ValueType): this {
+    public RegisterVariable(
+        Name: string,
+        Type: "number" | "array" | "string" = "string",
+        {
+            Default,
+            Parser
+        }: { Default?: ValueType; Parser?: (Env: string) => unknown[]; } = {}
+    ): this {
         if(this.Variables.has(Name))
             return this;
 
@@ -63,6 +72,9 @@ export default new class EnvLoader {
                 this.Variables.set(Name, Value);
             },
             array: (): any => {
+                if(!Parser)
+                    Parser = JSON.parse;
+
                 let Value: string | unknown[];
 
                 if(Env != undefined && Env !== "") 
@@ -76,7 +88,7 @@ export default new class EnvLoader {
 
                 try {
                     if(typeof Value === "string") {
-                        const Parsed: unknown = JSON.parse(Value);
+                        const Parsed: unknown = Parser(Value);
 
                         if(!Array.isArray(Parsed))
                             throw new TypeError(`Variable ${Name} isn't an array.`);
