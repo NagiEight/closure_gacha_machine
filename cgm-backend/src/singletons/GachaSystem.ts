@@ -39,6 +39,9 @@ export default await new class GachaSystem {
 
     public Manager!: UserDatabase;
     
+    /**
+     * Factory method for handling asynchronous dynamic importing that can't be done in the constructor.
+     */
     public async Initialize(): Promise<GachaSystem> {
         const Manager: UserDatabase = await new (await LoadManager())().Initialize();
         
@@ -99,6 +102,11 @@ export default await new class GachaSystem {
         return this.GachaProfiles[Token];
     }
     
+    /**
+     * Perform a gacha roll.
+     * 
+     * This overload returns an array of tuples containing Operator ID and their rarity.
+     */
     public Roll(
         Count: number,
         Token: string,
@@ -106,6 +114,11 @@ export default await new class GachaSystem {
         Selection?: Selection,
         Reduced?: false
     ): Promise<[string, Items][] | undefined>;
+    /**
+     * Perform a gacha roll.
+     * 
+     * This overload returns an Object keyed with operator IDs with value as the amount the roll yeild.
+     */
     public Roll(
         Count: number,
         Token: string,

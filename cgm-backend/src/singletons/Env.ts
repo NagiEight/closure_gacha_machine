@@ -20,14 +20,18 @@ export default new class EnvLoader {
     /**
      * Add variable of name {@link Name}, do nothing if variable already registered. If {@link Default} is provided, then its value will be use if variable doesn't exist.
      * 
-     * This method does not reject empty strings if the reported type is string.
+     * This method does not reject empty strings if the reported type is string, otherwise treat empty string as missing variable and defaults to {@link Default} if a value was provided.
      * 
      * @throws If reported type doesn't match with the variable's actual type (won't throw for this if variable is string), if registered variable doesn't exist in process.env and there is no default value provided, or if the type of {@link Default} doesn't match with the reported type of the variable.
      */
     public RegisterVariable(Name: string, Type: "number" | "array" | "string" = "string", Default?: ValueType): this {
+        if(this.Variables.has(Name))
+            return this;
+
         const Env: string | undefined = process.env[Name];
-        this.Variables.getOrInsertComputed(Name, (): ValueType => Switch(Type, {
-            string: (): ValueType => {
+
+        Switch(Type, {
+            string: (): any => {
                 let Value: string;
 
                 if(Env != undefined)
@@ -39,9 +43,9 @@ export default new class EnvLoader {
                 }
                 else throw new TypeError(`Variable ${Name} doesn't exists.`);
 
-                return Value;
+                this.Variables.set(Name, Value);
             },
-            number: (): ValueType => {
+            number: (): any => {
                 let Value: number;
 
                 if(Env != undefined && Env !== "")
@@ -56,9 +60,9 @@ export default new class EnvLoader {
                 if(Number.isNaN(Value))
                     throw new TypeError(`Variable ${Name} isn't a number.`);
 
-                return Value;
+                this.Variables.set(Name, Value);
             },
-            array: (): ValueType => {
+            array: (): any => {
                 let Value: string | unknown[];
 
                 if(Env != undefined && Env !== "") 
@@ -77,15 +81,16 @@ export default new class EnvLoader {
                         if(!Array.isArray(Parsed))
                             throw new TypeError(`Variable ${Name} isn't an array.`);
 
-                        return Parsed;
+                        this.Variables.set(Name, Parsed);
+                        return;
                     }
-                    return Value;
+                    this.Variables.set(Name, Value);
                 }
                 catch {
                     throw new TypeError(`Variable ${Name} isn't an array.`);
                 }
             }
-        }, () => { throw new TypeError(`Unknown variable type '${Type}'.`); }));
+        }, () => { throw new TypeError(`Unknown variable type '${Type}'.`); });
         return this;
     }
 }();
