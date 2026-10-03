@@ -1,7 +1,13 @@
-import Switch from "#helpers/Switch";
 import "dotenv/config";
 
 type ValueType = number | unknown[] | string;
+type TypeMap = { number: number; array: any[]; string: string; };
+
+export enum VariableTypes {
+    Number = "number",
+    Array = "array",
+    String = "string"
+}
 
 export default new class EnvLoader {
     public readonly Variables: Map<string, ValueType> = new Map();
@@ -26,21 +32,24 @@ export default new class EnvLoader {
      * 
      * @throws If reported type doesn't match with the variable's actual type (won't throw for this if variable is string),if registered variable doesn't exist in process.env and there is no default value provided, or if the type of {@link Default} doesn't match with the reported type of the variable.
      */
-    public RegisterVariable(
+    public RegisterVariable<T extends VariableTypes = VariableTypes.String>(
         Name: string,
-        Type: "number" | "array" | "string" = "string",
         {
+            Type,
             Default,
             Parser
-        }: { Default?: ValueType; Parser?: (Env: string) => unknown[]; } = {}
+        }: { Type?: T, Default?: TypeMap[T]; Parser?: (Env: string) => unknown[]; } = {}
     ): this {
         if(this.Variables.has(Name))
             return this;
 
         const Env: string | undefined = process.env[Name];
 
-        Switch(Type, {
-            string: (): any => {
+        if(!Type)
+            Type = VariableTypes.String as T;
+
+        switch(Type) {
+            case VariableTypes.String:
                 let Value: string;
 
                 if(Env != undefined)
@@ -53,56 +62,60 @@ export default new class EnvLoader {
                 else throw new TypeError(`Variable ${Name} doesn't exists.`);
 
                 this.Variables.set(Name, Value);
-            },
-            number: (): any => {
-                let Value: number;
+                break;
+
+            case VariableTypes.Number:
+                let Value2: number;
 
                 if(Env != undefined && Env !== "")
-                    Value = Number(Env);
+                    Value2 = Number(Env);
                 else if(Default != undefined) {
                     if(typeof Default !== "number" || Number.isNaN(Default))
                         throw new TypeError("Mismatched type between default value and the provided type.");
-                    Value = Default;
+                    Value2 = Default;
                 }
                 else throw new TypeError(`Variable ${Name} doesn't exists.`);
 
-                if(Number.isNaN(Value))
+                if(Number.isNaN(Value2))
                     throw new TypeError(`Variable ${Name} isn't a number.`);
 
-                this.Variables.set(Name, Value);
-            },
-            array: (): any => {
+                this.Variables.set(Name, Value2);
+                break;
+            
+            case VariableTypes.Array:
                 if(!Parser)
                     Parser = JSON.parse;
 
-                let Value: string | unknown[];
+                let Value3: string | unknown[];
 
-                if(Env != undefined && Env !== "") 
-                    Value = Env;
+                if(Env != undefined && Env !== "")
+                    Value3 = Env;
                 else if(Default != undefined) {
                     if(!Array.isArray(Default))
                         throw new TypeError("Mismatched type between default value and the provided type.");
-                    Value = structuredClone(Default);
+                    Value3 = structuredClone(Default);
                 }
                 else throw new TypeError(`Variable ${Name} doesn't exists.`);
 
                 try {
-                    if(typeof Value === "string") {
-                        const Parsed: unknown = Parser(Value);
+                    if(typeof Value3 === "string") {
+                        const Parsed: unknown = Parser(Value3);
 
                         if(!Array.isArray(Parsed))
                             throw new TypeError(`Variable ${Name} isn't an array.`);
 
                         this.Variables.set(Name, Parsed);
-                        return;
+                        break;
                     }
-                    this.Variables.set(Name, Value);
+                    this.Variables.set(Name, Value3);
                 }
                 catch {
                     throw new TypeError(`Variable ${Name} isn't an array.`);
                 }
-            }
-        }, () => { throw new TypeError(`Unknown variable type '${Type}'.`); });
+                break;
+            
+            default: throw new TypeError(`Unknown variable type '${Type}'.`);
+        }
         return this;
     }
 }();

@@ -1,8 +1,8 @@
-import Env from "#Env";
+import Env, { VariableTypes } from "#Env";
 
-Env.RegisterVariable("PORT", "number", { Default: 3000 })
-    .RegisterVariable("RATE_LIMIT", "number", { Default: 50 })
-    .RegisterVariable("PAGE_SIZE", "number", { Default: 10 })
+Env.RegisterVariable("PORT", { Type: VariableTypes.Number, Default: 3000 })
+    .RegisterVariable("RATE_LIMIT", { Type: VariableTypes.Number, Default: 50 })
+    .RegisterVariable("PAGE_SIZE", { Type: VariableTypes.Number, Default: 10 })
     .RegisterVariable("DATABASE_MANAGER_FILENAME")
     .RegisterVariable("BASE_MEDIA_URL")
 ;

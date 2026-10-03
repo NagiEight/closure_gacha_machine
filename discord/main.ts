@@ -54,19 +54,21 @@ Client.on(Events.InteractionCreate, async Interaction => {
         if(!Command)
             return;
 
+        
+
         const ActionName: string = EmbedActionInteraction.ActionName;
         return await (
             Interaction.isStringSelectMenu() 
                 ? Command.GetInteractionHandler(InteractionTypes.StringMenu, ActionName)
-            : Interaction.isUserSelectMenu()
-                ? Command.GetInteractionHandler(InteractionTypes.UserMenu, ActionName)
-            : Interaction.isRoleSelectMenu()
-                ? Command.GetInteractionHandler(InteractionTypes.RoleMenu, ActionName)
-            : Interaction.isChannelSelectMenu()
-                ? Command.GetInteractionHandler(InteractionTypes.ChannelMenu, ActionName)
-            : Interaction.isChannelSelectMenu()
-                ? Command.GetInteractionHandler(InteractionTypes.MentionableMenu, ActionName)
-            : undefined
+                : Interaction.isUserSelectMenu()
+                    ? Command.GetInteractionHandler(InteractionTypes.UserMenu, ActionName)
+                    : Interaction.isRoleSelectMenu()
+                        ? Command.GetInteractionHandler(InteractionTypes.RoleMenu, ActionName)
+                        : Interaction.isChannelSelectMenu()
+                            ? Command.GetInteractionHandler(InteractionTypes.ChannelMenu, ActionName)
+                            : Interaction.isChannelSelectMenu()
+                                ? Command.GetInteractionHandler(InteractionTypes.MentionableMenu, ActionName)
+                                : undefined
         )?.(Interaction as any, Client);
     }
 

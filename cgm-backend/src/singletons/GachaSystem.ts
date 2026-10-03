@@ -71,10 +71,10 @@ export default await new class GachaSystem {
             const { Token, Banner, Rarity, ID, Count } = Row;
             const Storage: ProfileStorage = this.GachaProfiles[Token][Banner].Storage;
             Switch(Rarity, {
-                6: (): Record<string, number> => Storage.SixStars,
-                5: (): Record<string, number> => Storage.FiveStars,
-                4: (): Record<string, number> => Storage.FourStars,
-                3: (): Record<string, number> => Storage.ThreeStars
+                6: Storage.SixStars,
+                5: Storage.FiveStars,
+                4: Storage.FourStars,
+                3: Storage.ThreeStars
             })[ID] = Count;
         });
 
@@ -245,10 +245,10 @@ export default await new class GachaSystem {
 
             const { Storage } = Profile;
             const Rarity: Record<string, number> = Switch(Result, {
-                [Items.SixStars]: (): Record<string, number> => Storage.SixStars,
-                [Items.FiveStars]: (): Record<string, number> => Storage.FiveStars,
-                [Items.FourStars]: (): Record<string, number> => Storage.FourStars,
-                [Items.ThreeStars]: (): Record<string, number> => Storage.ThreeStars
+                [Items.SixStars]: Storage.SixStars,
+                [Items.FiveStars]: Storage.FiveStars,
+                [Items.FourStars]: Storage.FourStars,
+                [Items.ThreeStars]: Storage.ThreeStars
             });
             
             Rarity[RollResult] ??= 0;
@@ -265,10 +265,10 @@ export default await new class GachaSystem {
                 Rarity,
                 ID,
                 Count: Switch(Rarity, {
-                    [Items.SixStars]: (): Record<string, number> => Storage.SixStars,
-                    [Items.FiveStars]: (): Record<string, number> => Storage.FiveStars,
-                    [Items.FourStars]: (): Record<string, number> => Storage.FourStars,
-                    [Items.ThreeStars]: (): Record<string, number> => Storage.ThreeStars
+                    [Items.SixStars]: Storage.SixStars,
+                    [Items.FiveStars]: Storage.FiveStars,
+                    [Items.FourStars]: Storage.FourStars,
+                    [Items.ThreeStars]: Storage.ThreeStars
                 })[ID]
             })
         );
