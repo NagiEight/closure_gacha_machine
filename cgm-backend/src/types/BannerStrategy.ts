@@ -29,6 +29,6 @@ export interface BannerStrategy {
 }
 
 export interface Selection {
-    SixStarsSelection: string[];
-    FiveStarsSelection: string[];
+    SixStarsSelection: [string, string, string];
+    FiveStarsSelection: [string, string, string];
 }

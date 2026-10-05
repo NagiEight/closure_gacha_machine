@@ -5,6 +5,20 @@ import GachaSystem from "#GachaSystem";
 import Server from "#Server";
 import BannerTypes from "#types/BannerTypes";
 import DataManager from "#DataManager";
+import z from "zod";
+
+const OrienteeringSchema = z.object({
+    SixStarsSelection: z.tuple([
+        z.string(),
+        z.string(),
+        z.string()
+    ]),
+    FiveStarsSelection: z.tuple([
+        z.string(),
+        z.string(),
+        z.string()
+    ])
+});
 
 Server.post("/gacha/:BannerName/roll/:Count", async (Req, Res) => {
     const Count: number = Number(Req.params.Count) || -1;
@@ -38,54 +52,18 @@ Server.post("/gacha/:BannerName/roll/:Count", async (Req, Res) => {
 
     if(Banner.Type === BannerTypes.Orienteering) {
         const Body: Selection = Req.body ?? {};
-
-        if(!Object.keys(Body).length) {
-            Res.status(400).json({ message: `Banner type '${Banner.Type}' requires a request body.` });
-            return;
-        }
-
-        if(!Body.SixStarsSelection || !Array.isArray(Body.SixStarsSelection)) {
-            Res.status(400).json({ message: `Missing or invalid 6 stars selection.` });
-            return;
-        }
-
-        if(!Body.FiveStarsSelection || !Array.isArray(Body.FiveStarsSelection)) {
-            Res.status(400).json({ message: `Missing or invalid 5 stars selection.` });
-            return;
-        }
+        const Parsed = OrienteeringSchema.safeParse(Body);
         
-        Body.SixStarsSelection = [...new Set(Body.SixStarsSelection)];
-        Body.FiveStarsSelection = [...new Set(Body.FiveStarsSelection)];
-
-        const Checker = (Selection: string[], Pool: string[], Rarity: number): boolean => {
-            const Excluded: string[] = [];
-            const IsValid: boolean = Selection.length === 3 && Selection.every(OP => {
-                const IsIncluded: boolean = Pool.includes(OP);
-                if(!IsIncluded)
-                    Excluded.push(OP);
-                return IsIncluded;
-            });
-
-            if(!IsValid) {
-                Res.status(400).json({ 
-                    message: `Operator${Excluded.length > 1 ? "s" : ""} ${Excluded.join(", ")}` +
-                        ` do${Excluded.length > 1 ? "" : "es"} not exist or not included in ${BannerName} ${Rarity} stars pool.`
-                 });
-            }
-            return IsValid;
-        };
-
-        if(!Checker(Body.SixStarsSelection, Banner.SixStarsPool.Primary, 6))
+        if(!Parsed.success) {
+            Res.status(404).json({ message: Parsed.error.issues });
             return;
-
-        if(!Checker(Body.FiveStarsSelection, Banner.FiveStarsPool.Primary, 5))
-            return;
+        }
 
         const Reduced: string | undefined = Req.query.reduced?.toString().trim().toLowerCase();
         Res.json({
             Result: Reduced === "true" || Reduced === "1"
-                ? await GachaSystem.Roll(Count, Token, BannerName, Body, true)
-                : await GachaSystem.Roll(Count, Token, BannerName, Body)
+                ? await GachaSystem.Roll(Count, Token, BannerName, { Selection: Parsed.data, Reduced: true })
+                : (await GachaSystem.Roll(Count, Token, BannerName, { Selection: Parsed.data }))?.map(T => T[0])
         });
         return;
     }
@@ -93,7 +71,7 @@ Server.post("/gacha/:BannerName/roll/:Count", async (Req, Res) => {
     const Reduced: string | undefined = Req.query.reduced?.toString().trim().toLowerCase();
     Res.json({
         Result: Reduced === "true" || Reduced === "1"
-            ? await GachaSystem.Roll(Count, Token, BannerName, undefined, true)!
-            : await GachaSystem.Roll(Count, Token, BannerName)!
+            ? await GachaSystem.Roll(Count, Token, BannerName, { Reduced: true })
+            : (await GachaSystem.Roll(Count, Token, BannerName))?.map(T => T[0])
     });
 });

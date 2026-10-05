@@ -111,8 +111,10 @@ export default await new class GachaSystem {
         Count: number,
         Token: string,
         BannerName: string,
-        Selection?: Selection,
-        Reduced?: false
+        {
+            Selection,
+            Reduced
+        }?: Partial<{ Selection: Selection; Reduced: false; }>
     ): Promise<[string, Items][] | undefined>;
     /**
      * Perform a gacha roll.
@@ -123,15 +125,19 @@ export default await new class GachaSystem {
         Count: number,
         Token: string,
         BannerName: string, 
-        Selection?: Selection,
-        Reduced?: true
+        {
+            Selection,
+            Reduced
+        }: Partial<{ Selection: Selection; Reduced: true; }>
     ): Promise<Record<string, number> | undefined>;
     public async Roll(
         Count: number,
         Token: string,
         BannerName: string,
-        Selection?: Selection,
-        Reduced?: boolean
+        {
+            Selection,
+            Reduced
+        }: Partial<{ Selection: Selection; Reduced: boolean; }> = {}
     ): Promise<[string, Items][] | Record<string, number> | undefined> {
         const Banner: Banner | undefined = DataManager.Banners.get(BannerName);
 
