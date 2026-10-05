@@ -1,945 +1,814 @@
-# Banner & Operator API Documentation
+﻿# Closure Gacha Machine API
 
 ## Base URL
-```
+
+```text
 http://localhost:3000
 ```
 
----
+## Common conventions
 
-# API Endpoints
-These endpoints return informations about Operators and Banners.
-
-## Search Banners (Paginated)
-Returns an array of banners for a specific query.
-
-### Request
-```http
-GET /api/banners/search
-```
-
-### Query Parameters
-| Parameter | Type | Description |
-|------------|--------|-------------|
-| page | number | Page to search |
-
-### Body 
-```typescript
-enum BannerTypes {
-    Standard = "Standard",
-    Limited = "Limited",
-    Crossover = "Crossover",
-    Orienteering = "Orienteering",
-    JointOperation = "JointOperation",
-    TFTW = "TFTW"
-}
-
-interface SearchQuery {
-    NameQuery?: string;
-    BannerType?: BannerTypes;
-    Includes?: string[];
-    From?: number;
-    To?: number;
-}
-```
-
-### Example
-```http
-GET /api/banners/search?page=1
-```
-**Body:**
-```JSON
-{
-    // TBA
-}
-```
-
-### Success Response
-**Status:** `200 OK`
-```typescript
-enum BannerTypes {
-    Standard = "Standard",
-    Limited = "Limited",
-    Crossover = "Crossover",
-    Orienteering = "Orienteering",
-    JointOperation = "JointOperation",
-    TFTW = "TFTW"
-}
-
-type GetBannerPageResponse = {
-    Name: string;
-    Type: BannerTypes,
-    ReleaseDate: number;
-}[];
-```
-
-**Example**
-```json
-[
-    {
-        "Name": "EN 600 Meters Over The Facts",
-        "Type": 0,
-        "ReleaseDate": 1764892800000
-    },
-    {
-        "Name": "EN A Shared Oath of Guardianship",
-        "Type": 1,
-        "ReleaseDate": 1761955200000
-    },
-    {
-        "Name": "EN A Wanderer in the Wind",
-        "Type": 0,
-        "ReleaseDate": 1649894400000
-    },
-    {
-        "Name": "EN Abyss Corrosion",
-        "Type": 1,
-        "ReleaseDate": 1651363200000
-    },
-    {
-        "Name": "EN An Eternity Aflame",
-        "Type": 1,
-        "ReleaseDate": 1737504000000
-    },
-    {
-        "Name": "EN Anchor In The Deep",
-        "Type": 0,
-        "ReleaseDate": 1717545600000
-    },
-    {
-        "Name": "EN Anchor In The Deep Rerun",
-        "Type": 0,
-        "ReleaseDate": 1750291200000
-    },
-    {
-        "Name": "EN And the Canoe'll Carry Us to You",
-        "Type": 0,
-        "ReleaseDate": 1739491200000
-    },
-    {
-        "Name": "EN Arbiter Aequissimus",
-        "Type": 0,
-        "ReleaseDate": 1703116800000
-    },
-    {
-        "Name": "EN Arbiter Aequissimus Rerun",
-        "Type": 0,
-        "ReleaseDate": 1719273600000
-    }
-]
-```
-
-### Error Response
-**Status:** `400 Bad Request`
-```json
-{
-    "message": "Invalid pagination index."
-}
-```
-```json
-{
-    "message": "Missing request body."
-}
-```
-**Status:** `404 Not Found`
-```json
-{
-    "message": "Unknown banner type '${body.BannerType}'."
-}
-```
+- Banner pagination is 1-based.
+- All `/gacha/*` routes require the `Session-Token` header.
+- Asset routes return a URL string in plain text.
+- The server responds with JSON for most data endpoints and text for success messages.
+- API rate limit is 50 requests/second by default.
 
 ---
 
-## Get Banners (Paginated)
-Returns an array of banners for a specific page.
+# Banner and Operator API
+
+## Get all banner names
+
+Returns every banner name currently stored in the database.
 
 ### Request
-```http
-GET /api/banners/:Page
-```
 
-### Path Parameters
-| Parameter | Type | Description |
-|------------|--------|-------------|
-| Page | number | Page index (must be greater than 0) |
-
-### Example
-```http
-GET /api/banners/1
-```
-
-### Success Response
-**Status:** `200 OK`
-```typescript
-enum BannerTypes {
-    Standard = "Standard",
-    Limited = "Limited",
-    Crossover = "Crossover",
-    Orienteering = "Orienteering",
-    JointOperation = "JointOperation",
-    TFTW = "TFTW"
-}
-
-type GetBannerPageResponse = {
-    Name: string;
-    Type: BannerTypes,
-    ReleaseDate: number;
-}[];
-```
-**Example**
-```json
-[
-    {
-        "Name": "EN 600 Meters Over The Facts",
-        "Type": 0,
-        "ReleaseDate": 1764892800000
-    },
-    {
-        "Name": "EN A Shared Oath of Guardianship",
-        "Type": 1,
-        "ReleaseDate": 1761955200000
-    },
-    {
-        "Name": "EN A Wanderer in the Wind",
-        "Type": 0,
-        "ReleaseDate": 1649894400000
-    },
-    {
-        "Name": "EN Abyss Corrosion",
-        "Type": 1,
-        "ReleaseDate": 1651363200000
-    },
-    {
-        "Name": "EN An Eternity Aflame",
-        "Type": 1,
-        "ReleaseDate": 1737504000000
-    },
-    {
-        "Name": "EN Anchor In The Deep",
-        "Type": 0,
-        "ReleaseDate": 1717545600000
-    },
-    {
-        "Name": "EN Anchor In The Deep Rerun",
-        "Type": 0,
-        "ReleaseDate": 1750291200000
-    },
-    {
-        "Name": "EN And the Canoe'll Carry Us to You",
-        "Type": 0,
-        "ReleaseDate": 1739491200000
-    },
-    {
-        "Name": "EN Arbiter Aequissimus",
-        "Type": 0,
-        "ReleaseDate": 1703116800000
-    },
-    {
-        "Name": "EN Arbiter Aequissimus Rerun",
-        "Type": 0,
-        "ReleaseDate": 1719273600000
-    }
-]
-```
-
-### Error Response
-**Status:** `400 Bad Request`
-```json
-{
-    "message": "Invalid pagination index."
-}
-```
-
----
-
-## Get Banner Details
-Returns information about a specific banner.
-
-### Request
-```http
-GET /api/banner/:BannerName
-```
-
-### Path Parameters
-| Parameter | Type | Description |
-|------------|--------|-------------|
-| BannerName | string | Banner identifier or name |
-
-### Example
-```http
-GET /api/banner/EN A Shared Oath of Guardianship
-```
-
-### Success Response
-**Status:** `200 OK`
-```typescript
-enum BannerTypes {
-    Standard = "Standard",
-    Limited = "Limited",
-    Crossover = "Crossover",
-    Orienteering = "Orienteering",
-    JointOperation = "JointOperation",
-    TFTW = "TFTW"
-} 
-
-interface GetBannerResponse {
-    Name: string;
-    ReleaseDate: number;
-    Type: BannerTypes;
-    OperatorPool: {
-        SixStarsPool: {
-            Primary: string[];
-            Secondary: string[];
-            Standard: string[];
-        };
-        FiveStarsPool: {
-            Primary: string[];
-            Standard: string[];
-        };
-        FourStarsPool: {
-            Primary: string[];
-            Standard: string[];
-        };
-        ThreeStarsPool: string[];
-    };
-}
-```
-**Example**
-```json
-{
-    "Name": "EN A Shared Oath of Guardianship",
-    "ReleaseDate": 1761955200000,
-    "Type": 1,
-    "OperatorPool": {
-        "SixStarsPool": {
-            "Primary": [
-                "char_1046_sbell2",
-                "char_1045_svash2"
-            ],
-            "Secondary": [
-                "char_1038_whitw2",
-                "char_245_cello",
-                "char_1035_wisdel"
-            ],
-            "Standard": ["<6* operators>"]
-        },
-        "FiveStarsPool": {
-            "Primary": [
-                "char_4211_snhunt"
-            ],
-            "Standard": ["<5* operators>"]
-        },
-        "FourStarsPool": {
-            "Primary": [],
-            "Standard": ["<4* operators>"]
-        },
-        "ThreeStarsPool": ["<3* operators>"],
-    }
-}
-```
-
-### Error Response
-**Status:** `404 Not Found`
-```json
-{
-    "message": "Banner '${BannerName}' doesn't exist."
-}
-```
-
----
-
-## Get Operator Details
-Returns information about a specific operator.
-
-### Request
-```http
-GET /api/operator/:OperatorID
-```
-
-### Path Parameters
-| Parameter | Type | Description |
-|------------|--------|-------------|
-| OperatorID | string | Operator identifier |
-
-### Example
-```http
-GET /api/operator/char_103_angel
-```
-
-### Success Response
-**Status:** `200 OK`
-```typescript
-interface GetOperatorResponse {
-    ID: string;
-    Name: string;
-    Rarity: 3 | 4 | 5 | 6;
-    ReleaseDate: number;
-    Limited: boolean;
-}
-```
-**Example**
-```json
-{
-    "ID": "char_103_angel",
-    "Name": "Exusiai",
-    "Rarity": 6,
-    "ReleaseDate": 1580860800000,
-    "Limited": false
-}
-```
-
-### Error Response
-**Status:** `404 Not Found`
-```json
-{
-    "message": "Operator '${OperatorID}' doesn't exist."
-}
-```
-
----
-
-### Get All Banner Names
-Returns the names of all banners in the database.
-
-### Request
 ```http
 GET /api/banners/all
 ```
 
-### Success Response
-**Status:** `200 OK`
-```typescript
-type GetAllBannerNamesResponse = string[];
-```
-**Example:**
+### Success response
+
+Status: `200 OK`
+
 ```json
 [
-    "EN 600 Meters Over The Facts",
-    "EN A Shared Oath of Guardianship",
-    "EN A Wanderer in the Wind",
-    "EN Abyss Corrosion",
-    "EN An Eternity Aflame",
-    "EN Anchor In The Deep",
-    "EN Anchor In The Deep Rerun",
-    "EN And the Canoe'll Carry Us to You",
-    "EN Arbiter Aequissimus",
-    "EN Arbiter Aequissimus Rerun",
-    // The rest of the database
+  "EN 600 Meters Over The Facts",
+  "EN A Shared Oath of Guardianship",
+  "EN A Wanderer in the Wind"
 ]
 ```
 
 ---
 
-# Asset Endpoints
-These endpoints return PNG image files.
+## Get paginated banner list
+
+Returns a page of banner summaries.
+
+### Request
+
+```http
+GET /api/banners/:Page
+```
+
+### Path parameters
+
+| Name | Type | Required | Description |
+|---|---|---:|---|
+| Page | number | Yes | 1-based page number. Must be greater than 0. |
+
+### Example
+
+```http
+GET /api/banners/1
+```
+
+### Success response
+
+Status: `200 OK`
+
+```json
+[
+  {
+    "Name": "EN 600 Meters Over The Facts",
+    "Type": "Standard",
+    "ReleaseDate": 1764892800000
+  },
+  {
+    "Name": "EN A Shared Oath of Guardianship",
+    "Type": "Limited",
+    "ReleaseDate": 1761955200000
+  }
+]
+```
+
+### Error response
+
+Status: `400 Bad Request`
+
+```json
+{
+  "message": "Invalid pagination index."
+}
+```
 
 ---
 
-## Get Banner Cover Image
-Returns the cover image associated with a banner.
+## Search banners
+
+Searches banners using a JSON body. The request body is optional but required to perform a search; if empty, the server responds with `400`.
 
 ### Request
+
+```http
+GET /api/banners/search?page=1
+```
+
+### Query parameters
+
+| Name | Type | Required | Description |
+|---|---|---:|---|
+| page | number | Yes | 1-based page number. |
+
+### JSON body
+
+```ts
+enum BannerTypes {
+  Standard = "Standard",
+  Limited = "Limited",
+  Crossover = "Crossover",
+  Orienteering = "Orienteering",
+  JointOperation = "JointOperation",
+  TFTW = "TFTW"
+}
+
+type SearchQuery = Partial<{
+  NameQuery: string;
+  BannerType: BannerTypes;
+  Includes: string[];
+  From: number;
+  To: number;
+}>;
+```
+
+### Example
+
+```http
+GET /api/banners/search?page=1
+```
+
+```json
+{
+  "NameQuery": "shared oath",
+  "BannerType": "Limited",
+  "Includes": ["char_1046_sbell2"],
+  "From": 1,
+  "To": 9999999999999
+}
+```
+
+### Success response
+
+Status: `200 OK`
+
+```json
+[
+  {
+    "Name": "EN A Shared Oath of Guardianship",
+    "Type": "Limited",
+    "ReleaseDate": 1761955200000
+  }
+]
+```
+
+### Error responses
+
+Status: `400 Bad Request`
+
+```json
+{
+  "message": "Invalid pagination index."
+}
+```
+
+```json
+{
+  "message": "Missing request body."
+}
+```
+
+Status: `404 Not Found`
+
+```json
+{
+  "message": [
+    {
+      "code": "invalid_type",
+      "path": ["BannerType"],
+      "message": "Invalid input"
+    }
+  ]
+}
+```
+
+---
+
+## Get banner details
+
+Returns the full banner definition including operator pools.
+
+### Request
+
+```http
+GET /api/banner/:BannerName
+```
+
+### Path parameters
+
+| Name | Type | Required | Description |
+|---|---|---:|---|
+| BannerName | string | Yes | Banner name as stored in the data set. |
+
+### Example
+
+```http
+GET /api/banner/EN A Shared Oath of Guardianship
+```
+
+### Success response
+
+Status: `200 OK`
+
+```json
+{
+  "Name": "EN A Shared Oath of Guardianship",
+  "OperatorPool": {
+    "ReleaseDate": 1761955200000,
+    "Type": "Limited",
+    "SixStarsPool": {
+      "Primary": ["char_1046_sbell2", "char_1045_svash2"],
+      "Secondary": ["char_1038_whitw2", "char_245_cello"],
+      "Standard": ["<6* operators>"]
+    },
+    "FiveStarsPool": {
+      "Primary": ["char_4211_snhunt"],
+      "Standard": ["<5* operators>"]
+    },
+    "FourStarsPool": {
+      "Primary": [],
+      "Standard": ["<4* operators>"]
+    },
+    "ThreeStarsPool": ["<3* operators>"]
+  }
+}
+```
+
+### Error response
+
+Status: `404 Not Found`
+
+```json
+{
+  "message": "Banner 'EN A Shared Oath of Guardianship' doesn't exist."
+}
+```
+
+---
+
+## Get operator details
+
+Returns the metadata for a single operator.
+
+### Request
+
+```http
+GET /api/operator/:OperatorID
+```
+
+### Path parameters
+
+| Name | Type | Required | Description |
+|---|---|---:|---|
+| OperatorID | string | Yes | Exact operator ID, for example `char_103_angel`. |
+
+### Example
+
+```http
+GET /api/operator/char_103_angel
+```
+
+### Success response
+
+Status: `200 OK`
+
+```json
+{
+  "ID": "char_103_angel",
+  "Name": "Exusiai",
+  "Rarity": 6,
+  "ReleaseDate": 1580860800000,
+  "Limited": false
+}
+```
+
+### Error response
+
+Status: `404 Not Found`
+
+```json
+{
+  "message": "Operator 'char_103_angel' doesn't exist."
+}
+```
+
+---
+
+# Asset endpoints
+
+These endpoints return URLs to PNG images as plain text.
+
+## Banner cover
+
+### Request
+
 ```http
 GET /assets/banner/:BannerName
 ```
 
-### Path Parameters
-| Parameter | Type | Description |
-|------------|--------|-------------|
-| BannerName | string | Banner identifier or name |
-
 ### Example
+
 ```http
 GET /assets/banner/EN A Shared Oath of Guardianship
 ```
 
-### Success Response
-**Status:** `200 OK` <br/>
-**Content-Type:** `text/plain`
+### Success response
 
-### Error Response
-**Status:** `404 Not Found`
+Status: `200 OK`
+
+```text
+https://example.com/assets/banner/EN%20A%20Shared%20Oath%20of%20Guardianship.png
+```
+
+### Error response
+
+Status: `404 Not Found`
+
 ```json
 {
-    "message": "Banner '${BannerName}' doesn't exist."
+  "message": "Banner 'EN A Shared Oath of Guardianship' doesn't exist."
 }
 ```
 
 ---
 
-## Get Operator Artwork
-Returns the base artwork image for an operator.
+## Operator artwork
 
 ### Request
+
 ```http
 GET /assets/operator/:OperatorID
 ```
 
-### Path Parameters
-| Parameter | Type | Description |
-|------------|--------|-------------|
-| OperatorID | string | Operator identifier |
-
 ### Example
+
 ```http
 GET /assets/operator/char_103_angel
 ```
 
-### Success Response
-**Status:** `200 OK` <br/>
-**Content-Type:**`text/plain`
+### Success response
 
-### Error Response
-**Status:** `404 Not Found`
+Status: `200 OK`
+
+```text
+https://example.com/assets/operators/char_103_angel.png
+```
+
+### Error response
+
+Status: `404 Not Found`
+
 ```json
 {
-    "message": "Operator '${OperatorID}' doesn't exist."
+  "message": "Operator 'char_103_angel' doesn't exist."
 }
 ```
 
 ---
 
-## Get Operator E2 Artwork
-Returns the Elite 2 (E2) artwork image for an operator.
+## Elite 2 operator artwork
 
 ### Request
+
 ```http
 GET /assets/e2operator/:OperatorID
 ```
-### Path Parameters
-| Parameter | Type | Description |
-|------------|--------|-------------|
-| OperatorID | string | Operator identifier |
 
 ### Example
+
 ```http
-GET /asset/e2operator/char_103_angel
+GET /assets/e2operator/char_103_angel
 ```
 
-### Success Response
-**Status:** `200 OK` <br/>
-**Content-Type:** `text/plain`
+### Success response
 
-### Error Response
-**Status:** `404 Not Found`
+Status: `200 OK`
+
+```text
+https://example.com/assets/operators/e2/char_103_angel.png
+```
+
+### Error response
+
+Status: `404 Not Found`
+
 ```json
 {
-    "message": "Operator '${OperatorID}' doesn't exist."
+  "message": "Operator 'char_103_angel' doesn't exist."
 }
 ```
 
 ---
 
-## Get Operator Card
+## Operator card
 
 ### Request
+
 ```http
 GET /assets/card/:OperatorID
 ```
 
-### Path Parameters
-| Parameter | Type | Description |
-|------------|--------|-------------|
-| OperatorID | string | Operator identifier |
-
 ### Example
+
 ```http
 GET /assets/card/char_103_angel
 ```
 
-### Success Response
-**Status:** `200 OK` <br/>
-**Content-Type:**`text/plain`
+### Success response
 
-### Error Response
-**Status:** `404 Not Found`
+Status: `200 OK`
+
+```text
+https://example.com/assets/cards/char_103_angel.png
+```
+
+### Error response
+
+Status: `404 Not Found`
+
 ```json
 {
-    "message": "Operator '${OperatorID}' doesn't exist."
+  "message": "Operator 'char_103_angel' doesn't exist."
 }
 ```
 
 ---
 
-# Gacha Endpoints
-These endpoints are for interacting with the gacha system.
+# Gacha API
 
----
+These endpoints create and manage session-based gacha profiles.
 
-## Create session token
-Create a new session token, this is necessary for interacting with the /gacha/ endpoints.
+## Create a gacha session
+
+Creates a new profile and returns a `Session-Token` in the response header.
 
 ### Request
+
 ```http
 POST /gacha/create
 ```
 
-### Success Response
-**Status:** `200 OK`
-```txt
+### Success response
+
+Status: `200 OK`
+
+```text
 Create profile successfully.
 ```
-**Header:**
-```json
-{
-    "Session-Token": "<your session token>"
-}
+
+Headers:
+
+```http
+Session-Token: <your session token>
 ```
 
 ---
 
-## Get Gacha Profile
-Get the Gacha profile of a user.
+## Get profile
+
+Returns the current gacha progress for the authenticated session.
 
 ### Request
+
 ```http
 GET /gacha/profile
 ```
 
 ### Headers
+
+```http
+Session-Token: <your session token>
+```
+
+### Success response
+
+Status: `200 OK`
+
 ```json
 {
-    "Session-Token": "<your session token>"
+  "EN A Shared Oath of Guardianship": {
+    "Count": 0,
+    "RollsWithoutSixStar": 0,
+    "RollsSinceLast6StarsRateUp": 0,
+    "RollsSinceLast5StarsRateUp": 0,
+    "RollsSinceLast4StarsRateUp": 0,
+    "Focused": false,
+    "TenRolls": false,
+    "Storage": {
+      "SixStars": {
+        "char_1046_sbell2": 0
+      },
+      "FiveStars": {},
+      "FourStars": {},
+      "ThreeStars": {}
+    }
+  }
 }
 ```
 
-### Success Response
-```typescript
-interface ProfileBanner {
-    Count: number;
-    RollsWithoutSixStar: number;
-    Focused: boolean;
-    TenRolls: boolean;
-    Storage: {
-        SixStars: Record<string, number>;
-        FiveStars: Record<string, number>;
-        FourStars: Record<string, number>;
-        ThreeStars: Record<string, number>;
-    };
-}
+### Error responses
 
-type GachaProfile = Record<string, ProfileBanner>;
-```
-**Example:**
+Status: `400 Bad Request`
+
 ```json
 {
-    "TBA": 0
+  "message": "Missing session token."
 }
 ```
 
-### Error Response
-**Status:** `404 Not Found`
+Status: `404 Not Found`
+
 ```json
 {
-    "message": "Missing session token."
-}
-```
-```json
-{
-    "message": "There are no profile associated with this token."
+  "message": "There are no profile associated with this token."
 }
 ```
 
 ---
 
-## Perform a roll
-Perform a gacha roll on a specific banner.
+## Roll once
+
+Performs a single gacha pull on the selected banner.
 
 ### Request
+
 ```http
 POST /gacha/:BannerName/roll
 ```
 
-### Path Parameters
-| Parameter | Type | Description |
-|------------|--------|-------------|
-| BannerName | string | Banner identifier or name |
+### Path parameters
+
+| Name | Type | Required | Description |
+|---|---|---:|---|
+| BannerName | string | Yes | Banner name exactly as stored in the database. |
 
 ### Headers
-```json
-{
-    "Session-Token": "<your session token>"
-}
-```
 
-### Body (For Banner.Type === BannerTypes.Orienteering)
-```typescript
-interface Selection{
-    SixStarsSelection: string[];
-    FiveStarsSelection: string[];
-}
-```
-
-### Example
 ```http
-POST /gacha/EN A Shared Oath of Guardianship/roll
+Session-Token: <your session token>
 ```
 
-### Success Response
-```typescript
-interface GachaRollResponse {
-    Result: string;
-}
-```
-**Example:**
+### Request body for Orienteering banners
+
 ```json
 {
-    "Result": "char_1046_sbell2"
+  "SixStarsSelection": ["op_1", "op_2", "op_3"],
+  "FiveStarsSelection": ["op_4", "op_5", "op_6"]
 }
 ```
 
-### Error Response
-**Status:** `400 Bad Request`
+### Success response
+
+Status: `200 OK`
+
 ```json
 {
-    "message": "Missing session token."
+  "Result": "char_1046_sbell2"
 }
 ```
-**If Banner.Type === BannerTypes.Orienteering:**
+
+### Error responses
+
+Status: `400 Bad Request`
+
 ```json
 {
-    "message": "Banner type '${Banner.Type}' requires a request body."
+  "message": "Missing session token."
 }
 ```
+
+Status: `404 Not Found`
+
 ```json
 {
-    "message": "Missing or invalid ${Rarity} stars selection."
+  "message": "There are no profile associated with this token."
 }
 ```
+
 ```json
 {
-    "message": "Operator(s) ${Operators} do(es) not exist or not included in ${BannerName} ${Rarity} stars pool."
-}
-```
-**Status:** `404 Not Found`
-```json
-{
-    "message": "There are no profile associated with this token."
-}
-```
-```json
-{
-    "message": "Banner '${BannerName}' doesn't exist."
+  "message": "Banner 'EN A Shared Oath of Guardianship' doesn't exist."
 }
 ```
 
 ---
 
-## Perform multiple rolls
-Perform multiple gacha rolls on a specific banner.
+## Roll multiple times
+
+Performs multiple rolls in one request.
 
 ### Request
+
 ```http
 POST /gacha/:BannerName/roll/:Count
 ```
 
-### Path Parameters
-| Parameter | Type | Description |
-|------------|--------|-------------|
-| BannerName | string | Banner identifier or name |
-| Count | number | Amount of times you want to roll (must be greater than 0) |
+### Path parameters
 
-### Query Parameters
-| Parameter | Type | Description |
-|------------|--------|-------------|
-| reduced | boolean | Whether to reduce the roll result |
+| Name | Type | Required | Description |
+|---|---|---:|---|
+| BannerName | string | Yes | Name of the banner to roll on. |
+| Count | number | Yes | Number of rolls. Must be greater than 0. |
 
-**Notes:** Will default to false behavior if reduced isn't valid booleans.
+### Query parameters
+
+| Name | Type | Required | Description |
+|---|---|---:|---|
+| reduced | boolean | No | If `true` or `1`, returns a counted result instead of a flat array. |
 
 ### Headers
-```json
-{
-    "Session-Token": "<your session token>"
-}
-```
 
-### Body (For Banner.Type === BannerTypes.Orienteering)
-```typescript
-interface Selection{
-    SixStarsSelection: string[];
-    FiveStarsSelection: string[];
-}
-```
-
-### Example
 ```http
-POST /gacha/EN A Shared Oath of Guardianship/roll/10
+Session-Token: <your session token>
 ```
 
-### Success Response
+### Request body for Orienteering banners
 
-#### If reduced == "true" or reduced == "1"
-```typescript
-type ReducedGachaMultiRollResponse = Record<string, number>;
-```
-**Example:**
 ```json
 {
+  "SixStarsSelection": ["op_1", "op_2", "op_3"],
+  "FiveStarsSelection": ["op_4", "op_5", "op_6"]
+}
+```
+
+### Success responses
+
+#### Standard result
+
+Status: `200 OK`
+
+```json
+{
+  "Result": [
+    "char_1046_sbell2",
+    "char_103_angel"
+  ]
+}
+```
+
+#### Reduced result
+
+Status: `200 OK`
+
+```json
+{
+  "Result": {
     "char_1046_sbell2": 1,
-    // The rest of the roll result
+    "char_103_angel": 1
+  }
 }
 ```
 
-#### Else
-```typescript
-interface GachaMultiRollResponse {
-    Result: string[];
-}
-```
-**Example:**
+### Error responses
+
+Status: `400 Bad Request`
+
 ```json
 {
-    "Result": [
-        "char_1046_sbell2",
-        // The rest of the roll result
-    ]
+  "message": "Roll count must be a number greater than 0."
 }
 ```
 
-### Error Response
-**Status:** `400 Bad Request`
 ```json
 {
-    "message": "Missing session token."
+  "message": "Missing session token."
 }
 ```
-**If Banner.Type === BannerTypes.Orienteering:**
+
+Status: `404 Not Found`
+
 ```json
 {
-    "message": "Banner type '${Banner.Type}' requires a request body."
+  "message": "There are no profile associated with this token."
 }
 ```
+
 ```json
 {
-    "message": "Missing or invalid ${Rarity} stars selection."
-}
-```
-```json
-{
-    "message": "Operator(s) ${Operators} do(es) not exist or not included in ${BannerName} ${Rarity} stars pool."
-}
-```
-**Status:** `404 Not Found`
-```json
-{
-    "message": "Roll count must be a number greater than 0."
-}
-```
-```json
-{
-    "message": "There are no profile associated with this token."
-}
-```
-```json
-{
-    "message": "Banner '${BannerName}' doesn't exist."
+  "message": "Banner 'EN A Shared Oath of Guardianship' doesn't exist."
 }
 ```
 
 ---
 
-## Reset progress on a banner
-Reset your progress on a banner.
+## Reset banner progress
+
+Resets the profile progress for a specific banner.
 
 ### Request
+
 ```http
 PATCH /gacha/reset/:BannerName
 ```
 
-### Path Parameters
-| Parameter | Type | Description |
-|------------|--------|-------------|
-| BannerName | string | Banner identifier or name |
-
 ### Headers
-```json
-{
-    "Session-Token": "<your session token>"
-}
-```
 
-### Example
 ```http
-PATCH /gacha/reset/EN A Shared Oath of Guardianship
+Session-Token: <your session token>
 ```
 
-### Success Response
-**Status:** `200 OK`
-```txt
+### Success response
+
+Status: `200 OK`
+
+```text
 Progress on EN A Shared Oath of Guardianship has been reset successfully.
 ```
 
-### Error Response
-**Status:** `404 Not Found`
+### Error responses
+
+Status: `400 Bad Request`
+
 ```json
 {
-    "message": "Missing session token."
+  "message": "Missing session token."
 }
 ```
+
+Status: `404 Not Found`
+
 ```json
 {
-    "message": "There are no profile associated with this token."
+  "message": "There are no profile associated with this token."
 }
 ```
+
 ```json
 {
-    "message": "Banner '${BannerName}' doesn't exist."
+  "message": "Banner 'EN A Shared Oath of Guardianship' doesn't exist."
 }
 ```
 
 ---
 
-## Delete a session token
-Delete a session token, will invalidate this token. This is irrecoverable.
+## Delete gacha session
+
+Deletes the current profile and invalidates the `Session-Token`.
 
 ### Request
+
 ```http
-PURGE /gacha/delete/
+PURGE /gacha/delete
 ```
 
 ### Headers
-```json
-{
-    "Session-Token": "<your session token>"
-}
+
+```http
+Session-Token: <your session token>
 ```
 
-### Success Response
-**Status:** `200 OK`
-```txt
+### Success response
+
+Status: `200 OK`
+
+```text
 Delete profile successfully.
 ```
 
-### Error Response
-**Status:** `404 Not Found`
+### Error responses
+
+Status: `400 Bad Request`
+
 ```json
 {
-    "message": "Missing session token."
+  "message": "Missing session token."
 }
 ```
+
+Status: `404 Not Found`
+
 ```json
 {
-    "message": "There are no profile associated with this token."
+  "message": "There are no profile associated with this token."
 }
 ```
 
 ---
 
-# Status Codes
+# Status codes
 
-| Status Code | Description |
-|-------------|-------------|
-| 200 | Request completed successfully |
-| 400 | Missing request body, Session-Token header, invalid path parameter |
-| 404 | Resource not found |
-| 429 | Exceeded API rate limit |
+| Code | Meaning |
+|---|---|
+| 200 | Request succeeded |
+| 400 | Missing session token or malformed request |
+| 404 | Profile, banner, or operator not found |
+| 429 | Rate limit exceeded |
 
 ---
 
 # Notes
 
-- All image endpoints return URLs to png files.
-- Banner pagination starts at page `1`.
-- Requests for non-existent banners or operators return a `404` response.
-- Responses are served directly from the application's database manager (`Database.Manager`).
-- API limit: 50 requests/sec (can be set in .env).
+- Banner names and operator IDs must match the stored database keys exactly.
+- The `Session-Token` header is required for all gacha routes.
+- Asset routes return URLs to PNG files, not binary data.
+- The default rate limit is `50 requests/second` and can be configured in the environment.
