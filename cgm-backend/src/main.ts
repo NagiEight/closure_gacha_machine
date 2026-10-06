@@ -19,4 +19,8 @@ Server.use(Limiter, express.json());
 await LoadPath();
 
 process.on("SIGINT", () => process.exit());
-Server.listen(Env.GetVariable("PORT"), "0.0.0.0", (): void => console.log(`Server is running on port ${Env.GetVariable("PORT")}.`));
+Server.listen(
+    Env.GetVariable("PORT"),
+    Env.GetVariable("HOST_NAME"),
+    (): void => console.log(`Server is running on port ${Env.GetVariable("PORT")}.`)
+);
