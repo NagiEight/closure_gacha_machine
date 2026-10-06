@@ -1,9 +1,9 @@
 import type { RateLimitRequestHandler } from "express-rate-limit";
 import Server from "#Server";
-import Env from "#Env";
 import LoadPath from "#helpers/LoadPath";
 import rateLimit from "express-rate-limit";
 import express from "express";
+import Env from "commaenv";
 
 const Limiter: RateLimitRequestHandler = rateLimit({
     windowMs: 1000,

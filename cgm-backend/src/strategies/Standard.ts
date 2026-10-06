@@ -1,4 +1,5 @@
 import type { BannerStrategy, RollParams } from "#types/BannerStrategy";
+import type { Banner } from "#types/Banner";
 import GenericFiveStarsHandler from "#helpers/GenericFiveStarsHandler";
 import GenericFourStarsHandler from "#helpers/GenericFourStarsHandler";
 import RandomItem from "#helpers/RandomItem";
@@ -10,7 +11,7 @@ import RateUp from "#types/RateUp";
 
 @StrategyManager.Register(BannerTypes.Standard)
 export default class Standard implements BannerStrategy {
-    public Roll({ Banner, Result, RU, Profile }: RollParams): string {
+    public Roll(Banner: Banner, Result: Items, RU: RateUp, { Profile }: RollParams): string {
         return Switch(Result, {
             [Items.SixStars]: (): string => {
                 if((Profile.Count <= 149 || Profile.Focused) && RU !== RateUp.Primary)

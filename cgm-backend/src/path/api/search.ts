@@ -1,9 +1,9 @@
 import type { SearchQuery } from "#types/SearchQuery";
 import type { SearchResult } from "#types/SearchResult";
-import Env from "#Env";
 import Server from "#Server";
 import DataManager from "#DataManager";
 import BannerTypes from "#types/BannerTypes";
+import Env from "commaenv";
 import z from "zod";
 
 const SearchQuerySchema = z.object({

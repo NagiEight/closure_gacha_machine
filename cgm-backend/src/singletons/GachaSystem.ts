@@ -168,6 +168,8 @@ export default await new class GachaSystem {
         const StrategyClass: new () => BannerStrategy = StrategyManager.StrategyRegistry.get(Banner.Type)!;
         const Strategy: BannerStrategy = new StrategyClass();
 
+        const { Storage, Focused, TenRolls, ...Rest } = Profile;
+
         for(let _: number = 0; _ < Count; _++) {
             Profile.Count++;
             let StandardRate: GachaItems<Items>[] = [
@@ -234,7 +236,7 @@ export default await new class GachaSystem {
                 }
             });
             
-            const RollResult: string = Strategy.Roll({ Banner, Profile, Result, RU, Selection });
+            const RollResult: string = Strategy.Roll(Banner, Result, RU, { Profile, Selection });
             OutputMap.set(RollResult, Result);
 
             if(Reduced) {
@@ -248,8 +250,6 @@ export default await new class GachaSystem {
                     Profile.RollsWithoutSixStar = 0;
                 Profile.TenRolls = true;
             }
-
-            const { Storage } = Profile;
             const Rarity: Record<string, number> = Switch(Result, {
                 [Items.SixStars]: Storage.SixStars,
                 [Items.FiveStars]: Storage.FiveStars,
@@ -260,8 +260,6 @@ export default await new class GachaSystem {
             Rarity[RollResult] ??= 0;
             Rarity[RollResult]++;
         }
-
-        const { Storage, Focused, TenRolls, ...Rest } = Profile;
 
         await AsyncMap(
             Array.from(OutputMap),

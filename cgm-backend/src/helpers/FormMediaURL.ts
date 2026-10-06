@@ -1,4 +1,4 @@
-import Env from "#Env";
+import Env from "commaenv";
 
 /**
  * Helper function for generating URL to media CDN.

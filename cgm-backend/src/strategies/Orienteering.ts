@@ -1,5 +1,6 @@
 import type { GachaItems } from "#helpers/Gacha";
 import type { BannerStrategy, RollParams } from "#types/BannerStrategy";
+import type { Banner } from "#types/Banner";
 import GenericFourStarsHandler from "#helpers/GenericFourStarsHandler";
 import RandomItem from "#helpers/RandomItem";
 import Switch from "#helpers/Switch";
@@ -17,7 +18,7 @@ export default class Orienteering implements BannerStrategy {
         ]
     };
 
-    public Roll({ Banner, Result, RU, Selection }: RollParams): string {
+    public Roll(Banner: Banner, Result: Items, RU: RateUp, { Selection }: RollParams): string {
         return Switch(Result, {
             [Items.SixStars]: (): string => 
                 Selection && RandomItem(Selection.SixStarsSelection) ||

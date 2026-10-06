@@ -1,6 +1,6 @@
 import DataManager from "#DataManager";
-import Env from "#Env";
 import Server from "#Server";
+import Env from "commaenv";
 
 Server.get("/api/banners/:Page", (Req, Res) => {
     const Page: number = Number(Req.params.Page) || -1;    

@@ -9,9 +9,6 @@ export type Mapping = Partial<
 >;
 
 export interface RollParams {
-    Banner: Banner;
-    Result: Items;
-    RU: RateUp;
     Profile: ProfileBanner;
     Selection?: Selection;
 }
@@ -19,13 +16,15 @@ export interface RollParams {
 export interface BannerStrategy {
     readonly RateUp?: Mapping;
 
-    Roll({
-        Banner,
-        Result,
-        RU,
-        Profile,
-        Selection
-    }: RollParams): string;
+    Roll(
+        Banner: Banner,
+        Result: Items,
+        RU: RateUp,
+        {
+            Profile,
+            Selection
+        }: RollParams
+    ): string;
 }
 
 export interface Selection {

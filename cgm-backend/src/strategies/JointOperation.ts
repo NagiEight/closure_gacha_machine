@@ -1,4 +1,6 @@
-import type { BannerStrategy, RollParams } from "#types/BannerStrategy";
+import type { BannerStrategy } from "#types/BannerStrategy";
+import type { Banner } from "#types/Banner";
+import type RateUp from "#types/RateUp";
 import GenericFourStarsHandler from "#helpers/GenericFourStarsHandler";
 import RandomItem from "#helpers/RandomItem";
 import Switch from "#helpers/Switch";
@@ -8,7 +10,7 @@ import Items from "#types/Items";
 
 @StrategyManager.Register(BannerTypes.JointOperation)
 export default class JointOperation implements BannerStrategy {
-    public Roll({ Banner, Result, RU }: RollParams): string {
+    public Roll(Banner: Banner, Result: Items, RU: RateUp): string {
         return Switch(Result, {
             [Items.SixStars]: (): string => RandomItem(Banner.SixStarsPool.Primary),
             [Items.FiveStars]: (): string => RandomItem(Banner.FiveStarsPool.Primary),

@@ -1,4 +1,5 @@
-import Env from "#Env";
+import Env from "commaenv";
+import "dotenv/config";
 
 Env.RegisterVariable("PORT", Env.number().Default(3000))
     .RegisterVariable("RATE_LIMIT", Env.number().Default(50))

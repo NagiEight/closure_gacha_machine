@@ -1,5 +1,6 @@
 import type { GachaItems } from "#helpers/Gacha";
-import type { BannerStrategy, RollParams } from "#types/BannerStrategy";
+import type { BannerStrategy } from "#types/BannerStrategy";
+import type { Banner } from "#types/Banner";
 import GenericFiveStarsHandler from "#helpers/GenericFiveStarsHandler";
 import GenericFourStarsHandler from "#helpers/GenericFourStarsHandler";
 import RandomItem from "#helpers/RandomItem";
@@ -19,7 +20,7 @@ export default class Limited implements BannerStrategy {
         ]
     };
 
-    public Roll({ Banner, Result, RU }: RollParams): string {
+    public Roll(Banner: Banner, Result: Items, RU: RateUp): string {
         return Switch(Result, {
             [Items.SixStars]: (): string => Switch(RU, {
                 [RateUp.Primary]: (): string => RandomItem(Banner.SixStarsPool.Primary),
