@@ -8,8 +8,8 @@ type TypeMap = {
 };
 
 class EArray<T extends "number" | "string"> extends EnvDataType<TypeMap[T][]> {
-    public P: (Value: string) => TypeMap[T][] = JSON.parse;
-    public readonly Type: T;
+    private P: (Value: string) => TypeMap[T][] = JSON.parse;
+    private readonly Type: T;
 
     constructor(Type: T) {
         super();
@@ -32,7 +32,7 @@ class EArray<T extends "number" | "string"> extends EnvDataType<TypeMap[T][]> {
         try {
             const Parsed: unknown[] = this.P(Env);
 
-            if(!Array.isArray(Parsed) || !Parsed.every(E => typeof E === this.Type)) 
+            if(!Array.isArray(Parsed) || !Parsed.every(E => typeof E === this.Type))
                 throw new TypeError(`Variable ${Name} isn't an array of type ${this.Type}.`);
             
             return Parsed as TypeMap[T][];
@@ -43,7 +43,7 @@ class EArray<T extends "number" | "string"> extends EnvDataType<TypeMap[T][]> {
     }
 
     public Default(Value: TypeMap[T][]): this {
-        if(!Array.isArray(Value) || !Value.every(E => typeof E === this.Type)) 
+        if(!Array.isArray(Value) || !Value.every(E => typeof E === this.Type))
             throw new TypeError("Mismatched type between default value and the provided type.");
 
         this.DefaultValue = Value;
@@ -68,13 +68,13 @@ class ENumber extends EnvDataType<number> {
 
         const Parsed: number = Number(Env);
 
-        if(Number.isNaN(Parsed)) 
+        if(Number.isNaN(Parsed))
             throw new TypeError(`Variable ${Name} isn't a number.`);
         return Parsed;
     }
 
     public Default(Value: number): this {
-        if(Value != undefined && typeof Value !== "number") 
+        if(Value != undefined && typeof Value !== "number")
             throw new TypeError("Mismatched type between default value and the provided type.");
         this.DefaultValue = Value;
         return this;
@@ -94,7 +94,7 @@ class EString extends EnvDataType<string> {
     }
 
     public Default(Value: string): this {
-        if(Value != undefined && typeof Value !== "string") 
+        if(Value != undefined && typeof Value !== "string")
             throw new TypeError("Mismatched type between default value and the provided type.");
         this.DefaultValue = Value;
         return this;
@@ -119,7 +119,7 @@ class EBoolean extends EnvDataType<boolean> {
     }
 
     public Default(Value: boolean): this {
-        if(Value != undefined && typeof Value !== "boolean") 
+        if(Value != undefined && typeof Value !== "boolean")
             throw new TypeError("Mismatched type between default value and the provided type.");
         this.DefaultValue = Value;
         return this;
