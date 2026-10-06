@@ -38,7 +38,7 @@ class EArray<T extends "number" | "string"> extends EnvDataType<TypeMap[T][]> {
             return Parsed as TypeMap[T][];
         }
         catch {
-            throw new TypeError(`Variable ${Name} isn't an array.`);
+            throw new TypeError(`Variable ${Name} isn't an array of type ${this.Type}.`);
         }
     }
 
