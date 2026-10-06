@@ -1,5 +1,4 @@
 import EnvDataType from "#types/EnvDataType";
-import z from "zod";
 import "dotenv/config";
 
 type ValueType = number | unknown[] | string | boolean;
@@ -15,7 +14,7 @@ class EArray<T extends "number" | "string"> extends EnvDataType<TypeMap[T][]> {
     constructor(Type: T) {
         super();
 
-        if(!z.literal(["number", "string"]).safeParse(Type).success)
+        if(!["number", "string"].includes(Type))
             throw new TypeError(`Unknown array type "${Type}".`);
 
         this.Type = Type;
@@ -32,16 +31,11 @@ class EArray<T extends "number" | "string"> extends EnvDataType<TypeMap[T][]> {
 
         try {
             const Parsed: unknown[] = this.P(Env);
-            const Schema = this.Type === "number"
-                ? z.array(z.number())
-                : z.array(z.string())
-            ;
-            const Checked = Schema.safeParse(Parsed);
 
-            if(!Checked.success) 
-                throw new TypeError(`Variable ${Name} isn't an array.`);
-
-            return Checked.data as TypeMap[T][];
+            if(!Array.isArray(Parsed) || !Parsed.every(E => typeof E === this.Type)) 
+                throw new TypeError(`Variable ${Name} isn't an array of type ${this.Type}.`);
+            
+            return Parsed as TypeMap[T][];
         }
         catch {
             throw new TypeError(`Variable ${Name} isn't an array.`);
@@ -49,17 +43,10 @@ class EArray<T extends "number" | "string"> extends EnvDataType<TypeMap[T][]> {
     }
 
     public Default(Value: TypeMap[T][]): this {
-        const TypeMap = {
-            "number": z.array(z.number()),
-            "string": z.array(z.string())
-        };
-
-        const Parsed = TypeMap[this.Type].safeParse(Value);
-        
-        if(!Parsed.success)
+        if(!Array.isArray(Value) || !Value.every(E => typeof E === this.Type)) 
             throw new TypeError("Mismatched type between default value and the provided type.");
-        
-        this.DefaultValue = Parsed.data as TypeMap[T][];
+
+        this.DefaultValue = Value;
         return this;
     }
 
