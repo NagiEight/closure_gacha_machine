@@ -1,5 +1,30 @@
 ﻿# Closure Gacha Machine API
 
+## Table of Contents
+
+- [Base URL](#base-url)
+- [Common conventions](#common-conventions)
+- [Banner and Operator API](#banner-and-operator-api)
+  - [Get all banner names](#get-all-banner-names)
+  - [Get paginated banner list](#get-paginated-banner-list)
+  - [Search banners](#search-banners)
+  - [Get banner details](#get-banner-details)
+  - [Get operator details](#get-operator-details)
+- [Asset endpoints](#asset-endpoints)
+  - [Banner cover](#banner-cover)
+  - [Operator artwork](#operator-artwork)
+  - [Elite 2 operator artwork](#elite-2-operator-artwork)
+  - [Operator card](#operator-card)
+- [Gacha API](#gacha-api)
+  - [Create a gacha session](#create-a-gacha-session)
+  - [Get profile](#get-profile)
+  - [Roll once](#roll-once)
+  - [Roll multiple times](#roll-multiple-times)
+  - [Reset banner progress](#reset-banner-progress)
+  - [Delete gacha session](#delete-gacha-session)
+- [Status codes](#status-codes)
+- [Notes](#notes)
+
 ## Base URL
 
 ```text
