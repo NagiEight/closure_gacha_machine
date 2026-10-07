@@ -1,0 +1,2 @@
+pages to add: home, history, banners, operators, settings, stats
+components to add: Header, Footer, Navigation Bar, Sidebar, Card, Table, Modal, Button, and Search Bar.
