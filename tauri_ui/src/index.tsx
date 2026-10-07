@@ -1,5 +1,6 @@
 /* @refresh reload */
+import './index.css';
 import { render } from "solid-js/web";
-import App from "./App";
+import Home from "./presentation/pages/home";
 
-render(() => <App />, document.getElementById("root") as HTMLElement);
+render(() => <Home />, document.getElementById("root") as HTMLElement);
