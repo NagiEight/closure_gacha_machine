@@ -2,7 +2,7 @@
   "$schema": "https://schema.tauri.app/config/2",
   "productName": "tauri_ui",
   "version": "0.1.0",
-  "identifier": "com.nagi8.tauri_ui",
+  "identifier": "com.nagi8.tauri-ui",
   "build": {
     "beforeDevCommand": "bun run dev",
     "devUrl": "http://localhost:1420",
