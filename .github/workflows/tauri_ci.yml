@@ -110,7 +110,7 @@ jobs:
       - name: Build Tauri Application
         uses: tauri-apps/tauri-action@v0
         with:
-          runner: bun
+          using: bun
           projectPath: tauri_ui
           tagName: v__VERSION__
           releaseName: 'App v__VERSION__'
