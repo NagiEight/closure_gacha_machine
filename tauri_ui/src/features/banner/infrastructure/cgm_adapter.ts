@@ -2,12 +2,11 @@ import { parseTimestamp } from "../../../shared/time_utils";
 import { BannerEntity, BannerSearchQuery, BannerSummary } from "../domain/entities";
 import { BannerPort } from "../domain/ports";
 
-
 export class BannerApiAdapter implements BannerPort {
   private readonly baseUrl: string;
 
   constructor(baseUrl: string = "http://localhost:3000") {
-    this.baseUrl = baseUrl.replace(/\/+$/, "");
+    this.baseUrl = baseUrl.replace(/\/+\$/, "");
   }
 
   async getAllBannerNames(): Promise<string[]> {
@@ -29,18 +28,17 @@ export class BannerApiAdapter implements BannerPort {
   }
 
   async searchBanners(page: number, query: BannerSearchQuery): Promise<BannerSummary[]> {
-    const body: Record<string, unknown> = {};
-    if (query.nameQuery) body.NameQuery = query.nameQuery;
-    if (query.bannerType) body.BannerType = query.bannerType;
-    if (query.includes) body.Includes = query.includes;
-    if (query.from !== undefined) body.From = query.from;
-    if (query.to !== undefined) body.To = query.to;
+    const params = new URLSearchParams({ page: String(page) });
 
-    const response = await fetch(`${this.baseUrl}/api/banners/search?page=${page}`, {
-      method: "GET",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-    });
+    if (query.nameQuery) params.append("NameQuery", query.nameQuery);
+    if (query.bannerType) params.append("BannerType", query.bannerType);
+    if (query.from !== undefined) params.append("From", String(query.from));
+    if (query.to !== undefined) params.append("To", String(query.to));
+    if (query.includes && query.includes.length > 0) {
+      query.includes.forEach((item) => params.append("Includes", item));
+    }
+
+    const response = await fetch(`${this.baseUrl}/api/banners/search?${params.toString()}`);
 
     await this.checkResponseStatus(response);
     const data = (await response.json()) as Array<{ Name: string; Type: string; ReleaseDate: number }>;
