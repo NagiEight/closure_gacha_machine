@@ -2,8 +2,12 @@ name: Flutter CI Pipeline
 
 on:
   push:
+    paths:
+      - 'ui/**'
     branches: [ main, master, develop ]
   pull_request:
+    paths:
+      - 'ui/**'
     branches: [ main, master, develop ]
 
 jobs:
