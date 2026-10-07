@@ -1,0 +1,115 @@
+name: Tauri CI Pipeline
+
+on:
+  push:
+    paths:
+      - 'tauri_ui/**'
+    branches: [ main, master, develop ]
+  pull_request:
+    paths:
+      - 'tauri_ui/**'
+    branches: [ main, master, develop ]
+
+jobs:
+  analyze-and-test:
+    name: Lint & Test
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: tauri_ui
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Install System Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev build-essential curl wget file libxdo-dev libssl-dev libappindicator3-dev librsvg2-dev
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy, rustfmt
+
+      - name: Rust Cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: tauri_ui/src-tauri
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install Frontend Dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Create Mock .env for CI
+        run: |
+          if [ -f .env.example ]; then cp .env.example .env; fi
+
+      - name: Run Frontend Linter & Tests
+        run: |
+          bun run lint || true
+          bun test
+
+      - name: Run Cargo Check & Clippy
+        run: |
+          cd src-tauri
+          cargo clippy -- -D warnings
+          cargo test
+
+  build:
+    name: Build Verification
+    needs: analyze-and-test
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: tauri_ui
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Install System Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev build-essential curl wget file libxdo-dev libssl-dev libappindicator3-dev librsvg2-dev
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Rust Cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: tauri_ui/src-tauri
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install Frontend Dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Create Mock .env for Build
+        run: |
+          if [ -f .env.example ]; then cp .env.example .env; fi
+
+      - name: Build Tauri Application
+        uses: tauri-apps/tauri-action@v0
+        with:
+          projectPath: tauri_ui
+          tagName: v__VERSION__
+          releaseName: 'App v__VERSION__'
+          releaseBody: 'See the assets to download this version and install.'
+          releaseDraft: true
+          prerelease: false
+
+      - name: Upload Build Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: tauri-linux-build
+          path: |
+            tauri_ui/src-tauri/target/release/bundle/
