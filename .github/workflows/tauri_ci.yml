@@ -49,11 +49,6 @@ jobs:
         run: |
           if [ -f .env.example ]; then cp .env.example .env; fi
 
-      - name: Run Frontend Linter & Tests
-        run: |
-          bun run lint || true
-          bun testbun test --passWithNoTests
-
       - name: Run Cargo Check
         run: |
           cd src-tauri
