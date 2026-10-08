@@ -110,6 +110,7 @@ jobs:
       - name: Build Tauri Application
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         uses: tauri-apps/tauri-action@v0
         with:
           using: bun
