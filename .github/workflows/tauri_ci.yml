@@ -111,6 +111,8 @@ jobs:
         uses: tauri-apps/tauri-action@v0
         with:
           using: bun
+          env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           projectPath: tauri_ui
           tagName: v__VERSION__
           releaseName: 'App v__VERSION__'
