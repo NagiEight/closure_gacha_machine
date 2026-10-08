@@ -108,11 +108,11 @@ jobs:
           path: |
             tauri_ui/src-tauri/target/release/bundle/
       - name: Build Tauri Application
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         uses: tauri-apps/tauri-action@v0
         with:
           using: bun
-          env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           projectPath: tauri_ui
           tagName: v__VERSION__
           releaseName: 'App v__VERSION__'
