@@ -109,7 +109,7 @@ jobs:
             tauri_ui/src-tauri/target/release/bundle/
       - name: Build Tauri Application
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         uses: tauri-apps/tauri-action@v0
         with:
           using: bun
