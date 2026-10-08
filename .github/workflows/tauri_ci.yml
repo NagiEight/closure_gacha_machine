@@ -41,7 +41,7 @@ jobs:
           workspaces: tauri_ui/src-tauri
 
       - name: Install Frontend Dependencies
-        run: npm ci
+        run: npm install
 
       - name: Create Mock .env for Build
         run: |
