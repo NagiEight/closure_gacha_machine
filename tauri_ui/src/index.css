@@ -1,0 +1,7 @@
+@import "tailwindcss";
+
+@theme {
+  --color-endfield-yellow: #FFDE00;
+  --color-endfield-yellow-dark: #C8AE00;
+  --color-endfield-black: #0D0D0D;
+}
