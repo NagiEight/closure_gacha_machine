@@ -35,17 +35,7 @@ interface OperatorsRow {
 export default new class DataManager {
     public readonly DB: DBType = new Database(path.join(DBDir, "Banners.db"));
     public readonly GetBannersSTMT: Database.Statement<[number, number], SearchResult>;
-    public readonly SearchBannersSTMT: Database.Transaction<(
-        PageIndex: number,
-        PageSize: number,
-        {
-            NameQuery,
-            BannerType,
-            Includes,
-            From,
-            To
-        }: SearchQuery
-    ) => SearchResult[]> = this.DB.transaction((
+    public readonly SearchBannersSTMT = this.DB.transaction((
         PageIndex: number,
         PageSize: number,
         {
