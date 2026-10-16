@@ -50,8 +50,15 @@ export default new class DataManager {
         const Args: any[] = [];
 
         if(NameQuery) {
-            Conditions.push("LOWER(Name) LIKE ?");
-            Args.push(`%${NameQuery.trim().toLowerCase()}%`);
+            Conditions.push("LOWER(Name) LIKE ? ESCAPE '\\'");
+            Args.push(`%${
+                NameQuery
+                    .trim()
+                    .toLowerCase()
+                    .replaceAll("\\", "\\\\")
+                    .replaceAll("%", "\\%")
+                    .replaceAll("_", "\\_")
+            }%`);
         }
 
         if(BannerType) {
