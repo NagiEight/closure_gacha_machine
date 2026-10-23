@@ -7,12 +7,12 @@ import Env from "commaenv";
 import z from "zod";
 
 const SearchQuerySchema = z.object({
-    NameQuery: z.string().transform(Name => Name.trim().toLowerCase()),
+    NameQuery: z.string(),
     BannerType: z.enum(BannerTypes),
     Includes: z.array(z.string()),
     From: z.int().positive(),
     To: z.int().positive()
-}).partial()
+}).partial();
 
 Server.get("/api/banners/all", (_, Res) => Res.json(DataManager.BannerNameCache))
 .get("/api/banners/search", (Req, Res) => {
