@@ -11,15 +11,15 @@ const Switch = <T extends PropertyKey, R>(
     Default?: ValueOrFunction<R>
 ): R => {
     if(Value in Resolver) {
-        return typeof Resolver[Value] === "function" 
+        return typeof Resolver[Value] === "function"
             ? Resolver[Value]()
             : Resolver[Value] as R
         ;
     }
 
     if(Default != undefined) {
-        return typeof Default === "function" 
-            ? (Default as () => R)() 
+        return typeof Default === "function"
+            ? (Default as () => R)()
             : Default
         ;
     }

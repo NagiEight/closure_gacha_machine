@@ -2,7 +2,6 @@ import type { Banner } from "#types/Banner";
 import type { Operator } from "#types/Operator";
 import type { SearchQuery } from "#types/SearchQuery";
 import type { SearchResult } from "#types/SearchResult";
-import type { Database as DBType } from "better-sqlite3";
 import type BannerTypes from "#types/BannerTypes";
 import FormMediaURL from "#helpers/FormMediaURL";
 import Switch from "#helpers/Switch";
@@ -32,20 +31,9 @@ interface OperatorsRow {
     Limited: number;
 }
 
-export default new class DataManager {
-    public readonly DB: DBType = new Database(path.join(DBDir, "Banners.db"));
+export default new class DataManager extends Database {
     public readonly GetBannersSTMT: Database.Statement<[number, number], SearchResult>;
-    public readonly SearchBannersSTMT: Database.Transaction<(
-        PageIndex: number,
-        PageSize: number,
-        {
-            NameQuery,
-            BannerType,
-            Includes,
-            From,
-            To
-        }: SearchQuery
-    ) => SearchResult[]> = this.DB.transaction((
+    public readonly SearchBannersSTMT = this.transaction((
         PageIndex: number,
         PageSize: number,
         {
@@ -60,8 +48,15 @@ export default new class DataManager {
         const Args: any[] = [];
 
         if(NameQuery) {
-            Conditions.push("LOWER(Name) LIKE ?");
-            Args.push(`%${NameQuery.trim().toLowerCase()}%`);
+            Conditions.push("LOWER(Name) LIKE ? ESCAPE '\\'");
+            Args.push(`%${
+                NameQuery
+                    .trim()
+                    .toLowerCase()
+                    .replace(/\\/g, "\\\\")
+                    .replaceAll(/%/g, "\\%")
+                    .replaceAll(/_/g, "\\_")
+            }%`);
         }
 
         if(BannerType) {
@@ -84,7 +79,7 @@ export default new class DataManager {
             Args.push(JSON.stringify(Includes));
         }
 
-        return this.DB.prepare<any[], SearchResult>(`
+        return this.prepare<any[], SearchResult>(`
             SELECT * FROM Banners
             ${Conditions.length ? `WHERE ${Conditions.join(" AND ")}` : ""}
             ORDER BY ReleaseDate DESC
@@ -98,11 +93,13 @@ export default new class DataManager {
     public readonly BannerPoolCache: Map<string, Set<string>> = new Map();
     
     public constructor() {
-        process.on("SIGINT", () => this.DB.close());
+        super(path.join(DBDir, "Banners.db"));
 
-        this.DB.pragma("journal_mode = WAL");
-        this.DB.pragma("foreign_keys = ON");
-        this.DB.exec(`
+        process.on("SIGINT", () => this.close());
+
+        this.pragma("journal_mode = WAL");
+        this.pragma("foreign_keys = ON");
+        this.exec(`
             CREATE TABLE IF NOT EXISTS Operators(
                 ID TEXT PRIMARY KEY,
                 Name TEXT NOT NULL,
@@ -143,21 +140,22 @@ export default new class DataManager {
                 return +Set.every(OP => PoolOps.has(OP)) as 0 | 1;
             }
         );
-        this.GetBannersSTMT = this.DB.prepare<[number, number], SearchResult>(`
+        this.GetBannersSTMT = this.prepare<[number, number], SearchResult>(`
             SELECT * FROM Banners
             ORDER BY ReleaseDate DESC
             LIMIT ? OFFSET ?
         `);
 
         this.Operators = new Map<string, Operator>(
-            this.DB.prepare<[], OperatorsRow>("SELECT * FROM Operators").all().map(Row => {
-                const { ID, Limited, ...Rest } = Row;
-                return [ID, { ...Rest, Limited: !!Limited }];
+            this.prepare<[], OperatorsRow>("SELECT * FROM Operators").all().map(Row => {
+                const { ID, Limited: LTD, ...Rest } = Row;
+                const Limited: boolean = !!LTD;
+                return [ID, { ...Rest, Limited }];
             })
         );
-        this.BannerNameCache = this.DB.prepare<[], { Name: string; }>("SELECT Name FROM Banners").all().map(Row => Row.Name);
+        this.BannerNameCache = this.prepare<[], { Name: string; }>("SELECT Name FROM Banners").all().map(Row => Row.Name);
 
-        const Query: BannersRow[] = this.DB.prepare<[], BannersRow>(`
+        const Query: BannersRow[] = this.prepare<[], BannersRow>(`
             SELECT
                 B.Name,
                 B.ReleaseDate,
