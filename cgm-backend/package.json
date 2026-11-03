@@ -24,8 +24,8 @@
   },
   "scripts": {
     "dev": "tsx ./src/main.ts",
-    "start": "node ./public/main.js",
-    "build": "tsc"
+    "start": "node ./build/main.js",
+    "build": "tsc && node --input-type=module -e \"import { mkdirSync, copyFileSync } from 'node:fs'; mkdirSync('./build/database', { recursive: true }); copyFileSync('./src/database/Banners.db', './build/database/Banners.db');\""
   },
   "name": "cgm-backend",
   "description": "## Base URL ``` http://localhost:3000 ```",
