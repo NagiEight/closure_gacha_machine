@@ -18,9 +18,9 @@
   },
   "type": "module",
   "imports": {
-    "#*": "./public/singletons/*.js",
-    "#types/*": "./public/types/*.js",
-    "#helpers/*": "./public/helpers/*.js"
+    "#*": "./build/singletons/*.js",
+    "#types/*": "./build/types/*.js",
+    "#helpers/*": "./build/helpers/*.js"
   },
   "scripts": {
     "dev": "tsx ./src/main.ts",
