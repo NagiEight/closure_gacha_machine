@@ -10,7 +10,7 @@ import Database from "better-sqlite3";
 import path from "path";
 import fs from "fs/promises";
 
-const DBDir: string = path.join(import.meta.dirname, "..", "..", "database");
+const DBDir: string = path.join(import.meta.dirname, "..", "database");
 await fs.mkdir(DBDir, { recursive: true });
 
 interface BannersRow {
