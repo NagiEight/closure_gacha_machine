@@ -14,7 +14,10 @@ const Limiter: RateLimitRequestHandler = rateLimit({
     standardHeaders: true,
     legacyHeaders: false
 });
-Server.use(Limiter, express.json());
+Server
+    .use(Limiter, express.json())
+    .use(express.static("./dist"))
+;
 
 await LoadPath();
 

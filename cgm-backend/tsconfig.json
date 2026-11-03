@@ -14,7 +14,7 @@
       "#helpers/*": ["./src/helpers/*.ts"]
     },
 
-    "outDir": "./public",
+    "outDir": "../build",
     "rootDir": "./src",
 
     "strict": true,

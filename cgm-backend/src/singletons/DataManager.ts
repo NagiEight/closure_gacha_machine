@@ -54,8 +54,8 @@ export default new class DataManager extends Database {
                     .trim()
                     .toLowerCase()
                     .replace(/\\/g, "\\\\")
-                    .replaceAll(/%/g, "\\%")
-                    .replaceAll(/_/g, "\\_")
+                    .replace(/%/g, "\\%")
+                    .replace(/_/g, "\\_")
             }%`);
         }
 
